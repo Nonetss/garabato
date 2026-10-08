@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>better · Estructura de packages/api</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --color-paper: #faf9f5;
+      --color-ink: #3d3929;
+      --color-muted: #6e6d68;
+      --color-accent: #d97757;
+      --font-sans: "Space Grotesk", system-ui, sans-serif;
+      --font-serif: "Instrument Serif", serif;
+      --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg {
+      width: 100%;
+      min-width: 960px;
+      display: block;
+    }
+    @media print {
+      .diagram-container {
+        overflow-x: visible;
+      }
+      svg {
+        min-width: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Árbol · better</p>
+      <h1>Estructura de packages/api</h1>
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 540"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="api-estructura-title api-estructura-desc"
+        >
+          <title id="api-estructura-title">Estructura de packages/api</title>
+          <desc id="api-estructura-desc">
+            Árbol de packages/api/src: una base compartida, los helpers y la
+            carpeta v1 con una carpeta por feature dividida en input, output,
+            handler y router.
+          </desc>
+          <defs></defs>
+          <rect width="100%" height="100%" fill="#faf9f5" />
+          <path
+            d="M 392 112 L 392 144 L 168 144 L 168 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 392 112 L 392 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 392 112 L 392 144 L 616 144 L 616 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <line
+            x1="616"
+            y1="224"
+            x2="616"
+            y2="288"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 616 336 L 616 368 L 388 368 L 388 400"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 616 336 L 616 368 L 540 368 L 540 400"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 616 336 L 616 368 L 692 368 L 692 400"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 616 336 L 616 368 L 844 368 L 844 400"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <rect x="304" y="64" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="304"
+            y="64"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="392"
+            y="85"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            src/
+          </text>
+          <text
+            x="392"
+            y="100"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            packages/api
+          </text>
+          <rect x="80" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="80"
+            y="176"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="168"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Base compartida
+          </text>
+          <text
+            x="168"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            index · context · errors
+          </text>
+          <rect x="304" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="304"
+            y="176"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="392"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            shared/ · lib/
+          </text>
+          <text
+            x="392"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            helpers comunes
+          </text>
+          <rect x="528" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="528"
+            y="176"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="616"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            v1/
+          </text>
+          <text
+            x="616"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            router.ts monta features
+          </text>
+          <rect x="528" y="288" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="528"
+            y="288"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="616"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            &lt;feature&gt;/
+          </text>
+          <text
+            x="616"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            cron, comment, apiKey…
+          </text>
+          <rect x="324" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="324"
+            y="400"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="388"
+            y="421"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            input.ts
+          </text>
+          <text
+            x="388"
+            y="436"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            entrada (zod)
+          </text>
+          <rect x="476" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="476"
+            y="400"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="540"
+            y="421"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            output.ts
+          </text>
+          <text
+            x="540"
+            y="436"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            salida (zod)
+          </text>
+          <rect x="628" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="628"
+            y="400"
+            width="128"
+            height="48"
+            rx="6"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="692"
+            y="421"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            handler.ts
+          </text>
+          <text
+            x="692"
+            y="436"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            lógica · db · auth
+          </text>
+          <rect x="780" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="780"
+            y="400"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="844"
+            y="421"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            router.ts
+          </text>
+          <text
+            x="844"
+            y="436"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            solo cableado
+          </text>
+          <line
+            x1="40"
+            y1="480"
+            x2="920"
+            y2="480"
+            stroke="rgba(61,57,41,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="496"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.18em"
+          >
+            LEYENDA
+          </text>
+          <rect
+            x="40"
+            y="512"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="60"
+            y="520"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Donde vive la lógica
+          </text>
+          <rect
+            x="196"
+            y="512"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="216"
+            y="520"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Carpeta o fichero
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

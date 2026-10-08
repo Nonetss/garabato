@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>better · Estructura de apps/frontend</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --color-paper: #faf9f5;
+      --color-ink: #3d3929;
+      --color-muted: #6e6d68;
+      --color-accent: #d97757;
+      --font-sans: "Space Grotesk", system-ui, sans-serif;
+      --font-serif: "Instrument Serif", serif;
+      --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg {
+      width: 100%;
+      min-width: 960px;
+      display: block;
+    }
+    @media print {
+      .diagram-container {
+        overflow-x: visible;
+      }
+      svg {
+        min-width: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Árbol · better</p>
+      <h1>Estructura de apps/frontend</h1>
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 428"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="frontend-estructura-title frontend-estructura-desc"
+        >
+          <title id="frontend-estructura-title">
+            Estructura de apps/frontend
+          </title>
+          <desc id="frontend-estructura-desc">
+            Árbol de apps/frontend/src: rutas y layouts, features por dominio,
+            componentes ui y shared, hooks y lib, y estilos.
+          </desc>
+          <defs></defs>
+          <rect width="100%" height="100%" fill="#faf9f5" />
+          <path
+            d="M 480 112 L 480 144 L 128 144 L 128 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 144 L 304 144 L 304 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 144 L 656 144 L 656 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 144 L 832 144 L 832 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 388 256 L 388 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 572 256 L 572 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <rect x="400" y="64" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="400"
+            y="64"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="480"
+            y="85"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            src/
+          </text>
+          <text
+            x="480"
+            y="100"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            apps/frontend
+          </text>
+          <rect x="48" y="176" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="48"
+            y="176"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="128"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            pages/ · layouts/
+          </text>
+          <text
+            x="128"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            rutas y middleware
+          </text>
+          <rect x="224" y="176" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="224"
+            y="176"
+            width="160"
+            height="48"
+            rx="6"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="304"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            features/
+          </text>
+          <text
+            x="304"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            interfaz por dominio
+          </text>
+          <rect x="400" y="176" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="400"
+            y="176"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="480"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            components/
+          </text>
+          <text
+            x="480"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            ui/ y shared/
+          </text>
+          <rect x="576" y="176" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="576"
+            y="176"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="656"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            hooks/ · lib/
+          </text>
+          <text
+            x="656"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            y providers/
+          </text>
+          <rect x="752" y="176" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="752"
+            y="176"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="832"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            styles/
+          </text>
+          <text
+            x="832"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            tokens y tema
+          </text>
+          <rect x="308" y="288" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="308"
+            y="288"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="388"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            ui/
+          </text>
+          <text
+            x="388"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            primitivas shadcn
+          </text>
+          <rect x="492" y="288" width="160" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="492"
+            y="288"
+            width="160"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="572"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            shared/
+          </text>
+          <text
+            x="572"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            patrones de la app
+          </text>
+          <line
+            x1="40"
+            y1="368"
+            x2="920"
+            y2="368"
+            stroke="rgba(61,57,41,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="384"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.18em"
+          >
+            LEYENDA
+          </text>
+          <rect
+            x="40"
+            y="400"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="60"
+            y="408"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            El código de la interfaz
+          </text>
+          <rect
+            x="215"
+            y="400"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="235"
+            y="408"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Carpeta
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

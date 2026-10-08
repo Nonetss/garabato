@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>better · Un dominio del frontend: crons</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --color-paper: #faf9f5;
+      --color-ink: #3d3929;
+      --color-muted: #6e6d68;
+      --color-accent: #d97757;
+      --font-sans: "Space Grotesk", system-ui, sans-serif;
+      --font-serif: "Instrument Serif", serif;
+      --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg {
+      width: 100%;
+      min-width: 960px;
+      display: block;
+    }
+    @media print {
+      .diagram-container {
+        overflow-x: visible;
+      }
+      svg {
+        min-width: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Árbol · better</p>
+      <h1>Un dominio del frontend: crons</h1>
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 428"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="slices-crons-title slices-crons-desc"
+        >
+          <title id="slices-crons-title">Un dominio del frontend: crons</title>
+          <desc id="slices-crons-desc">
+            Árbol de features/crons: los slices shared, overview y detail, y
+            dentro de overview sus carpetas components, definitions, hooks y su
+            index.ts público.
+          </desc>
+          <defs></defs>
+          <rect width="100%" height="100%" fill="#faf9f5" />
+          <path
+            d="M 480 112 L 480 144 L 120 144 L 120 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 112 L 480 144 L 840 144 L 840 176"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 252 256 L 252 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 404 256 L 404 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 556 256 L 556 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <path
+            d="M 480 224 L 480 256 L 708 256 L 708 288"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <rect x="392" y="64" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="392"
+            y="64"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="480"
+            y="85"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            crons/
+          </text>
+          <text
+            x="480"
+            y="100"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            index.ts del dominio
+          </text>
+          <rect x="48" y="176" width="144" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="48"
+            y="176"
+            width="144"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="120"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            shared/
+          </text>
+          <text
+            x="120"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            común a los dos
+          </text>
+          <rect x="392" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="392"
+            y="176"
+            width="176"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="480"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            overview/
+          </text>
+          <text
+            x="480"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            página /crons
+          </text>
+          <rect x="768" y="176" width="144" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="768"
+            y="176"
+            width="144"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="840"
+            y="197"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            detail/
+          </text>
+          <text
+            x="840"
+            y="212"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            página /crons/[id]
+          </text>
+          <rect x="188" y="288" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="188"
+            y="288"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="252"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            components/
+          </text>
+          <text
+            x="252"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            page y content
+          </text>
+          <rect x="340" y="288" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="340"
+            y="288"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="404"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            definitions/
+          </text>
+          <text
+            x="404"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            filas de lista
+          </text>
+          <rect x="492" y="288" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="492"
+            y="288"
+            width="128"
+            height="48"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="0.8"
+          />
+          <text
+            x="556"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            hooks/
+          </text>
+          <text
+            x="556"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            estado y datos
+          </text>
+          <rect x="644" y="288" width="128" height="48" rx="6" fill="#faf9f5" />
+          <rect
+            x="644"
+            y="288"
+            width="128"
+            height="48"
+            rx="6"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="708"
+            y="309"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            index.ts
+          </text>
+          <text
+            x="708"
+            y="324"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            lo que expone
+          </text>
+          <line
+            x1="40"
+            y1="368"
+            x2="920"
+            y2="368"
+            stroke="rgba(61,57,41,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="384"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            letter-spacing="0.18em"
+          >
+            LEYENDA
+          </text>
+          <rect
+            x="40"
+            y="400"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="60"
+            y="408"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Lo que el slice expone
+          </text>
+          <rect
+            x="205"
+            y="400"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="225"
+            y="408"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Carpeta o fichero
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

@@ -163,6 +163,7 @@ better/
 │   ├── env/            # @t3-oss/env-core validated env access
 │   ├── logger/         # Shared pino logger (+ Loki stream)
 │   └── config/         # Shared tsconfig base
+├── doc/                # Human documentation (Spanish) with diagrams
 ├── openspec/           # Capability specs (openspec/specs) and change proposals
 └── scripts/
     ├── setup-dev.sh    # Generates the local root .env with real secrets
@@ -327,12 +328,19 @@ There are no git hooks.
 
 ## Documentation
 
+**Start with [`doc/`](doc/README.md).** It is the human-oriented guide to how
+the project works, written in Spanish: architecture, local development,
+configuration, the API, auth, the frontend, cron jobs, Docker and the
+conventions, with diagrams. The rest of this section lists the reference
+material it builds on.
+
 Every capability (auth, admin, crons, logging, Docker, …) has a
 spec under `openspec/specs/`; finished changes are kept in
 `openspec/changes/archive/`. Read those for the authoritative description of
 expected behavior before changing code in an area you're unfamiliar with;
 `openspec validate --specs --strict` checks they stay well-formed.
 
+- `doc/`: the human documentation (Spanish), one file per topic
 - `AGENTS.md`: normative conventions for contributors and coding agents
 - `.agents/skills/stack/`: the project skill (workspaces, commands, env, Docker, API layering and frontend structure)
 - `DESIGN.md` / `PRODUCT.md`: visual system and product context, used by the `impeccable` design skill

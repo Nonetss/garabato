@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>better · Arquitectura</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --color-paper: #faf9f5;
+      --color-ink: #3d3929;
+      --color-muted: #6e6d68;
+      --color-accent: #d97757;
+      --font-sans: "Space Grotesk", system-ui, sans-serif;
+      --font-serif: "Instrument Serif", serif;
+      --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 400;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg {
+      width: 100%;
+      min-width: 960px;
+      display: block;
+    }
+    @media print {
+      .diagram-container {
+        overflow-x: visible;
+      }
+      svg {
+        min-width: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Arquitectura · better</p>
+      <h1>Cómo llega una petición a cada app</h1>
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 472"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="arquitectura-title arquitectura-desc"
+        >
+          <title id="arquitectura-title">Arquitectura de better</title>
+          <desc id="arquitectura-desc">
+            El navegador solo habla con el gateway Caddy, que envía las rutas de
+            la API al backend y el resto al frontend; el backend usa PostgreSQL
+            y ambas apps pueden enviar logs a Loki.
+          </desc>
+          <defs>
+            <marker
+              id="arrow"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#6e6d68" />
+            </marker>
+            <marker
+              id="arrow-accent"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#d97757" />
+            </marker>
+            <marker
+              id="arrow-link"
+              markerWidth="8"
+              markerHeight="6"
+              refX="7"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 8 3, 0 6" fill="#6a55b8" />
+            </marker>
+          </defs>
+
+          <rect width="100%" height="100%" fill="#faf9f5" />
+
+          <!-- Zone: the server (everything behind the single published port) -->
+          <rect
+            x="208"
+            y="64"
+            width="712"
+            height="312"
+            rx="8"
+            fill="rgba(61,57,41,0.02)"
+            stroke="rgba(61,57,41,0.10)"
+            stroke-width="0.8"
+          />
+          <rect x="496" y="58" width="136" height="12" rx="2" fill="#faf9f5" />
+          <text
+            x="564"
+            y="67"
+            fill="rgba(61,57,41,0.55)"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.14em"
+          >
+            SERVIDOR · COMPOSE
+          </text>
+
+          <!-- Arrows first (behind boxes) -->
+          <!-- Browser -> Gateway -->
+          <line
+            x1="168"
+            y1="208"
+            x2="232"
+            y2="208"
+            stroke="#6a55b8"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <!-- Gateway -> Frontend (pages) -->
+          <path
+            d="M 376,196 H 432 Q 440,196 440,188 V 136 Q 440,128 448,128 H 520"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <!-- Gateway -> Backend (/rpc, /api) -->
+          <path
+            d="M 376,220 H 448 Q 456,220 456,228 V 312 Q 456,320 464,320 H 520"
+            fill="none"
+            stroke="#d97757"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <!-- Frontend -> Backend (SSR session lookup) -->
+          <line
+            x1="576"
+            y1="160"
+            x2="576"
+            y2="288"
+            stroke="#6e6d68"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <!-- Backend -> PostgreSQL -->
+          <line
+            x1="696"
+            y1="320"
+            x2="768"
+            y2="320"
+            stroke="#6e6d68"
+            stroke-width="1.2"
+            marker-end="url(#arrow)"
+          />
+          <!-- Frontend -> Loki (page views, optional) -->
+          <line
+            x1="696"
+            y1="128"
+            x2="768"
+            y2="128"
+            stroke="#6e6d68"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+            marker-end="url(#arrow)"
+          />
+          <!-- Backend -> Loki (API calls, optional) -->
+          <path
+            d="M 656,288 V 248 Q 656,240 664,240 H 824 Q 832,240 832,232 V 160"
+            fill="none"
+            stroke="#6e6d68"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+            marker-end="url(#arrow)"
+          />
+
+          <!-- Arrow labels (masks with a gap from their stroke) -->
+          <rect x="176" y="186" width="48" height="12" rx="2" fill="#faf9f5" />
+          <text
+            x="200"
+            y="195"
+            fill="#6a55b8"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            HTTP
+          </text>
+
+          <rect x="448" y="152" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="476"
+            y="161"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            PÁGINAS
+          </text>
+
+          <rect x="464" y="264" width="52" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="490"
+            y="273"
+            fill="#d97757"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            /RPC /API
+          </text>
+
+          <rect x="584" y="204" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="612"
+            y="213"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            SESIÓN
+          </text>
+
+          <rect x="712" y="300" width="40" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="732"
+            y="309"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            SQL
+          </text>
+
+          <rect x="704" y="108" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="732"
+            y="117"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            VISITAS
+          </text>
+
+          <rect x="704" y="220" width="80" height="12" rx="2" fill="#f6f5f1" />
+          <text
+            x="744"
+            y="229"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.06em"
+          >
+            LLAMADAS API
+          </text>
+
+          <!-- Node: Browser (input) -->
+          <rect x="40" y="176" width="128" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="40"
+            y="176"
+            width="128"
+            height="64"
+            rx="6"
+            fill="rgba(110,109,104,0.10)"
+            stroke="#93928d"
+            stroke-width="1"
+          />
+          <rect
+            x="48"
+            y="184"
+            width="28"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(147,146,141,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="62"
+            y="193"
+            fill="#93928d"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            USR
+          </text>
+          <text
+            x="104"
+            y="212"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Navegador
+          </text>
+          <text
+            x="104"
+            y="228"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            cookie de sesión
+          </text>
+
+          <!-- Node: Gateway (focal) -->
+          <rect x="232" y="176" width="144" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="232"
+            y="176"
+            width="144"
+            height="64"
+            rx="6"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <rect
+            x="240"
+            y="184"
+            width="40"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(217,119,87,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="260"
+            y="193"
+            fill="#d97757"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            CADDY
+          </text>
+          <text
+            x="304"
+            y="212"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Gateway
+          </text>
+          <text
+            x="304"
+            y="228"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            único puerto público
+          </text>
+
+          <!-- Node: Frontend -->
+          <rect x="520" y="96" width="176" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="520"
+            y="96"
+            width="176"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <rect
+            x="528"
+            y="104"
+            width="28"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(61,57,41,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="542"
+            y="113"
+            fill="#3d3929"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            APP
+          </text>
+          <text
+            x="608"
+            y="132"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Frontend
+          </text>
+          <text
+            x="608"
+            y="148"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            Astro SSR · :4321
+          </text>
+
+          <!-- Node: Backend -->
+          <rect x="520" y="288" width="176" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="520"
+            y="288"
+            width="176"
+            height="64"
+            rx="6"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <rect
+            x="528"
+            y="296"
+            width="28"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(61,57,41,0.40)"
+            stroke-width="0.8"
+          />
+          <text
+            x="542"
+            y="305"
+            fill="#3d3929"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            APP
+          </text>
+          <text
+            x="608"
+            y="324"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Backend
+          </text>
+          <text
+            x="608"
+            y="340"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            Hono + oRPC · :3000
+          </text>
+
+          <!-- Node: Loki (optional) -->
+          <rect x="768" y="96" width="128" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="768"
+            y="96"
+            width="128"
+            height="64"
+            rx="6"
+            fill="rgba(61,57,41,0.02)"
+            stroke="rgba(61,57,41,0.30)"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+          />
+          <rect
+            x="776"
+            y="104"
+            width="28"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(61,57,41,0.25)"
+            stroke-width="0.8"
+          />
+          <text
+            x="790"
+            y="113"
+            fill="#93928d"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            LOG
+          </text>
+          <text
+            x="832"
+            y="132"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            Loki
+          </text>
+          <text
+            x="832"
+            y="148"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            opcional
+          </text>
+
+          <!-- Node: PostgreSQL (store) -->
+          <rect x="768" y="288" width="128" height="64" rx="6" fill="#faf9f5" />
+          <rect
+            x="768"
+            y="288"
+            width="128"
+            height="64"
+            rx="6"
+            fill="rgba(61,57,41,0.05)"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <rect
+            x="776"
+            y="296"
+            width="24"
+            height="12"
+            rx="2"
+            fill="none"
+            stroke="rgba(110,109,104,0.50)"
+            stroke-width="0.8"
+          />
+          <text
+            x="788"
+            y="305"
+            fill="#6e6d68"
+            font-size="7"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            letter-spacing="0.08em"
+          >
+            DB
+          </text>
+          <text
+            x="832"
+            y="324"
+            fill="#3d3929"
+            font-size="12"
+            font-weight="600"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+          >
+            PostgreSQL
+          </text>
+          <text
+            x="832"
+            y="340"
+            fill="#6e6d68"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+          >
+            Drizzle
+          </text>
+
+          <!-- Legend strip -->
+          <line
+            x1="40"
+            y1="404"
+            x2="920"
+            y2="404"
+            stroke="rgba(61,57,41,0.10)"
+            stroke-width="0.8"
+          />
+          <text
+            x="40"
+            y="420"
+            fill="#6e6d68"
+            font-size="8"
+            font-family="'Space Mono', monospace"
+            letter-spacing="0.18em"
+          >
+            LEYENDA
+          </text>
+
+          <rect
+            x="40"
+            y="436"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(217,119,87,0.08)"
+            stroke="#d97757"
+            stroke-width="1"
+          />
+          <text
+            x="60"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Punto de entrada
+          </text>
+
+          <rect
+            x="172"
+            y="436"
+            width="14"
+            height="10"
+            rx="2"
+            fill="#ffffff"
+            stroke="#3d3929"
+            stroke-width="1"
+          />
+          <text
+            x="192"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Aplicación
+          </text>
+
+          <rect
+            x="276"
+            y="436"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(61,57,41,0.05)"
+            stroke="#6e6d68"
+            stroke-width="1"
+          />
+          <text
+            x="296"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Almacén
+          </text>
+
+          <rect
+            x="368"
+            y="436"
+            width="14"
+            height="10"
+            rx="2"
+            fill="rgba(61,57,41,0.02)"
+            stroke="rgba(61,57,41,0.30)"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+          />
+          <text
+            x="388"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Opcional
+          </text>
+
+          <line
+            x1="468"
+            y1="442"
+            x2="496"
+            y2="442"
+            stroke="#6a55b8"
+            stroke-width="1.2"
+            marker-end="url(#arrow-link)"
+          />
+          <text
+            x="504"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Petición del navegador
+          </text>
+
+          <line
+            x1="640"
+            y1="442"
+            x2="668"
+            y2="442"
+            stroke="#d97757"
+            stroke-width="1.4"
+            marker-end="url(#arrow-accent)"
+          />
+          <text
+            x="676"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Llamada a la API
+          </text>
+
+          <line
+            x1="788"
+            y1="442"
+            x2="816"
+            y2="442"
+            stroke="#6e6d68"
+            stroke-width="1"
+            stroke-dasharray="4,3"
+            marker-end="url(#arrow)"
+          />
+          <text
+            x="824"
+            y="444"
+            fill="#6e6d68"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+          >
+            Envío de logs
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>
