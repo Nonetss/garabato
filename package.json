@@ -56,6 +56,8 @@
     "db:migrate": "turbo -F @nonete/db db:migrate",
     "loki:start": "docker compose -f compose.dev.yml --profile native up -d loki-native",
     "loki:stop": "docker compose -f compose.dev.yml --profile native stop loki-native",
+    "minio:start": "docker compose -f compose.dev.yml --profile native up -d minio-native minio-native-init",
+    "minio:stop": "docker compose -f compose.dev.yml --profile native stop minio-native",
     "setup:dev": "bash scripts/setup-dev.sh",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d --build",

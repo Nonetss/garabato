@@ -147,6 +147,13 @@ gen_password() {
   openssl rand -hex 32
 }
 
+# Enables the bundled MinIO in compose.prod.yml; empty for an external store.
+compose_profiles_line() {
+  if [[ "$STORAGE_MODE" == "bundled" ]]; then
+    printf "COMPOSE_PROFILES=%s" "$(env_quote minio)"
+  fi
+}
+
 # AES-256 master key for the certificate vault: exactly 32 bytes in base64.
 gen_encryption_key() {
   openssl rand -base64 32 | tr -d '\n'
@@ -210,12 +217,51 @@ until [[ ${#ADMIN_PASSWORD} -ge 8 ]] && ! has_single_quote "$ADMIN_PASSWORD"; do
 done
 printf '\n'
 
+# ── Object storage ───────────────────────────────────────────────────────────
+# Documents are stored, encrypted, in an S3-compatible store: the bundled
+# MinIO (compose profile `minio`, credentials generated below) or an external
+# service whose bucket already exists.
+S3_REGION="us-east-1"
+S3_BUCKET="documents"
+if prompt_confirm "Store documents in the bundled MinIO? (n = external S3-compatible store)" "y"; then
+  STORAGE_MODE="bundled"
+  S3_ENDPOINT="http://minio:9000"
+else
+  STORAGE_MODE="external"
+  S3_ENDPOINT=$(prompt "S3 endpoint URL (e.g. https://s3.eu-west-1.amazonaws.com)")
+  if [[ ! "$S3_ENDPOINT" =~ ^https?://[^[:space:]\']+$ ]]; then
+    err "Invalid URL (must start with http:// or https://, no spaces or quotes)"
+    exit 1
+  fi
+  S3_BUCKET=$(prompt "Bucket (it must already exist)" "$S3_BUCKET")
+  S3_REGION=$(prompt "Region" "$S3_REGION")
+  S3_ACCESS_KEY_ID=$(prompt "Access key id")
+  for value in "$S3_BUCKET" "$S3_REGION" "$S3_ACCESS_KEY_ID"; do
+    if [[ -z "$value" ]] || has_single_quote "$value"; then
+      err "Bucket, region and access key id cannot be empty or contain a single quote (')"
+      exit 1
+    fi
+  done
+  S3_SECRET_ACCESS_KEY=""
+  until [[ ${#S3_SECRET_ACCESS_KEY} -ge 8 ]] && ! has_single_quote "$S3_SECRET_ACCESS_KEY"; do
+    S3_SECRET_ACCESS_KEY=$(prompt_secret "Secret access key (min 8 characters, no single quotes)")
+    if [[ ${#S3_SECRET_ACCESS_KEY} -lt 8 ]] || has_single_quote "$S3_SECRET_ACCESS_KEY"; then
+      err "Invalid secret, try again"
+    fi
+  done
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 echo
 log "Configuration summary:"
 echo "  Public URL:        $PUBLIC_URL"
 echo "  Frontend port:     $FRONTEND_PORT"
 echo "  Admin:             $ADMIN_NAME <$ADMIN_EMAIL>"
+if [[ "$STORAGE_MODE" == "bundled" ]]; then
+  echo "  Document storage:  bundled MinIO (bucket $S3_BUCKET)"
+else
+  echo "  Document storage:  $S3_ENDPOINT (bucket $S3_BUCKET)"
+fi
 echo
 
 if ! prompt_confirm "Generate .env and continue?"; then
@@ -228,7 +274,14 @@ log "Generating secrets with openssl..."
 POSTGRES_PASSWORD=$(gen_password)
 BETTER_AUTH_SECRET=$(gen_secret)
 CERTIFICATE_ENCRYPTION_KEY=$(gen_encryption_key)
-ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET, CERTIFICATE_ENCRYPTION_KEY)"
+if [[ "$STORAGE_MODE" == "bundled" ]]; then
+  # MinIO's root user and password, also the backend's S3 credentials.
+  S3_ACCESS_KEY_ID="stack"
+  S3_SECRET_ACCESS_KEY=$(gen_password)
+  ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET, CERTIFICATE_ENCRYPTION_KEY, S3_SECRET_ACCESS_KEY)"
+else
+  ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET, CERTIFICATE_ENCRYPTION_KEY)"
+fi
 
 # ── Write .env ───────────────────────────────────────────────────────────────
 # umask 077 so the file is created 600: creating it with the default umask
@@ -261,6 +314,16 @@ BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 # Master key of the certificate vault. Back it up together with the database:
 # without it the stored certificates cannot be decrypted.
 CERTIFICATE_ENCRYPTION_KEY=$(env_quote "$CERTIFICATE_ENCRYPTION_KEY")
+
+# ── Object storage ───────────────────────────────────────────────────────────
+# Encrypted documents. Bundled: MinIO from compose.prod.yml's \`minio\` profile,
+# with these as its root credentials. Back up the minio_data volume too.
+S3_ENDPOINT=$(env_quote "$S3_ENDPOINT")
+S3_BUCKET=$(env_quote "$S3_BUCKET")
+S3_REGION=$(env_quote "$S3_REGION")
+S3_ACCESS_KEY_ID=$(env_quote "$S3_ACCESS_KEY_ID")
+S3_SECRET_ACCESS_KEY=$(env_quote "$S3_SECRET_ACCESS_KEY")
+$(compose_profiles_line)
 
 # ── Seed admin ───────────────────────────────────────────────────────────────
 # Created on first backend boot (idempotent by email). Leave blank to skip.

@@ -64,13 +64,16 @@ fi
 BETTER_AUTH_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
 # AES-256 master key for the certificate vault: exactly 32 bytes.
 CERTIFICATE_ENCRYPTION_KEY="$(openssl rand -base64 32 | tr -d '\n')"
+# Root password of the loopback MinIO (`bun run minio:start`), also the
+# backend's S3 secret. Hex keeps it free of characters MinIO rejects.
+S3_SECRET_ACCESS_KEY="$(openssl rand -hex 24)"
 # Must be a valid address for zod's z.email() in packages/env: "admin@localhost"
 # has no TLD and fails validation, which crashes the backend on boot.
 ADMIN_EMAIL="admin@stack.local"
 ADMIN_NAME="Admin"
 ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
 
-echo "→ Generating Better Auth, certificate vault and admin secrets with openssl..."
+echo "→ Generating Better Auth, certificate vault, object storage and admin secrets with openssl..."
 
 # Copy .env.example, setting each listed variable on its `KEY=` or `# KEY=`
 # line. Values go through the environment so awk never interprets them.
@@ -78,11 +81,12 @@ echo "→ Generating Better Auth, certificate vault and admin secrets with opens
 umask 077
 BETTER_AUTH_SECRET="$BETTER_AUTH_SECRET" \
   CERTIFICATE_ENCRYPTION_KEY="$CERTIFICATE_ENCRYPTION_KEY" \
+  S3_SECRET_ACCESS_KEY="$S3_SECRET_ACCESS_KEY" \
   ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_NAME="$ADMIN_NAME" \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   awk '
     BEGIN {
-      split("BETTER_AUTH_SECRET CERTIFICATE_ENCRYPTION_KEY ADMIN_EMAIL ADMIN_NAME ADMIN_PASSWORD", keys, " ")
+      split("BETTER_AUTH_SECRET CERTIFICATE_ENCRYPTION_KEY S3_SECRET_ACCESS_KEY ADMIN_EMAIL ADMIN_NAME ADMIN_PASSWORD", keys, " ")
       for (i in keys) wanted[keys[i]] = 1
     }
     {
@@ -90,7 +94,7 @@ BETTER_AUTH_SECRET="$BETTER_AUTH_SECRET" \
       sub(/^# /, "", line)
       key = line
       sub(/=.*/, "", key)
-      if (line ~ /^[A-Z_]+=/ && (key in wanted)) {
+      if (line ~ /^[A-Z][A-Z0-9_]*=/ && (key in wanted)) {
         print key "=" ENVIRON[key]
         next
       }
@@ -108,6 +112,7 @@ fi
 echo ""
 echo "✓ Done. Next:"
 echo "  # set DATABASE_URL in .env to your external dev PostgreSQL"
+echo "  bun run minio:start # loopback MinIO for native dev (or set S3_* to yours)"
 echo "  bun install"
 echo "  bun run dev         # Docker dev stack, Loki included"
 echo "  # or: bun run loki:start && bun run dev:local"

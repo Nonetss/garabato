@@ -5,9 +5,10 @@
 #   bun run dev        # build, start and watch (Ctrl+C stops)
 #   bun run dev:down   # remove the containers
 #   bun run loki:start # only Loki on 127.0.0.1:3100, for native dev
+#   bun run minio:start # only MinIO on 127.0.0.1:9000 (console :9001), for native dev
 #
 # Like production, the gateway is the only service that publishes a port:
-# https://localhost:4321 (local CA, HTTP/2). The apps and Loki stay on the
+# https://localhost:4321 (local CA, HTTP/2). The apps, Loki and MinIO stay on the
 # stack's private network and reach each other by service name; the
 # `environment` overrides below swap .env's localhost addresses for those
 # names, everything else comes from the root .env unchanged. Native dev
@@ -43,6 +44,38 @@ x-loki: &loki
     retries: 5
     start_period: 10s
   restart: unless-stopped
+
+# Object store for documents: pgsty/silo, a MinIO build (its entrypoint maps
+# `server` to the `silo` binary). The root credentials are the backend's S3
+# credentials from .env, so each credential has a single name.
+x-minio: &minio
+  image: pgsty/silo:latest
+  command: [ "server", "/data", "--console-address", ":9001" ]
+  environment:
+    MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID}
+    MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY}
+  volumes:
+    - minio_data:/data
+  healthcheck:
+    test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:9000/minio/health/live" ]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  restart: unless-stopped
+
+# One-shot: creates S3_BUCKET once MinIO is healthy (idempotent), then exits.
+# Bun's S3 client cannot create buckets. MINIO_HOST names the MinIO service.
+x-minio-init: &minio-init
+  image: pgsty/silo:latest
+  entrypoint: [ "sh", "-c" ]
+  command:
+    - mc alias set local "http://$$MINIO_HOST:9000" "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY" && mc mb --ignore-existing "local/$$S3_BUCKET"
+  environment: &minio-init-env
+    S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+    S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+    S3_BUCKET: ${S3_BUCKET}
+  restart: "no"
 
 services:
   frontend:
@@ -107,8 +140,13 @@ services:
         required: false
     environment:
       LOKI_URL: http://loki:3100
+      S3_ENDPOINT: http://minio:9000
     expose:
       - "3000"
+    # Uploads need the bucket, which minio-init creates.
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
     develop:
       watch:
         - action: sync
@@ -192,7 +230,50 @@ services:
     ports:
       - "127.0.0.1:3100:3100"
 
+  # Document store for the dev stack, on the private network only (the
+  # backend's S3_ENDPOINT override).
+  minio:
+    <<: *minio
+    container_name: stack-dev-minio
+    expose:
+      - "9000"
+      - "9001"
+
+  minio-init:
+    <<: *minio-init
+    environment:
+      <<: *minio-init-env
+      MINIO_HOST: minio
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  # The same MinIO for native dev (`bun run minio:start` / `minio:stop`,
+  # profile `native`), published on 127.0.0.1:9000 (the S3_ENDPOINT in .env)
+  # and its console on 127.0.0.1:9001. It shares minio_data, so run one or
+  # the other.
+  minio-native:
+    <<: *minio
+    container_name: stack-dev-minio-native
+    profiles:
+      - native
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+
+  minio-native-init:
+    <<: *minio-init
+    profiles:
+      - native
+    environment:
+      <<: *minio-init-env
+      MINIO_HOST: minio-native
+    depends_on:
+      minio-native:
+        condition: service_healthy
+
 volumes:
   frontend_vite_cache:
   gateway_data:
   loki_data:
+  minio_data:
