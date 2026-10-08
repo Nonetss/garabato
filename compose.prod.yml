@@ -1,9 +1,9 @@
-name: stack
+name: garabato
 
 services:
   frontend:
     image: ghcr.io/nonetss/garabato-frontend:main
-    container_name: stack-frontend
+    container_name: garabato-frontend
     init: true
     # Reached only through the gateway, which publishes the site
     expose:
@@ -23,11 +23,11 @@ services:
       start_period: 15s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   backend:
     image: ghcr.io/nonetss/garabato-backend:main
-    container_name: stack-backend
+    container_name: garabato-backend
     init: true
     expose:
       - "3000"
@@ -53,14 +53,14 @@ services:
       start_period: 15s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   # Gateway (apps/gateway/Caddyfile): the only published service. Its :80
   # site routes /rpc, /api, /scalar and /openapi.json to the backend and the
   # rest to the frontend.
   gateway:
     image: ghcr.io/nonetss/garabato-gateway:main
-    container_name: stack-gateway
+    container_name: garabato-gateway
     ports:
       # Host port comes from .env (scripts/bootstrap.sh prompts for it); the
       # default keeps `docker compose up` working with no FRONTEND_PORT set.
@@ -76,13 +76,13 @@ services:
       start_period: 5s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   # Optional: backend/frontend ship structured logs here when LOKI_URL is
   # set, but neither depends on it at startup — the app works without it.
   loki:
     image: grafana/loki:3.7.7
-    container_name: stack-loki
+    container_name: garabato-loki
     expose:
       - "3100"
     volumes:
@@ -102,11 +102,11 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   db:
     image: postgres:17
-    container_name: stack-db
+    container_name: garabato-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -121,7 +121,7 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   # Bundled object store, started only with the `minio` profile
   # (COMPOSE_PROFILES=minio in .env, written by bootstrap.sh). Without it the
@@ -135,7 +135,7 @@ services:
   # tunnel).
   minio:
     image: pgsty/silo:latest
-    container_name: stack-minio
+    container_name: garabato-minio
     profiles:
       - minio
     command: [ "server", "/data", "--console-address", ":9001" ]
@@ -156,13 +156,13 @@ services:
       start_period: 10s
     restart: unless-stopped
     networks:
-      - stack
+      - garabato
 
   # One-shot: creates S3_BUCKET once MinIO is healthy (idempotent), then
   # exits. Bun's S3 client cannot create buckets.
   minio-init:
     image: pgsty/silo:latest
-    container_name: stack-minio-init
+    container_name: garabato-minio-init
     profiles:
       - minio
     entrypoint: [ "sh", "-c" ]
@@ -177,7 +177,7 @@ services:
         condition: service_healthy
     restart: "no"
     networks:
-      - stack
+      - garabato
 
 volumes:
   db_data:
@@ -185,5 +185,5 @@ volumes:
   minio_data:
 
 networks:
-  stack:
+  garabato:
     driver: bridge

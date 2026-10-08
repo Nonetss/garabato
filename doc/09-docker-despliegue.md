@@ -48,7 +48,7 @@ Comandos: `docker:build`, `docker:up`, `docker:logs` y `docker:down`.
 ## `compose.prod.yml`: producción
 
 Usa las imágenes publicadas `ghcr.io/nonetss/garabato-{frontend,backend,gateway}:main`
-y los mismos cinco servicios en una red `stack`. Toda la configuración sale
+y los mismos cinco servicios en una red `garabato` (proyecto `garabato`, contenedores `garabato-<servicio>`). Toda la configuración sale
 de un `.env` junto al compose, en el directorio del servidor.
 
 **Solo el gateway publica un puerto.** Un proxy inverso con https delante del
