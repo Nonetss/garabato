@@ -809,6 +809,28 @@ html.theme-transitioning::view-transition-new(root) {
   animation: rubric-loop 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite both;
 }
 
+/* A certificate's validity line rules itself from the issue date to today
+   (`certificate-validity-line.tsx`). The vertical inset leaves room for the
+   status dot's ring standing on the line's end. */
+@keyframes validity-draw {
+  from {
+    clip-path: inset(-0.5rem 100% -0.5rem 0);
+  }
+  to {
+    clip-path: inset(-0.5rem -0.5rem -0.5rem 0);
+  }
+}
+
+@utility validity-draw {
+  animation: validity-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .validity-draw {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rubric-write,
   .rubric-loop {

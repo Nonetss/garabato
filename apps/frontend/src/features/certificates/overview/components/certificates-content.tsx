@@ -5,18 +5,17 @@ const UploadIcon = getIcon("actions", "upload")
 
 import { useState } from "react"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import {
+  CertificateGrid,
+  type CertificateGridContext,
+} from "@/features/certificates/overview/components/certificate-grid"
 import { CertificateSignaturesSheet } from "@/features/certificates/overview/components/certificate-signatures-sheet"
 import { ImportCertificateDialog } from "@/features/certificates/overview/components/import-certificate-dialog"
 import { RememberPasswordDialog } from "@/features/certificates/overview/components/remember-password-dialog"
 import { RenameCertificateDialog } from "@/features/certificates/overview/components/rename-certificate-dialog"
-import {
-  type CertificatesRowContext,
-  certificateDefinition,
-} from "@/features/certificates/overview/definitions/certificate.definition"
 import { certificateLabels } from "@/features/certificates/overview/definitions/certificate-labels"
 import {
   useCertificateDelete,
@@ -54,7 +53,7 @@ export function CertificatesContent() {
     (certificate) => certificate.status !== "expired"
   ).length
 
-  const rowContext: CertificatesRowContext = {
+  const gridContext: CertificateGridContext = {
     onShowSignatures: signaturesSheet.open,
     onRename: renameDialog.open,
     onRememberPassword: rememberDialog.open,
@@ -101,11 +100,7 @@ export function CertificatesContent() {
         }}
       >
         {(data) => (
-          <EntityList
-            items={data}
-            context={rowContext}
-            definition={certificateDefinition}
-          />
+          <CertificateGrid certificates={data} context={gridContext} />
         )}
       </ResourceOverview>
 

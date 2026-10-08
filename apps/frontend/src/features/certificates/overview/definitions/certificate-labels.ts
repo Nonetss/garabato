@@ -36,8 +36,7 @@ export const certificateLabels = {
   taxId: "NIF/NIE",
   issuer: "Emisor",
   expires: "Caduca",
-  passwordColumn: "Contraseña",
-  passwordRemembered: "Recordada",
+  passwordRememberedNote: "Contraseña recordada",
   passwordAsked: "Se pide al firmar",
 } as const
 
