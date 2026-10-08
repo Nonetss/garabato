@@ -18,6 +18,7 @@ export const certificateLabels = {
   rememberPasswordDescription: "Firmar sin escribir la contraseña cada vez",
   rememberPasswordHint:
     "Se guarda cifrada. Puedes olvidarla cuando quieras desde la lista.",
+  signatures: "Ver firmas",
   rename: "Renombrar",
   renameTitle: "Renombrar certificado",
   remember: "Recordar contraseña",

@@ -1,0 +1,9 @@
+---
+import { DocumentsPage } from "@/features/documents"
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.documents.title} scrollToTop>
+  <DocumentsPage client:only="react" />
+</Layout>

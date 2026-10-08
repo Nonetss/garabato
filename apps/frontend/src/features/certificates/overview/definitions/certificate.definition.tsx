@@ -9,6 +9,7 @@ import { formatDate } from "@/lib/format"
 import { iconRef } from "@/lib/icon-registry"
 
 export interface CertificatesRowContext {
+  onShowSignatures: (certificate: Certificate) => void
   onRename: (certificate: Certificate) => void
   onRememberPassword: (certificate: Certificate) => void
   onForgetPassword: (certificate: Certificate) => void
@@ -67,6 +68,12 @@ export const certificateDefinition: EntityListDefinition<
     },
   ],
   actions: [
+    {
+      key: "signatures",
+      label: certificateLabels.signatures,
+      icon: iconRef("actions", "sign"),
+      onSelect: (certificate, ctx) => ctx.onShowSignatures(certificate),
+    },
     {
       key: "rename",
       label: certificateLabels.rename,

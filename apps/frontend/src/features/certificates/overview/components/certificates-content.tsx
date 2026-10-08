@@ -9,6 +9,7 @@ import { EntityList } from "@/components/shared/resource/entity-list"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { CertificateSignaturesSheet } from "@/features/certificates/overview/components/certificate-signatures-sheet"
 import { ImportCertificateDialog } from "@/features/certificates/overview/components/import-certificate-dialog"
 import { RememberPasswordDialog } from "@/features/certificates/overview/components/remember-password-dialog"
 import { RenameCertificateDialog } from "@/features/certificates/overview/components/rename-certificate-dialog"
@@ -37,6 +38,7 @@ export function CertificatesContent() {
   const deleteCertificate = useCertificateDelete()
 
   const [importOpen, setImportOpen] = useState(false)
+  const signaturesSheet = useTargetDialog<Certificate>()
   const renameDialog = useTargetDialog<Certificate>()
   const rememberDialog = useTargetDialog<Certificate>()
   const deleteDialog = useTargetConfirmDialog<Certificate>({
@@ -53,6 +55,7 @@ export function CertificatesContent() {
   ).length
 
   const rowContext: CertificatesRowContext = {
+    onShowSignatures: signaturesSheet.open,
     onRename: renameDialog.open,
     onRememberPassword: rememberDialog.open,
     onForgetPassword: (certificate) =>
@@ -107,6 +110,10 @@ export function CertificatesContent() {
       </ResourceOverview>
 
       <ImportCertificateDialog open={importOpen} onOpenChange={setImportOpen} />
+      <CertificateSignaturesSheet
+        certificate={signaturesSheet.target}
+        {...signaturesSheet.dialogProps}
+      />
       <RenameCertificateDialog
         certificate={renameDialog.target}
         {...renameDialog.dialogProps}

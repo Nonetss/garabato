@@ -1,0 +1,17 @@
+---
+import { DocumentDetailPage } from "@/features/documents"
+import Detail from "@/layouts/Detail.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+
+const { id } = Astro.params as { id: string }
+---
+
+<Detail
+  title={appSurfaces["document-detail"].title}
+  backHref={appSurfaces.documents.path}
+  backLabel={appSurfaces.documents.label}
+  maxWidth="80%"
+  scrollToTop
+>
+  <DocumentDetailPage documentId={id} client:only="react" />
+</Detail>

@@ -15,6 +15,7 @@ const navigationIcons = {
   home: Lucide.Home,
   crons: Lucide.Clock,
   certificates: Lucide.FileKey2,
+  documents: Lucide.FileText,
   admin: Lucide.BrickWallFire,
   back: Lucide.ArrowLeft,
   forward: Lucide.ArrowRight,
@@ -66,6 +67,8 @@ const securityIcons = {
 const actionIcons = {
   add: Lucide.Plus,
   upload: Lucide.Upload,
+  download: Lucide.Download,
+  sign: Lucide.Signature,
   edit: Lucide.Pencil,
   delete: Lucide.Trash2,
   copy: Lucide.Copy,
