@@ -8,6 +8,7 @@ import { useCallback, useMemo, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
 import { HeroCount } from "@/components/shared/layout/page-hero"
+import { ScrollPanel } from "@/components/shared/layout/scroll-panel"
 import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
@@ -164,52 +165,52 @@ export function UsersContent() {
         }}
       >
         {(data) => (
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-            <div className="min-h-0 flex-1 overflow-y-auto">
-              <EntityList
-                items={data}
-                context={{
-                  currentUserId,
-                  onChangePassword: passwordDialog.open,
-                  onToggleAdmin: handleToggleAdmin,
-                  onUnban: handleUnban,
-                  onBan: banDialog.open,
-                  onDelete: deleteDialog.open,
-                }}
-                definition={userListDefinition}
-                className="rounded-none border-0 bg-transparent"
-              />
-            </div>
-
-            <Text
-              as="div"
-              variant="meta"
-              tone="muted"
-              className="flex shrink-0 items-center justify-between border-t px-4 py-3"
-            >
-              <span className="tabular-nums">
-                {from}–{to} de {total}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => Math.max(0, p - 1))}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!hasNextPage}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </Text>
-          </div>
+          <ScrollPanel
+            footer={
+              <Text
+                as="div"
+                variant="meta"
+                tone="muted"
+                className="flex items-center justify-between"
+              >
+                <span className="tabular-nums">
+                  {from}–{to} de {total}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 0}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasNextPage}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
+              </Text>
+            }
+          >
+            <EntityList
+              items={data}
+              context={{
+                currentUserId,
+                onChangePassword: passwordDialog.open,
+                onToggleAdmin: handleToggleAdmin,
+                onUnban: handleUnban,
+                onBan: banDialog.open,
+                onDelete: deleteDialog.open,
+              }}
+              definition={userListDefinition}
+              className="rounded-none border-0 bg-transparent"
+            />
+          </ScrollPanel>
         )}
       </ResourceOverview>
 

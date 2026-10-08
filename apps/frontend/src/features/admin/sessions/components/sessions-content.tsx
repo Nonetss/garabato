@@ -13,6 +13,7 @@ import {
 } from "@/components/shared/data-display/metadata-cell"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
 import { HeroCount } from "@/components/shared/layout/page-hero"
+import { ScrollPanel } from "@/components/shared/layout/scroll-panel"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { useSessionHistory } from "@/features/admin/sessions/hooks/use-session-history"
 import type { SessionRecord } from "@/features/admin/sessions/model/types"
@@ -217,21 +218,16 @@ export function SessionsContent() {
       }}
     >
       {(data) => (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-          <div
-            ref={setScrollContainer}
-            className="min-h-0 flex-1 divide-y overflow-y-auto"
-          >
-            {data.map((session, index) => (
-              <SessionRow key={session.id} session={session} index={index} />
-            ))}
-            <InfiniteScrollSentinel
-              sentinelRef={sentinelRef}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-            />
-          </div>
-        </div>
+        <ScrollPanel scrollRef={setScrollContainer} divided>
+          {data.map((session, index) => (
+            <SessionRow key={session.id} session={session} index={index} />
+          ))}
+          <InfiniteScrollSentinel
+            sentinelRef={sentinelRef}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+          />
+        </ScrollPanel>
       )}
     </ResourceOverview>
   )

@@ -6,6 +6,7 @@ const RotateCw = getIcon("actions", "refresh")
 
 import { useCallback, useState } from "react"
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
+import { ScrollPanel } from "@/components/shared/layout/scroll-panel"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
@@ -212,25 +213,20 @@ export function LogsContent() {
       }}
     >
       {(data) => (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card/40">
-          <div
-            ref={setScrollContainer}
-            className="min-h-0 flex-1 divide-y overflow-y-auto"
-          >
-            {data.map((entry, index) => (
-              <LogRow
-                key={`${entry.timestamp}-${index}`}
-                entry={entry}
-                index={index}
-              />
-            ))}
-            <InfiniteScrollSentinel
-              sentinelRef={sentinelRef}
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
+        <ScrollPanel scrollRef={setScrollContainer} divided>
+          {data.map((entry, index) => (
+            <LogRow
+              key={`${entry.timestamp}-${index}`}
+              entry={entry}
+              index={index}
             />
-          </div>
-        </div>
+          ))}
+          <InfiniteScrollSentinel
+            sentinelRef={sentinelRef}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+          />
+        </ScrollPanel>
       )}
     </ResourceOverview>
   )
