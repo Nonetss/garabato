@@ -1,6 +1,10 @@
 **/node_modules
 .git
 
+**/.venv
+**/__pycache__
+**/.ruff_cache
+
 **/dist
 **/build
 **/.next
@@ -19,15 +23,10 @@
 
 Dockerfile
 **/Dockerfile
-docker-compose.yml
+compose.yml
 
-# Env value files stay out of COPY layers; runtime env comes from compose env_file,
-# build-time configuration uses BuildKit secrets; public values use build args
+# Secrets stay out of image layers; runtime env comes from compose env_file,
+# build-time public values come from compose build args
 **/.env
 **/.env.*
 !**/.env.example
-!**/.env.schema
-
-local.db
-local.db-*
-.data

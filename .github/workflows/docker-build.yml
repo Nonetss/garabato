@@ -1,0 +1,113 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - "main"
+
+# A newer push to the same branch cancels the running build, so an older run
+# can never finish last and leave the branch tag pointing at stale code.
+concurrency:
+  group: docker-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_TAG: ${{ github.ref_name }}
+
+jobs:
+  changes:
+    runs-on: amd64
+    outputs:
+      matrix: ${{ steps.filter.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect images to rebuild
+        id: filter
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Each image lists the paths that can change its build output. The
+          # workflow itself and .dockerignore rebuild everything.
+          declare -A PATHS=(
+            [backend]="apps/backend/ packages/ package.json bun.lock bunfig.toml"
+            [frontend]="apps/frontend/ packages/ package.json bun.lock bunfig.toml"
+            [gateway]="apps/gateway/"
+          )
+          COMMON=".github/workflows/docker-build.yml .dockerignore"
+
+          # New branch or force push: there is no usable base, so build all.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            CHANGED="__all__"
+          else
+            CHANGED=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+          fi
+          echo "Changed files:"; echo "$CHANGED"
+
+          matches() {
+            [ "$CHANGED" = "__all__" ] && return 0
+            for p in $COMMON $1; do
+              echo "$CHANGED" | grep -q "^$p" && return 0
+            done
+            return 1
+          }
+
+          ITEMS=()
+          for name in backend frontend gateway; do
+            if matches "${PATHS[$name]}"; then
+              ITEMS+=("{\"name\":\"$name\",\"suffix\":\"-$name\",\"dockerfile\":\"apps/$name/Dockerfile\"}")
+            fi
+          done
+          MATRIX="[$(IFS=,; echo "${ITEMS[*]}")]"
+          echo "Matrix: $MATRIX"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: changes
+    if: needs.changes.outputs.matrix != '[]'
+    runs-on: amd64
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.changes.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to Gitea Registry
+        env:
+          REGISTRY_PASS: ${{ secrets.MY_PASSWORD }}
+          REGISTRY_USER: ${{ secrets.DOCKER_USERNAME || github.actor }}
+        run: |
+          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | awk -F[/:] '{print $4}')
+          if [ -z "$REGISTRY_PASS" ]; then
+            echo "::error::Falta el secreto MY_PASSWORD (PAT con package:write)."
+            exit 1
+          fi
+          echo "$REGISTRY_PASS" | docker login "$REGISTRY_DOMAIN" -u "$REGISTRY_USER" --password-stdin
+
+      # docker-container builder: the default docker driver can't export a
+      # registry cache.
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push ${{ matrix.name }}
+        run: |
+          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | awk -F[/:] '{print $4}')
+          IMAGE_ID=$(echo "$REGISTRY_DOMAIN/${{ github.repository }}${{ matrix.suffix }}" | tr '[:upper:]' '[:lower:]')
+          SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+
+          echo "Building ${{ matrix.name }} image: $IMAGE_ID — tag: $IMAGE_TAG sha: $SHA"
+
+          # Layer cache lives in the registry (one ref per branch, falling back
+          # to main's), so it survives ephemeral runners.
+          docker buildx build . \
+            -f "${{ matrix.dockerfile }}" \
+            -t "$IMAGE_ID:latest" \
+            -t "$IMAGE_ID:$IMAGE_TAG" \
+            -t "$IMAGE_ID:$IMAGE_TAG-$SHA" \
+            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG" \
+            --cache-from "type=registry,ref=$IMAGE_ID:buildcache-main" \
+            --cache-to "type=registry,ref=$IMAGE_ID:buildcache-$IMAGE_TAG,mode=max,image-manifest=true,oci-mediatypes=true" \
+            --push

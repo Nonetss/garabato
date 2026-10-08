@@ -1,0 +1,146 @@
+# Docker dev stack: every app runs its own hot-reload server from source and
+# `docker compose watch` syncs edits into the containers (no bind mounts, so
+# node_modules stays the containers' own).
+#
+#   bun run dev        # build, start and watch (Ctrl+C stops)
+#   bun run dev:down   # remove the containers
+#   bun run db:start   # only the database, for native dev (`bun run dev:local`)
+#
+# Behaves like native dev (`bun run dev:local` + `bun run gateway`): the apps
+# run on the host network, read the root .env unchanged and reach each other
+# and the database through the same localhost addresses and ports. Run one or
+# the other, not both.
+name: better-dev
+
+x-node-ignore: &node-ignore
+  - node_modules/
+  - dist/
+  - .astro/
+  - .turbo/
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile.dev
+    init: true
+    network_mode: host
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/frontend/src
+          target: /app/apps/frontend/src
+          ignore: *node-ignore
+        - action: sync
+          path: ./apps/frontend/public
+          target: /app/apps/frontend/public
+        - action: sync
+          path: ./packages/api/src
+          target: /app/packages/api/src
+        - action: sync
+          path: ./packages/auth/src
+          target: /app/packages/auth/src
+        - action: sync
+          path: ./packages/env/src
+          target: /app/packages/env/src
+        - action: sync
+          path: ./packages/logger/src
+          target: /app/packages/logger/src
+        - action: sync+restart
+          path: ./apps/frontend/astro.config.mjs
+          target: /app/apps/frontend/astro.config.mjs
+        - action: rebuild
+          path: ./bun.lock
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./apps/frontend/package.json
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile.dev
+    init: true
+    network_mode: host
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/backend/src
+          target: /app/apps/backend/src
+          ignore: *node-ignore
+        - action: sync
+          path: ./packages/api/src
+          target: /app/packages/api/src
+        - action: sync
+          path: ./packages/auth/src
+          target: /app/packages/auth/src
+        - action: sync
+          path: ./packages/cron/src
+          target: /app/packages/cron/src
+        - action: sync
+          path: ./packages/db/src
+          target: /app/packages/db/src
+        - action: sync
+          path: ./packages/env/src
+          target: /app/packages/env/src
+        - action: sync
+          path: ./packages/logger/src
+          target: /app/packages/logger/src
+        - action: rebuild
+          path: ./bun.lock
+        - action: rebuild
+          path: ./package.json
+        - action: rebuild
+          path: ./apps/backend/package.json
+
+  # Same image and upstreams as `bun run gateway` (apps/gateway/compose.yml):
+  # its HTTP site on :8080 so it never takes the host's port 80. The app is
+  # still served by `astro dev` on :4321.
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    network_mode: host
+    environment:
+      GATEWAY_HTTP_PORT: "8080"
+      BACKEND_HTTP_UPSTREAM: localhost:3000
+      FRONTEND_HTTP_UPSTREAM: localhost:4321
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/gateway/Caddyfile
+          target: /etc/caddy/Caddyfile
+
+  # Published on POSTGRES_PORT (default 5432), the port DATABASE_URL in .env
+  # points at, so native and Docker dev share one database.
+  db:
+    image: postgres:17
+    container_name: better-dev-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: better
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d better" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db_data:

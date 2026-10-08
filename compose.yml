@@ -1,0 +1,126 @@
+# Production-like stack built from this checkout: `bun run docker:up`.
+# The gateway is the only published service; the app is on
+# http://localhost:${FRONTEND_PORT:-4444}.
+name: better
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: better-frontend
+    init: true
+    # Reached only through the gateway, which publishes the site
+    expose:
+      - "4321"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      BACKEND_URL: http://backend:3000
+      LOKI_URL: http://loki:3100
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "bun", "-e", "fetch('http://localhost:4321/login').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: better-backend
+    init: true
+    expose:
+      - "3000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/better
+      BETTER_AUTH_URL: http://backend:3000
+      CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-4444}
+      LOKI_URL: http://loki:3100
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "bun", "-e", "fetch('http://localhost:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Gateway (apps/gateway/Caddyfile): the public entry point on :80, routing
+  # /rpc, /api, /scalar and /openapi.json to the backend and the rest to the
+  # frontend.
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: better-gateway
+    ports:
+      - "${FRONTEND_PORT:-4444}:80"
+    depends_on:
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+    container_name: better-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: better
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d better" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Optional: backend/frontend ship structured logs here when LOKI_URL is
+  # set, but neither depends on it at startup — the app works without it.
+  loki:
+    image: grafana/loki:3.7.7
+    container_name: better-loki
+    expose:
+      - "3100"
+    volumes:
+      - loki_data:/loki
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -validation.allow-structured-metadata=true
+      - -store.retention=720h
+      - -compactor.working-directory=/loki/compactor
+      - -compactor.delete-request-store=filesystem
+      - -compactor.retention-enabled=true
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  loki_data:
