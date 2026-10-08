@@ -2,6 +2,7 @@
   "name": "@nonete/api",
   "type": "module",
   "imports": {
+    "#tests/*": "./tests/*.ts",
     "#*": "./src/*.ts"
   },
   "exports": {

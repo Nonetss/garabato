@@ -1,3 +1,7 @@
+import { mock } from "bun:test"
+
+import { fakeDb } from "#tests/fixtures/db"
+
 /**
  * Preloaded before every test file (`bunfig.toml`). Importing the procedure
  * builders pulls in `@nonete/auth` and `@nonete/db`, which validate
@@ -34,3 +38,11 @@ const cleared = [
 
 Object.assign(process.env, placeholders)
 for (const name of cleared) process.env[name] = ""
+
+// `mock.module` holds for the whole run, so `@nonete/db` is replaced once,
+// here, with the shared fake; a per-file mock would leak into other files.
+mock.module("@nonete/db", () => ({
+  db: fakeDb.db,
+  createDb: () => fakeDb.db,
+  closeDb: async () => {},
+}))

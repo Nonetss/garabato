@@ -1,28 +1,24 @@
-import { describe, expect, mock, test } from "bun:test"
+import { beforeEach, describe, expect, test } from "bun:test"
 import { CronNotFoundError } from "@nonete/cron"
+import { cronJobRow } from "@nonete/db/testing"
 import { ORPCError } from "@orpc/server"
+import { cronService, resetCronService } from "#tests/fixtures/cron-service"
+import { closeCronRunEvents, publishCronRunChange } from "#v1/cron/events"
+import { cronHandler } from "#v1/cron/handler"
 
 const JOB = "job-a"
 const OTHER_JOB = "job-b"
 const MISSING_JOB = "job-missing"
 
-// Replaced before the handler loads: the real service is bound by the backend
-// at startup and talks to the database.
-mock.module("#v1/cron/runtime", () => ({
-  getCronService: () => ({
-    get: async (id: string) => {
-      if (id === MISSING_JOB) {
-        throw new CronNotFoundError(`Cron job not found: ${id}`)
-      }
-      return { id }
-    },
-  }),
-}))
-
-const { cronHandler } = await import("#v1/cron/handler")
-const { closeCronRunEvents, publishCronRunChange } = await import(
-  "#v1/cron/events"
-)
+beforeEach(() => {
+  resetCronService()
+  cronService.get.mockImplementation(async (id) => {
+    if (id === MISSING_JOB) {
+      throw new CronNotFoundError(`Cron job not found: ${id}`)
+    }
+    return cronJobRow({ id })
+  })
+})
 
 function watch(jobId: string, signal?: AbortSignal) {
   return cronHandler.watchRuns({ input: { jobId }, signal })

@@ -8,7 +8,7 @@ import {
   anonymousContext,
   cronContext,
   userContext,
-} from "./fixtures/context"
+} from "#tests/fixtures/context"
 
 const hasOrganizationPermission = mock(async (_: unknown) => false)
 
