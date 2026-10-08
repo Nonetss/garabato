@@ -1,0 +1,996 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stack · Project structure</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --background: oklch(0.9818 0.0054 95.0986);
+      --foreground: oklch(0.3438 0.0269 95.7226);
+      --card: oklch(0.9665 0.0067 97.3521);
+      --muted-foreground: oklch(0.5341 0.0078 97.4503);
+      --border: oklch(0.94 0.003 97.3627);
+      --primary: oklch(0.6724 0.1308 38.7559);
+      --surface: color-mix(in oklch, var(--card) 40%, var(--background));
+      --edge: color-mix(in oklch, var(--foreground) 15%, transparent);
+      --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+      --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: oklch(0.2679 0.0036 106.6427);
+        --foreground: oklch(0.9576 0.0027 106.4494);
+        --card: oklch(0.2928 0.0018 106.5092);
+        --muted-foreground: oklch(0.7713 0.0169 99.0657);
+        --border: oklch(0.31 0.004 106.8928);
+        --primary: oklch(0.6724 0.1308 38.7559);
+      }
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--background);
+      color: var(--foreground);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame {
+      max-width: 1200px;
+      width: 100%;
+    }
+    .diagram-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+    /* `label` role of the Text component */
+    .eyebrow {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-foreground);
+      margin-bottom: 0.5rem;
+    }
+    /* `display` role (PageHero title) */
+    h1 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: var(--foreground);
+      margin-bottom: 1.5rem;
+    }
+    svg {
+      width: 100%;
+      min-width: 960px;
+      display: block;
+    }
+    @media print {
+      .diagram-container {
+        overflow-x: visible;
+      }
+      svg {
+        min-width: 0;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="eyebrow">Tree · stack</p>
+      <h1>Project structure</h1>
+      <div class="diagram-container">
+        <svg
+          viewBox="0 0 960 772"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-labelledby="project-structure-title project-structure-desc"
+        >
+          <title id="project-structure-title">stack project structure</title>
+          <desc id="project-structure-desc">
+            Folder tree of the stack monorepo: apps/ with the frontend, backend
+            and gateway, packages/ with the seven shared @nonete libraries, plus
+            doc/, openspec/ and scripts/.
+          </desc>
+          <defs></defs>
+          <rect width="100%" height="100%" style="fill: var(--background)" />
+          <path
+            d="M 200 372 H 224 Q 232 372 232 364 V 128 Q 232 120 240 120 H 264"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 120 H 480 Q 488 120 488 112 V 88 Q 488 80 496 80 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 120 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 120 H 480 Q 488 120 488 128 V 152 Q 488 160 496 160 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 200 372 H 224 Q 232 372 232 364 V 336 Q 232 328 240 328 H 264"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 320 V 216 Q 488 208 496 208 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 320 V 256 Q 488 248 496 248 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 320 V 296 Q 488 288 496 288 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 336 V 360 Q 488 368 496 368 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 336 V 400 Q 488 408 496 408 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 328 H 480 Q 488 328 488 336 V 440 Q 488 448 496 448 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 200 372 H 224 Q 232 372 232 380 V 496 Q 232 504 240 504 H 264"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 200 372 H 224 Q 232 372 232 380 V 560 Q 232 568 240 568 H 264"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 200 372 H 224 Q 232 372 232 380 V 636 Q 232 644 240 644 H 264"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 644 H 480 Q 488 644 488 636 V 632 Q 488 624 496 624 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <path
+            d="M 464 644 H 480 Q 488 644 488 652 V 656 Q 488 664 496 664 H 512"
+            fill="none"
+            stroke-width="1"
+            style="stroke: var(--muted-foreground)"
+          />
+          <rect
+            x="40"
+            y="348"
+            width="160"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="40"
+            y="348"
+            width="160"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="120"
+            y="369"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            stack/
+          </text>
+          <text
+            x="120"
+            y="384"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            bun workspaces · turbo
+          </text>
+          <rect
+            x="264"
+            y="96"
+            width="200"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="264"
+            y="96"
+            width="200"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="364"
+            y="117"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            apps/
+          </text>
+          <text
+            x="364"
+            y="132"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            what runs and gets deployed
+          </text>
+          <rect
+            x="512"
+            y="64"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="64"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="84"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            frontend/
+          </text>
+          <text
+            x="632"
+            y="83"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Astro app (TypeScript, Bun)
+          </text>
+          <rect
+            x="512"
+            y="104"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="104"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="124"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            backend/
+          </text>
+          <text
+            x="632"
+            y="123"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Hono + oRPC API and cron scheduler
+          </text>
+          <rect
+            x="512"
+            y="144"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="144"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            stroke-dasharray="4,3"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="164"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            gateway/
+          </text>
+          <text
+            x="632"
+            y="163"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Caddy: public HTTP entry point
+          </text>
+          <rect
+            x="264"
+            y="304"
+            width="200"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="264"
+            y="304"
+            width="200"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
+          />
+          <text
+            x="364"
+            y="325"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            packages/
+          </text>
+          <text
+            x="364"
+            y="340"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            shared libraries · @nonete/*
+          </text>
+          <rect
+            x="512"
+            y="192"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="192"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="212"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            api/
+          </text>
+          <text
+            x="632"
+            y="211"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            oRPC contract + handlers, versioned per feature
+          </text>
+          <rect
+            x="512"
+            y="232"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="232"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="252"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            auth/
+          </text>
+          <text
+            x="632"
+            y="251"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Better Auth config and permissions
+          </text>
+          <rect
+            x="512"
+            y="272"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="272"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="292"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            cron/
+          </text>
+          <text
+            x="632"
+            y="291"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Scheduler and cron job service
+          </text>
+          <rect
+            x="512"
+            y="312"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="312"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="332"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            db/
+          </text>
+          <text
+            x="632"
+            y="331"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Drizzle schema, migrations, seed
+          </text>
+          <rect
+            x="512"
+            y="352"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="352"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="372"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            env/
+          </text>
+          <text
+            x="632"
+            y="371"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            @t3-oss/env-core validated env access
+          </text>
+          <rect
+            x="512"
+            y="392"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="392"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="412"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            logger/
+          </text>
+          <text
+            x="632"
+            y="411"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Shared pino logger (+ Loki stream)
+          </text>
+          <rect
+            x="512"
+            y="432"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="432"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="452"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            config/
+          </text>
+          <text
+            x="632"
+            y="451"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Shared tsconfig base
+          </text>
+          <rect
+            x="264"
+            y="480"
+            width="200"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="264"
+            y="480"
+            width="200"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="364"
+            y="501"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            doc/
+          </text>
+          <text
+            x="364"
+            y="516"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            human docs (Spanish) + diagrams
+          </text>
+          <rect
+            x="264"
+            y="544"
+            width="200"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="264"
+            y="544"
+            width="200"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="364"
+            y="565"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            openspec/
+          </text>
+          <text
+            x="364"
+            y="580"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            specs + change proposals
+          </text>
+          <rect
+            x="264"
+            y="620"
+            width="200"
+            height="48"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="264"
+            y="620"
+            width="200"
+            height="48"
+            rx="6"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="364"
+            y="641"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            scripts/
+          </text>
+          <text
+            x="364"
+            y="656"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="middle"
+            style="fill: var(--muted-foreground)"
+          >
+            local setup and installer
+          </text>
+          <rect
+            x="512"
+            y="608"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="608"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="628"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            setup-dev.sh
+          </text>
+          <text
+            x="632"
+            y="627"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Generates the local root .env with real secrets
+          </text>
+          <rect
+            x="512"
+            y="648"
+            width="408"
+            height="32"
+            rx="6"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="512"
+            y="648"
+            width="408"
+            height="32"
+            rx="6"
+            stroke-width="0.8"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="528"
+            y="668"
+            font-size="12"
+            font-weight="500"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
+          >
+            bootstrap.sh
+          </text>
+          <text
+            x="632"
+            y="667"
+            font-size="9"
+            font-family="'Space Mono', monospace"
+            text-anchor="start"
+            style="fill: var(--muted-foreground)"
+          >
+            Interactive installer: .env + docker compose (prod)
+          </text>
+          <line
+            x1="40"
+            y1="712"
+            x2="920"
+            y2="712"
+            stroke-width="0.8"
+            style="stroke: var(--border)"
+          />
+          <text
+            x="40"
+            y="728"
+            font-size="8"
+            font-family="'Space Grotesk', sans-serif"
+            text-anchor="start"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
+          >
+            LEGEND
+          </text>
+          <rect
+            x="40"
+            y="744"
+            width="14"
+            height="10"
+            rx="2"
+            stroke-width="1"
+            style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
+          />
+          <text
+            x="60"
+            y="752"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
+          >
+            Shared code: raw TypeScript the apps import directly
+          </text>
+          <rect
+            x="331"
+            y="744"
+            width="14"
+            height="10"
+            rx="2"
+            stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="351"
+            y="752"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
+          >
+            Folder or workspace
+          </text>
+          <rect
+            x="470"
+            y="744"
+            width="14"
+            height="10"
+            rx="2"
+            stroke-width="1"
+            stroke-dasharray="3,2"
+            style="fill: var(--card); stroke: var(--edge)"
+          />
+          <text
+            x="490"
+            y="752"
+            font-size="8.5"
+            font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
+          >
+            Not a workspace (Docker assets only)
+          </text>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

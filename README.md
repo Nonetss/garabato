@@ -143,6 +143,8 @@ page views are also shipped to Loki and become browsable at `/admin/logs`.
 
 ## Project Structure
 
+![The stack monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus doc/, openspec/ and scripts/](doc/diagrams/project-structure.svg)
+
 ```txt
 stack/
 ├── apps/

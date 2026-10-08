@@ -43,6 +43,9 @@ de la skill `diagram-design` no lo hace, así que hay que revisar el resultado.
 backend, `/health`, `BACKEND_URL` y los paquetes que corre el backend). Si
 cambia una, hay que cambiar la otra.
 
+`project-structure.svg` dibuja el árbol de "Project Structure" del
+`README.md` de la raíz. Si cambia ese bloque, hay que cambiar el diagrama.
+
 ## Glosario rápido
 
 | Término | Qué es |
