@@ -634,6 +634,7 @@ export function ResourceFilters({
   className,
   sortSlot,
   fetchDraftTotal,
+  hideMobileActionBar = false,
 }: {
   filters: ResourceFilterDescriptor[]
   onClear?: () => void
@@ -644,6 +645,9 @@ export function ResourceFilters({
   className?: string
   /** Rendered in the mobile action bar next to "Filtros". */
   sortSlot?: ReactNode
+  /** Leaves the bottom edge to another bar (a selection bar) on narrow
+   *  viewports: the filter action bar is not rendered while it is set. */
+  hideMobileActionBar?: boolean
   /** Only relevant when `filters` includes a `facet` descriptor: recomputes
    *  the match total for a draft combination of facet values while the
    *  mobile sheet is open, so its confirm button can read "Ver N resultados".
@@ -664,6 +668,7 @@ export function ResourceFilters({
         sortSlot={sortSlot}
         fetchDraftTotal={fetchDraftTotal}
         onClear={onClear}
+        hideActionBar={hideMobileActionBar}
       />
     )
   }
@@ -705,6 +710,7 @@ function MobileResourceFilters({
   sortSlot,
   fetchDraftTotal,
   onClear,
+  hideActionBar,
 }: {
   filters: ResourceFilterDescriptor[]
   activeCount: number
@@ -713,6 +719,7 @@ function MobileResourceFilters({
     draft: ResourceFilterDescriptor[]
   ) => number | Promise<number>
   onClear?: () => void
+  hideActionBar: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [draftValues, setDraftValues] = useState<
@@ -774,11 +781,13 @@ function MobileResourceFilters({
 
   return (
     <>
-      <ListActionBar
-        filterCount={activeCount}
-        onOpenFilters={() => setOpen(true)}
-        sortSlot={sortSlot}
-      />
+      {hideActionBar ? null : (
+        <ListActionBar
+          filterCount={activeCount}
+          onOpenFilters={() => setOpen(true)}
+          sortSlot={sortSlot}
+        />
+      )}
       <FilterSheet
         open={open}
         onOpenChange={setOpen}

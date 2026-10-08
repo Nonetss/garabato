@@ -142,7 +142,7 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
 
 ### `apps/frontend`
 
-- `tests/setup.ts` (preload) pins `TZ=UTC` and registers a happy-dom window at `https://localhost:4321/`. The URL matters: `history.replaceState` needs a real origin. `tests/bun-env.d.ts` references `bun` types so `astro check` knows `bun:test`, because TypeScript 6 no longer includes every installed `@types/*`.
+- `tests/setup.ts` (preload) pins `TZ=UTC` and registers a happy-dom window at `https://localhost:4321/`. The URL matters: `history.replaceState` needs a real origin. It also mocks Astro's `astro:transitions/client` virtual module with a no-op `navigate`, so components that render `AppLink` (through `@/lib/navigate`) can be tested. `tests/bun-env.d.ts` references `bun` types so `astro check` knows `bun:test`, because TypeScript 6 no longer includes every installed `@types/*`.
 - Layout:
   - `tests/lib/<file>.test.ts` covers `src/lib`.
   - `tests/hooks/<hook>.test.tsx` covers `src/hooks`.

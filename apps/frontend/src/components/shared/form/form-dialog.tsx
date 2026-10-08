@@ -87,7 +87,10 @@ export function FormDialog<TValues extends object = never>({
           ) : null}
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="flex flex-col">
+        {/* `min-w-0`: as a grid item the form would otherwise grow to its
+            min-content width, so a long unbreakable value (a truncated file
+            name) would widen the whole dialog past its max width. */}
+        <form onSubmit={onSubmit} className="flex min-w-0 flex-col">
           <div className="space-y-4 px-6 py-5">
             {form && fields ? (
               <DialogFields form={form} fields={fields} />

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react"
+import type { CSSProperties, DragEventHandler, ReactNode } from "react"
 import { Fragment } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataCell } from "@/components/shared/data-display/metadata-cell"
@@ -10,6 +10,7 @@ import {
   StatusTag,
 } from "@/components/shared/data-display/status-dot"
 import { AppLink } from "@/components/ui/app-link"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -44,6 +45,28 @@ export interface EntityListActionDescriptor<TItem, TContext> {
   onSelect: (item: TItem, context: TContext) => void
 }
 
+/** Native drag-and-drop wiring for one row: the row as a drag source, a drop
+ *  target, or both. `dropActive` highlights it while something valid is
+ *  dragged over it. */
+export interface EntityListRowDragProps {
+  draggable?: boolean
+  onDragStart?: DragEventHandler<HTMLLIElement>
+  onDragEnd?: DragEventHandler<HTMLLIElement>
+  onDragEnter?: DragEventHandler<HTMLLIElement>
+  onDragOver?: DragEventHandler<HTMLLIElement>
+  onDragLeave?: DragEventHandler<HTMLLIElement>
+  onDrop?: DragEventHandler<HTMLLIElement>
+  dropActive?: boolean
+}
+
+/** Optional row selection: a leading checkbox per row, owned by the caller. */
+export interface EntityListSelection<TItem> {
+  isSelected: (item: TItem) => boolean
+  onToggle: (item: TItem) => void
+  /** Accessible name of the row's checkbox, e.g. "Seleccionar contrato.pdf". */
+  getLabel: (item: TItem) => string
+}
+
 export interface EntityListDefinition<TItem, TContext = void> {
   getKey: (item: TItem) => string
   /** Accessible name for the row's open control and action menu. Falls back to `getPrimary` when it returns a plain string. */
@@ -71,6 +94,8 @@ export interface EntityListDefinition<TItem, TContext = void> {
    * escape hatch: it does not receive control over the row's structure.
    */
   renderTrailing?: (item: TItem, context: TContext) => ReactNode
+  /** Makes the row a drag source and/or drop target (pointer only). */
+  getRowDragProps?: (item: TItem, context: TContext) => EntityListRowDragProps
   actions?: EntityListActionDescriptor<TItem, TContext>[]
 }
 
@@ -89,11 +114,13 @@ function EntityListRow<TItem, TContext>({
   index,
   context,
   definition,
+  selection,
 }: {
   item: TItem
   index: number
   context: TContext
   definition: EntityListDefinition<TItem, TContext>
+  selection?: EntityListSelection<TItem>
 }) {
   const disabled = definition.isDisabled?.(item, context) ?? false
   const muted = disabled || (definition.isMuted?.(item, context) ?? false)
@@ -113,6 +140,8 @@ function EntityListRow<TItem, TContext>({
   const accessibleLabel =
     definition.getAccessibleLabel?.(item, context) ??
     (typeof primary === "string" ? primary : undefined)
+  const { dropActive, ...dragProps } =
+    definition.getRowDragProps?.(item, context) ?? {}
 
   const primaryBlock = (
     <div className="flex min-w-0 items-start gap-3">
@@ -141,20 +170,10 @@ function EntityListRow<TItem, TContext>({
     </div>
   )
 
-  return (
-    <li
-      className={cn(
-        "group dash-enter grid gap-4 px-4 py-4 transition-colors @2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)_auto] @2xl:items-center @2xl:gap-6 @2xl:px-5",
-        muted && "opacity-60",
-        !disabled && "hover:bg-muted/40"
-      )}
-      style={
-        {
-          "--dash-delay": `${Math.min(index, MAX_STAGGER_INDEX) * 40}ms`,
-        } as CSSProperties
-      }
-    >
-      {definition.getOpenHref && !disabled ? (
+  const openControl = () => {
+    if (disabled) return primaryBlock
+    if (definition.getOpenHref) {
+      return (
         <AppLink
           href={definition.getOpenHref(item, context)}
           aria-label={accessibleLabel}
@@ -162,7 +181,10 @@ function EntityListRow<TItem, TContext>({
         >
           {primaryBlock}
         </AppLink>
-      ) : definition.onOpen && !disabled ? (
+      )
+    }
+    if (definition.onOpen) {
+      return (
         <button
           type="button"
           onClick={() => definition.onOpen?.(item, context)}
@@ -171,8 +193,39 @@ function EntityListRow<TItem, TContext>({
         >
           {primaryBlock}
         </button>
+      )
+    }
+    return primaryBlock
+  }
+
+  return (
+    <li
+      {...dragProps}
+      className={cn(
+        "group dash-enter grid gap-4 px-4 py-4 transition-colors @2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)_auto] @2xl:items-center @2xl:gap-6 @2xl:px-5",
+        muted && "opacity-60",
+        !disabled && "hover:bg-muted/40",
+        dropActive && "bg-muted ring-2 ring-ring/50 ring-inset"
+      )}
+      style={
+        {
+          "--dash-delay": `${Math.min(index, MAX_STAGGER_INDEX) * 40}ms`,
+        } as CSSProperties
+      }
+    >
+      {selection ? (
+        <div className="flex min-w-0 items-start gap-3">
+          <Checkbox
+            checked={selection.isSelected(item)}
+            onCheckedChange={() => selection.onToggle(item)}
+            aria-label={selection.getLabel(item)}
+            disabled={disabled}
+            className="mt-1 shrink-0"
+          />
+          {openControl()}
+        </div>
       ) : (
-        primaryBlock
+        openControl()
       )}
 
       <div className="@container min-w-0">
@@ -261,11 +314,14 @@ export function EntityList<TItem, TContext = void>({
   items,
   context,
   definition,
+  selection,
   className,
 }: {
   items: TItem[]
   context: TContext
   definition: EntityListDefinition<TItem, TContext>
+  /** Adds a leading checkbox per row; rows are unchanged without it. */
+  selection?: EntityListSelection<TItem>
   className?: string
 }) {
   return (
@@ -279,6 +335,7 @@ export function EntityList<TItem, TContext = void>({
           index={index}
           context={context}
           definition={definition}
+          selection={selection}
         />
       ))}
     </SoftCardList>

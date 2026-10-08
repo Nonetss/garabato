@@ -1,3 +1,4 @@
+import { mock } from "bun:test"
 import { GlobalRegistrator } from "@happy-dom/global-registrator"
 
 /**
@@ -9,3 +10,9 @@ import { GlobalRegistrator } from "@happy-dom/global-registrator"
  */
 process.env.TZ = "UTC"
 GlobalRegistrator.register({ url: "https://localhost:4321/" })
+
+// Astro's virtual module only exists under Vite; components that navigate
+// (`AppLink` through `@/lib/navigate`) get a no-op instead.
+mock.module("astro:transitions/client", () => ({
+  navigate: async () => {},
+}))
