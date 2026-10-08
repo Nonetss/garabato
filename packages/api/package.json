@@ -1,25 +1,43 @@
 {
-  "name": "@better/api",
+  "name": "@nonete/api",
   "type": "module",
+  "imports": {
+    "#*": "./src/*.ts"
+  },
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
   },
   "scripts": {
-    "build": "tsc -b",
-    "check-types": "tsc -b"
+    "build": "true",
+    "check-types": "tsc --noEmit -p .",
+    "test": "bun test"
   },
   "dependencies": {
-    "@better/auth": "workspace:*",
-    "@better/db": "workspace:*",
+    "@nonete/auth": "workspace:*",
+    "@nonete/cron": "workspace:*",
+    "@nonete/db": "workspace:*",
+    "@nonete/env": "workspace:*",
     "@orpc/client": "catalog:",
+    "@orpc/contract": "catalog:",
     "@orpc/openapi": "catalog:",
+    "@orpc/pino": "catalog:",
+    "@orpc/publisher": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "pino": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@better/config": "workspace:*",
+    "@nonete/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "hono": "catalog:",
     "typescript": "catalog:"
   }
 }
