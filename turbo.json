@@ -1,66 +1,70 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "futureFlags": {
+    "watchUsingTaskInputs": true
+  },
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".astro/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/.env*"],
+      "outputs": ["dist/**", ".astro/**"],
+      "env": ["PUBLIC_SERVER_URL", "NODE_ENV", "SKIP_ENV_VALIDATION"]
     },
     "check-types": {
       "dependsOn": ["^check-types"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "*.tsbuildinfo", ".astro/**"]
+    },
+    "@nonete/api#build": {
+      "outputs": []
+    },
+    "@nonete/auth#build": {
+      "outputs": []
+    },
+    "@nonete/cron#build": {
+      "outputs": []
+    },
+    "@nonete/db#build": {
+      "outputs": []
+    },
+    "@nonete/env#build": {
+      "outputs": []
+    },
+    "@nonete/logger#build": {
+      "outputs": []
     },
     "dev": {
+      "dependsOn": ["^build"],
+      "inputs": ["package.json", "$TURBO_ROOT$/.env*"],
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "interruptible": false
     },
     "db:push": {
-      "cache": false,
-      "interactive": true
+      "cache": false
     },
     "db:generate": {
-      "cache": false,
-      "interactive": true
+      "cache": false
     },
     "db:migrate": {
       "cache": false,
-      "interactive": true
+      "persistent": true
     },
     "db:studio": {
       "cache": false,
       "persistent": true
     },
-    "db:start": {
-      "cache": false
-    },
-    "db:stop": {
-      "cache": false
-    },
-    "db:watch": {
+    "test": {
       "cache": false,
-      "persistent": true
-    },
-    "db:down": {
-      "cache": false
+      "passThroughEnv": [
+        "DATABASE_URL",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "CORS_ORIGIN",
+        "NODE_ENV",
+        "SKIP_ENV_VALIDATION",
+        "LOG_LEVEL"
+      ]
     }
-  },
-  "globalEnv": [
-    "BETTER_AUTH_SECRET",
-    "BETTER_AUTH_URL",
-    "CI",
-    "CORS_ORIGIN",
-    "DATABASE_URL",
-    "NODE_ENV",
-    "PUBLIC_SERVER_URL",
-    "VERCEL",
-    "VERCEL_ENV",
-    "VERCEL_PROJECT_PRODUCTION_URL",
-    "VERCEL_URL",
-    "_VARLOCK_ENV_KEY"
-  ],
-  "globalDependencies": [".env*", "apps/*/.env*", "packages/*/.env*"]
+  }
 }

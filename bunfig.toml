@@ -1,1 +1,2 @@
-env = false
+[install]
+linker = "isolated"
