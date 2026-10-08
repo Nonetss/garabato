@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
+import {
+  flagCodec,
+  type QueryParamCodec,
+  useQueryParam,
+} from "@/hooks/use-query-param"
 
 const pageCodec: QueryParamCodec<number> = {
   parse: (raw) => Number(raw),
@@ -52,5 +56,24 @@ describe("useQueryParam", () => {
       window.dispatchEvent(new window.Event("popstate"))
     })
     expect(result.current[0]).toBe("nightly")
+  })
+
+  test("a flag param opens from the URL and disappears when turned off", () => {
+    window.history.replaceState(null, "", "/documents/abc?firmar=1")
+    const { result } = renderHook(() =>
+      useQueryParam("firmar", false, flagCodec)
+    )
+    expect(result.current[0]).toBe(true)
+    act(() => result.current[1](false))
+    expect(result.current[0]).toBe(false)
+    expect(searchParam("firmar")).toBeNull()
+    act(() => result.current[1](true))
+    expect(searchParam("firmar")).toBe("1")
+  })
+
+  test("a flag param reads 0 and false as off", () => {
+    expect(flagCodec.parse("0")).toBe(false)
+    expect(flagCodec.parse("false")).toBe(false)
+    expect(flagCodec.parse("")).toBe(true)
   })
 })

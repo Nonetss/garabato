@@ -17,7 +17,6 @@ import {
 import { SignPanel } from "@/features/documents/detail/components/sign-panel"
 import { SignatureHistory } from "@/features/documents/detail/components/signature-history"
 import { VersionList } from "@/features/documents/detail/components/version-list"
-import { usePdfDocument } from "@/features/documents/detail/hooks/use-pdf-document"
 import {
   type DocumentVersion,
   downloadDocumentVersion,
@@ -25,7 +24,9 @@ import {
   saveFile,
   useDocument,
   useDocumentFile,
+  usePdfDocument,
 } from "@/features/documents/shared"
+import { flagCodec, useQueryParam } from "@/hooks/use-query-param"
 import { notifyError } from "@/lib/toast"
 
 function download(documentId: string, versionNumber?: number) {
@@ -62,7 +63,8 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const { data: file } = useDocumentFile(documentId)
   const pdf = usePdfDocument(file)
 
-  const [signing, setSigning] = useState(false)
+  // `?firmar=1` opens signing straight away (the home's drop zone links here).
+  const [signing, setSigning] = useQueryParam("firmar", false, flagCodec)
   const [visible, setVisible] = useState(true)
   const [stamp, setStamp] = useState<StampPlacement | null>(null)
 
@@ -94,7 +96,9 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const placing = signing && visible
 
   return (
-    <div className="space-y-6">
+    // Below `lg` the whole page scrolls inside this root; from `lg` it is
+    // pinned and only the PDF (and the side panel, if it overflows) scroll.
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto lg:overflow-hidden">
       <PageHero
         icon={<DocumentIcon className="size-5" />}
         title={document.name}
@@ -115,64 +119,62 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
         }
       />
 
-      <div className="@container">
-        <div className="grid gap-6 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="min-w-0">
-            {pdf.status === "error" ? (
-              <ViewerState documentId={document.id} />
-            ) : null}
-            {pdf.status === "loading" ? (
-              <Skeleton className="aspect-[1/1.414] w-full" />
-            ) : null}
-            {pdf.status === "ready" ? (
-              <PdfViewer
-                pdf={pdf.pdf}
-                placing={placing}
-                stamp={stamp}
-                onDraw={(page, rect) =>
-                  setStamp({ page, rect, pages: stamp?.pages ?? "one" })
-                }
-              />
-            ) : null}
-          </div>
-
-          <aside className="space-y-6 @4xl:sticky @4xl:top-4 @4xl:self-start">
-            {signing ? (
-              <section className="space-y-3 rounded-xl border bg-card/40 p-4">
-                <Text as="h2" variant="title">
-                  Firmar documento
-                </Text>
-                <SignPanel
-                  document={document}
-                  stamp={stamp}
-                  onVisibilityChange={setVisible}
-                  onPagesChange={(pages) => {
-                    if (stamp) setStamp({ ...stamp, pages })
-                  }}
-                  onSigned={closeSigning}
-                  onCancel={closeSigning}
-                />
-              </section>
-            ) : null}
-            <section className="space-y-3">
-              <Text as="h2" variant="title">
-                Versiones
-              </Text>
-              <VersionList
-                versions={document.versions}
-                onDownload={(version: DocumentVersion) =>
-                  download(document.id, version.number)
-                }
-              />
-            </section>
-            <section className="space-y-3">
-              <Text as="h2" variant="title">
-                Firmas
-              </Text>
-              <SignatureHistory records={document.signatures} />
-            </section>
-          </aside>
+      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 overscroll-contain rounded-lg bg-desk p-3 sm:p-6 lg:overflow-y-auto xl:p-8">
+          {pdf.status === "error" ? (
+            <ViewerState documentId={document.id} />
+          ) : null}
+          {pdf.status === "loading" ? (
+            <Skeleton className="aspect-[1/1.414] w-full rounded-sm" />
+          ) : null}
+          {pdf.status === "ready" ? (
+            <PdfViewer
+              pdf={pdf.pdf}
+              placing={placing}
+              stamp={stamp}
+              onDraw={(page, rect) =>
+                setStamp({ page, rect, pages: stamp?.pages ?? "one" })
+              }
+            />
+          ) : null}
         </div>
+
+        <aside className="space-y-6 overscroll-contain lg:overflow-y-auto lg:pr-1">
+          {signing ? (
+            <section className="space-y-3 rounded-xl border bg-card/40 p-4">
+              <Text as="h2" variant="title">
+                Firmar documento
+              </Text>
+              <SignPanel
+                document={document}
+                stamp={stamp}
+                onVisibilityChange={setVisible}
+                onPagesChange={(pages) => {
+                  if (stamp) setStamp({ ...stamp, pages })
+                }}
+                onSigned={closeSigning}
+                onCancel={closeSigning}
+              />
+            </section>
+          ) : null}
+          <section className="space-y-3">
+            <Text as="h2" variant="title">
+              Versiones
+            </Text>
+            <VersionList
+              versions={document.versions}
+              onDownload={(version: DocumentVersion) =>
+                download(document.id, version.number)
+              }
+            />
+          </section>
+          <section className="space-y-3">
+            <Text as="h2" variant="title">
+              Firmas
+            </Text>
+            <SignatureHistory records={document.signatures} />
+          </section>
+        </aside>
       </div>
     </div>
   )

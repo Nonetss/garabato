@@ -8,6 +8,7 @@ export {
   useDocuments,
   useDocumentUpload,
 } from "@/features/documents/shared/hooks/use-documents"
+export { usePdfDocument } from "@/features/documents/shared/hooks/use-pdf-document"
 export {
   formatFileSize,
   formatPages,

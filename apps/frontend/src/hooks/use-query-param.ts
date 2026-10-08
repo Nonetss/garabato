@@ -10,6 +10,16 @@ const stringCodec: QueryParamCodec<string> = {
   serialize: (value) => value,
 }
 
+/**
+ * An on/off flag such as `?firmar=1`. Pair it with a `false` default so the
+ * param only exists while the flag is on; any present value other than "0"
+ * or "false" reads as on.
+ */
+export const flagCodec: QueryParamCodec<boolean> = {
+  parse: (raw) => raw !== "0" && raw !== "false",
+  serialize: (value) => String(Number(value)),
+}
+
 function readParam(key: string): string | null {
   return new URL(window.location.href).searchParams.get(key)
 }

@@ -11,7 +11,7 @@ const { id } = Astro.params as { id: string }
   backHref={appSurfaces.documents.path}
   backLabel={appSurfaces.documents.label}
   maxWidth="80%"
-  scrollToTop
+  fillViewport
 >
   <DocumentDetailPage documentId={id} client:only="react" />
 </Detail>

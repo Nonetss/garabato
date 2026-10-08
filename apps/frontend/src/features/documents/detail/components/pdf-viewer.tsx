@@ -44,6 +44,21 @@ function shownRect(
   return null
 }
 
+/**
+ * The nearest ancestor that scrolls vertically, so lazy pages preload against
+ * the pane they scroll in (the viewer column, or the page root on narrow
+ * screens) rather than the window, which doesn't scroll on this page.
+ */
+function scrollParent(element: HTMLElement): HTMLElement | null {
+  let parent = element.parentElement
+  while (parent) {
+    const { overflowY } = window.getComputedStyle(parent)
+    if (overflowY === "auto" || overflowY === "scroll") return parent
+    parent = parent.parentElement
+  }
+  return null
+}
+
 function aspectStyle(aspect: number | null) {
   if (aspect === null) return undefined
   return { aspectRatio: `1 / ${aspect}` }
@@ -83,7 +98,7 @@ function PdfPage({
       ([entry]) => {
         if (entry?.isIntersecting) setVisible(true)
       },
-      { rootMargin: "600px 0px" }
+      { root: scrollParent(element), rootMargin: "600px 0px" }
     )
     observer.observe(element)
     return () => observer.disconnect()
@@ -148,7 +163,7 @@ function PdfPage({
     <div className="space-y-1.5">
       <div
         ref={containerRef}
-        className="relative w-full overflow-hidden rounded-md border bg-white shadow-sm"
+        className="relative w-full overflow-hidden rounded-sm bg-white shadow-sheet"
         style={aspectStyle(aspect)}
       >
         {!rendered ? (
@@ -184,7 +199,7 @@ function PdfPage({
 export function PdfViewer(props: PdfViewerProps) {
   const pages = Array.from({ length: props.pdf.numPages }, (_, index) => index)
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-4xl space-y-6">
       {pages.map((index) => (
         <PdfPage key={index} {...props} index={index} />
       ))}
