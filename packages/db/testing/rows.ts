@@ -2,8 +2,11 @@
 import type {
   certificates,
   comments,
+  documentFolders,
   documentSignatures,
   documents,
+  documentTagAssignments,
+  documentTags,
   documentVersions,
   entityIcons,
   member,
@@ -21,6 +24,10 @@ export type SessionRow = typeof session.$inferSelect
 export type CommentRow = typeof comments.$inferSelect
 export type CertificateRow = typeof certificates.$inferSelect
 export type DocumentRow = typeof documents.$inferSelect
+export type DocumentFolderRow = typeof documentFolders.$inferSelect
+export type DocumentTagRow = typeof documentTags.$inferSelect
+export type DocumentTagAssignmentRow =
+  typeof documentTagAssignments.$inferSelect
 export type DocumentVersionRow = typeof documentVersions.$inferSelect
 export type DocumentSignatureRow = typeof documentSignatures.$inferSelect
 export type EntityIconRow = typeof entityIcons.$inferSelect
@@ -152,10 +159,51 @@ export function documentRow(overrides: Partial<DocumentRow> = {}): DocumentRow {
     userId: "user-1",
     name: "contrato.pdf",
     pageCount: 3,
+    folderId: null,
+    pinnedAt: null,
     encryptedDataKey: Buffer.from("wrapped-data-key"),
     deletedAt: null,
     createdAt: NOW,
     updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function documentFolderRow(
+  overrides: Partial<DocumentFolderRow> = {}
+): DocumentFolderRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000a1",
+    userId: "user-1",
+    parentId: null,
+    name: "Contratos",
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function documentTagRow(
+  overrides: Partial<DocumentTagRow> = {}
+): DocumentTagRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000b1",
+    userId: "user-1",
+    name: "Urgente",
+    color: "neutral",
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function documentTagAssignmentRow(
+  overrides: Partial<DocumentTagAssignmentRow> = {}
+): DocumentTagAssignmentRow {
+  return {
+    documentId: "00000000-0000-4000-8000-0000000000d1",
+    tagId: "00000000-0000-4000-8000-0000000000b1",
+    createdAt: NOW,
     ...overrides,
   }
 }

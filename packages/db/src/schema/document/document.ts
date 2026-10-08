@@ -1,10 +1,13 @@
+import { sql } from "drizzle-orm"
 import {
+  type AnyPgColumn,
   boolean,
   bytea,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -13,6 +16,7 @@ import {
 
 import { user } from "#schema/auth"
 import { certificates } from "#schema/certificate"
+import type { EntityIconColor } from "#schema/entity-icon"
 
 /** A visible signature's rectangle, as fractions (0–1) of the displayed page. */
 export type SignatureRect = {
@@ -21,6 +25,40 @@ export type SignatureRect = {
   width: number
   height: number
 }
+
+// A user's folder tree. A null parent is a top-level folder (library root).
+export const documentFolders = pgTable(
+  "document_folders",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // Restrict: deleting a folder reparents its children first, so a missed
+    // path fails instead of cascading into the subtree.
+    parentId: uuid("parent_id").references(
+      (): AnyPgColumn => documentFolders.id,
+      { onDelete: "restrict" }
+    ),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("documentFolders_userId_idx").on(table.userId),
+    index("documentFolders_parentId_idx").on(table.parentId),
+    // Sibling names are unique ignoring case; the coalesce makes top-level
+    // folders siblings of each other too.
+    uniqueIndex("documentFolders_sibling_name_idx").on(
+      table.userId,
+      sql`coalesce(${table.parentId}, '00000000-0000-0000-0000-000000000000'::uuid)`,
+      sql`lower(${table.name})`
+    ),
+  ]
+)
 
 // A user's PDF document. Its versions live encrypted in object storage under
 // a per-document data key, wrapped by the vault master key.
@@ -34,6 +72,12 @@ export const documents = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     pageCount: integer("page_count").notNull(),
+    // Null is the library root.
+    folderId: uuid("folder_id").references(() => documentFolders.id, {
+      onDelete: "set null",
+    }),
+    // When the document was first pinned; null when not pinned.
+    pinnedAt: timestamp("pinned_at"),
     // Null only after deletion (crypto-shredding): the objects can no longer
     // be decrypted.
     encryptedDataKey: bytea("encrypted_data_key"),
@@ -46,7 +90,10 @@ export const documents = pgTable(
       .notNull()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("documents_userId_idx").on(table.userId)]
+  (table) => [
+    index("documents_userId_idx").on(table.userId),
+    index("documents_folderId_idx").on(table.folderId),
+  ]
 )
 
 // Immutable versions: 1 is the upload, each signature adds the next one.
@@ -113,6 +160,51 @@ export const documentSignatures = pgTable(
   ]
 )
 
+// A user's labels for documents, painted with an entity icon palette key.
+export const documentTags = pgTable(
+  "document_tags",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    color: text("color").$type<EntityIconColor>().notNull().default("neutral"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .notNull()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex("documentTags_name_idx").on(
+      table.userId,
+      sql`lower(${table.name})`
+    ),
+  ]
+)
+
+// Which tags each document carries.
+export const documentTagAssignments = pgTable(
+  "document_tag_assignments",
+  {
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    tagId: uuid("tag_id")
+      .notNull()
+      .references(() => documentTags.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.documentId, table.tagId] }),
+    index("documentTagAssignments_tagId_idx").on(table.tagId),
+  ]
+)
+
+export type DocumentFolder = typeof documentFolders.$inferSelect
+export type DocumentTag = typeof documentTags.$inferSelect
+export type DocumentTagAssignment = typeof documentTagAssignments.$inferSelect
 export type Document = typeof documents.$inferSelect
 export type NewDocument = typeof documents.$inferInsert
 export type DocumentVersion = typeof documentVersions.$inferSelect
