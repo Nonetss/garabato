@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 import { EncryptedPDFError, PDFDocument } from "@cantoo/pdf-lib"
 import { db } from "@nonete/db"
+import { withKeysetPagination } from "@nonete/db/keyset-pagination"
 import {
   type Certificate,
   certificates,
@@ -11,7 +12,20 @@ import {
   documents,
   documentVersions,
 } from "@nonete/db/schema"
-import { and, desc, eq, isNull, max, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  isNull,
+  lt,
+  max,
+  type SQL,
+  sql,
+} from "drizzle-orm"
 import type { z } from "zod"
 
 import { type Context, getRequestLogger } from "#context"
@@ -26,12 +40,19 @@ import {
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { isUniqueViolation } from "#shared/db-errors"
 import { assertFound } from "#shared/not-found"
+import {
+  decodeKeysetCursor,
+  encodeKeysetCursor,
+  paginateWithTotal,
+} from "#shared/pagination"
 import { openSigningKey } from "#shared/pkcs12"
+import { likePattern } from "#shared/search"
 import { VaultError, type VaultScope, vault } from "#shared/vault"
 import type { documentInput } from "#v1/document/input"
 import type {
   DocumentSummary,
   DocumentVersionOutput,
+  SignatureLogRecord,
   SignatureRecord,
 } from "#v1/document/output"
 import { AppearanceError } from "#v1/document/pades/appearance"
@@ -39,6 +60,7 @@ import { EncryptedPdfError } from "#v1/document/pades/placeholder"
 import { signPdf } from "#v1/document/pades/sign"
 
 const NOT_FOUND_MESSAGE = "Documento no encontrado"
+const CERTIFICATE_NOT_FOUND_MESSAGE = "Certificado no encontrado"
 const CHANGED_MESSAGE =
   "El documento ha cambiado desde que lo abriste; recárgalo para firmar la última versión"
 
@@ -149,6 +171,29 @@ function toRecord(row: SignatureJoin): SignatureRecord {
   }
 }
 
+type SignatureLogJoin = SignatureJoin & {
+  certificateDeletedAt: Date | null
+  certificateTaxId: string | null
+  certificateIssuer: string
+  certificateSerialNumber: string
+  certificateFingerprint: string
+  certificateNotBefore: Date
+  certificateNotAfter: Date
+}
+
+function toLogRecord(row: SignatureLogJoin): SignatureLogRecord {
+  return {
+    ...toRecord(row),
+    certificateDeleted: row.certificateDeletedAt !== null,
+    certificateTaxId: row.certificateTaxId,
+    certificateIssuer: row.certificateIssuer,
+    certificateSerialNumber: row.certificateSerialNumber,
+    certificateFingerprint: row.certificateFingerprint,
+    certificateNotBefore: toIso(row.certificateNotBefore),
+    certificateNotAfter: toIso(row.certificateNotAfter),
+  }
+}
+
 function summaryOf(
   document: Document,
   versions: DocumentVersion[],
@@ -205,6 +250,13 @@ function signatureJoin() {
       versionNumber: documentVersions.number,
       certificateAlias: certificates.alias,
       certificateHolder: certificates.commonName,
+      certificateDeletedAt: certificates.deletedAt,
+      certificateTaxId: certificates.taxId,
+      certificateIssuer: certificates.issuerCommonName,
+      certificateSerialNumber: certificates.serialNumber,
+      certificateFingerprint: certificates.fingerprintSha256,
+      certificateNotBefore: certificates.notBefore,
+      certificateNotAfter: certificates.notAfter,
     })
     .from(documentSignatures)
     .innerJoin(documents, eq(documents.id, documentSignatures.documentId))
@@ -228,6 +280,40 @@ async function signaturesOfDocument(userId: string, documentId: string) {
     )
     .orderBy(desc(documentSignatures.signedAt))
   return rows.map(toRecord)
+}
+
+// The certificate must be the caller's; deleted ones still have records.
+async function assertOwnCertificate(userId: string, certificateId: string) {
+  const certificate = await db.query.certificates.findFirst({
+    where: { id: certificateId, userId },
+  })
+  assertFound(certificate, CERTIFICATE_NOT_FOUND_MESSAGE)
+}
+
+// The log's filters, without the cursor: shared by the page and its count.
+function signatureLogFilters(
+  userId: string,
+  input: z.infer<typeof documentInput.signatureLog>
+) {
+  const filters: SQL[] = [eq(documentSignatures.userId, userId)]
+  if (input.certificateId !== undefined) {
+    filters.push(eq(documentSignatures.certificateId, input.certificateId))
+  }
+  if (input.query !== undefined) {
+    filters.push(ilike(documents.name, likePattern(input.query)))
+  }
+  if (input.signedFrom !== undefined) {
+    filters.push(gte(documentSignatures.signedAt, new Date(input.signedFrom)))
+  }
+  if (input.signedBefore !== undefined) {
+    filters.push(lt(documentSignatures.signedAt, new Date(input.signedBefore)))
+  }
+  return filters
+}
+
+function nextCursorOf(hasMore: boolean, lastRow: SignatureLogJoin | undefined) {
+  if (!hasMore || !lastRow) return null
+  return encodeKeysetCursor(lastRow.signature.signedAt, lastRow.signature.id)
 }
 
 async function unwrapDocumentKey(document: Document) {
@@ -684,10 +770,7 @@ export const documentHandler = {
         message: "Indica un documento o un certificado",
       })
     }
-    const certificate = await db.query.certificates.findFirst({
-      where: { id: certificateId, userId },
-    })
-    assertFound(certificate, "Certificado no encontrado")
+    await assertOwnCertificate(userId, certificateId)
     const rows = await signatureJoin()
       .where(
         and(
@@ -697,5 +780,66 @@ export const documentHandler = {
       )
       .orderBy(desc(documentSignatures.signedAt))
     return rows.map(toRecord)
+  },
+
+  signatureLog: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.signatureLog>
+  }) => {
+    const userId = requireUserId(context)
+    const cursor = decodeKeysetCursor(input.cursor)
+    if (input.certificateId !== undefined) {
+      await assertOwnCertificate(userId, input.certificateId)
+    }
+    const filters = signatureLogFilters(userId, input)
+
+    const { page, hasMore, lastRow, total } = await paginateWithTotal(
+      withKeysetPagination(signatureJoin().$dynamic(), {
+        orderColumns: [documentSignatures.signedAt, documentSignatures.id],
+        cursor,
+        filters,
+        limit: input.limit + 1,
+      }),
+      db
+        .select({ total: count() })
+        .from(documentSignatures)
+        .innerJoin(documents, eq(documents.id, documentSignatures.documentId))
+        .where(and(...filters)),
+      input.limit
+    )
+
+    return {
+      records: page.map(toLogRecord),
+      total,
+      nextCursor: nextCursorOf(hasMore, lastRow),
+    }
+  },
+
+  signatureLogCertificates: async ({ context }: { context: Context }) => {
+    const userId = requireUserId(context)
+    const rows = await db
+      .select({
+        id: certificates.id,
+        alias: certificates.alias,
+        holder: certificates.commonName,
+        deletedAt: certificates.deletedAt,
+      })
+      .from(documentSignatures)
+      .innerJoin(
+        certificates,
+        eq(certificates.id, documentSignatures.certificateId)
+      )
+      .where(eq(documentSignatures.userId, userId))
+      .groupBy(certificates.id)
+      .orderBy(asc(certificates.alias), asc(certificates.id))
+    return rows.map((row) => ({
+      id: row.id,
+      alias: row.alias,
+      holder: row.holder,
+      deleted: row.deletedAt !== null,
+    }))
   },
 }

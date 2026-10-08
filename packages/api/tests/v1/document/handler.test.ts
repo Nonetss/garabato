@@ -11,6 +11,7 @@ import {
 import type { z } from "zod"
 import { errors } from "#errors"
 import { certificateScope } from "#shared/certificate-secrets"
+import { encodeKeysetCursor } from "#shared/pagination"
 import { type VaultScope, vault } from "#shared/vault"
 import { P12_PASSWORD, p12Fixture } from "#tests/fixtures/certificate-files"
 import { userContext } from "#tests/fixtures/context"
@@ -20,7 +21,7 @@ import { expectErrorCode } from "#tests/fixtures/errors"
 import { fakeObjectStorage } from "#tests/fixtures/object-storage"
 import { verifySignatures } from "#tests/fixtures/pdf-signatures"
 import { documentHandler, documentName, pdfName } from "#v1/document/handler"
-import type { documentInput } from "#v1/document/input"
+import { documentInput } from "#v1/document/input"
 
 type SignInput = z.infer<typeof documentInput.sign>
 
@@ -680,5 +681,235 @@ describe("document.signatures", () => {
       "NOT_FOUND"
     )
     expect(fakeDb.calls("select")).toEqual([])
+  })
+})
+
+// A row of the signature join, as the log query returns it.
+function logRow(
+  index: number,
+  overrides: { documentDeletedAt?: Date; certificateDeletedAt?: Date } = {}
+) {
+  const certificate = certificateRow({ id: CERT_ID })
+  return {
+    signature: documentSignatureRow({
+      id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+      signedAt: new Date(Date.UTC(2026, 9, 7, 12, 0, 60 - index)),
+    }),
+    documentName: `doc-${index}.pdf`,
+    documentDeletedAt: overrides.documentDeletedAt ?? null,
+    versionNumber: 2,
+    certificateAlias: certificate.alias,
+    certificateHolder: certificate.commonName,
+    certificateDeletedAt: overrides.certificateDeletedAt ?? null,
+    certificateTaxId: certificate.taxId,
+    certificateIssuer: certificate.issuerCommonName,
+    certificateSerialNumber: certificate.serialNumber,
+    certificateFingerprint: certificate.fingerprintSha256,
+    certificateNotBefore: certificate.notBefore,
+    certificateNotAfter: certificate.notAfter,
+  }
+}
+
+function logInput(
+  overrides: Partial<z.input<typeof documentInput.signatureLog>> = {}
+) {
+  return documentInput.signatureLog.parse({ limit: 2, ...overrides })
+}
+
+describe("document.signatureLog", () => {
+  test("returns records with certificate data, the total and no cursor on the last page", async () => {
+    fakeDb.queue("select", [logRow(1)])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    const result = await documentHandler.signatureLog({
+      context,
+      input: logInput(),
+    })
+
+    expect(result).toEqual({
+      records: [
+        expect.objectContaining({
+          documentName: "doc-1.pdf",
+          documentDeleted: false,
+          certificateAlias: "Personal",
+          certificateDeleted: false,
+          certificateTaxId: "12345678Z",
+          certificateIssuer: "AC PRUEBAS AUTOFIRMAS",
+          certificateSerialNumber: "1DA4064E22D19F8E5ADFA4F4A5C540E11AE51FB9",
+          certificateFingerprint:
+            "79e9b2ecc60d29095afd435a404e828b5b84bb91e1c3a19e435c5650444148dc",
+          certificateNotBefore: "2025-01-01T00:00:00.000Z",
+          certificateNotAfter: "2027-01-01T00:00:00.000Z",
+        }),
+      ],
+      total: 1,
+      nextCursor: null,
+    })
+  })
+
+  test("pages by cursor without repeating or skipping records", async () => {
+    const rows = [logRow(1), logRow(2), logRow(3)]
+    fakeDb.queue("select", rows)
+    fakeDb.queue("select", [{ total: 3 }])
+
+    const first = await documentHandler.signatureLog({
+      context,
+      input: logInput(),
+    })
+
+    const second = rows[1]
+    if (!second) throw new Error("missing row")
+    expect(first.records.map((record) => record.documentName)).toEqual([
+      "doc-1.pdf",
+      "doc-2.pdf",
+    ])
+    expect(first.total).toBe(3)
+    expect(first.nextCursor).toBe(
+      encodeKeysetCursor(second.signature.signedAt, second.signature.id)
+    )
+
+    fakeDb.queue("select", [logRow(3)])
+    fakeDb.queue("select", [{ total: 3 }])
+    const next = await documentHandler.signatureLog({
+      context,
+      input: logInput({ cursor: first.nextCursor }),
+    })
+
+    expect(next.records.map((record) => record.documentName)).toEqual([
+      "doc-3.pdf",
+    ])
+    expect(next.nextCursor).toBeNull()
+  })
+
+  test("flags records of deleted documents and certificates", async () => {
+    fakeDb.queue("select", [
+      logRow(1, {
+        documentDeletedAt: new Date(),
+        certificateDeletedAt: new Date(),
+      }),
+    ])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    const result = await documentHandler.signatureLog({
+      context,
+      input: logInput(),
+    })
+
+    expect(result.records[0]).toMatchObject({
+      documentDeleted: true,
+      certificateDeleted: true,
+      certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+    })
+  })
+
+  test("returns an empty page when nothing matches", async () => {
+    fakeDb.queue("select", [])
+    fakeDb.queue("select", [{ total: 0 }])
+
+    const result = await documentHandler.signatureLog({
+      context,
+      input: logInput({ query: "100%" }),
+    })
+
+    expect(result).toEqual({ records: [], total: 0, nextCursor: null })
+  })
+
+  test("filters by one of the caller's certificates, deleted included", async () => {
+    fakeDb.queue(
+      "query.certificates.findFirst",
+      certificateRow({ id: CERT_ID, deletedAt: new Date() })
+    )
+    fakeDb.queue("select", [logRow(1)])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    const result = await documentHandler.signatureLog({
+      context,
+      input: logInput({ certificateId: CERT_ID }),
+    })
+
+    expect(result.total).toBe(1)
+  })
+
+  test("answers NOT_FOUND for another user's certificate", async () => {
+    fakeDb.queue("query.certificates.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.signatureLog({
+        context,
+        input: logInput({ certificateId: CERT_ID }),
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("select")).toEqual([])
+  })
+
+  test("rejects a malformed cursor with BAD_REQUEST", async () => {
+    await expectErrorCode(
+      documentHandler.signatureLog({
+        context,
+        input: logInput({ cursor: "not-a-cursor" }),
+      }),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls("select")).toEqual([])
+  })
+
+  test("accepts a range whose start is before its end", () => {
+    const result = documentInput.signatureLog.safeParse({
+      signedFrom: "2026-10-01T00:00:00.000Z",
+      signedBefore: "2026-10-08T00:00:00.000Z",
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  test("rejects a range whose start is not before its end", () => {
+    const same = documentInput.signatureLog.safeParse({
+      signedFrom: "2026-10-08T00:00:00.000Z",
+      signedBefore: "2026-10-08T00:00:00.000Z",
+    })
+    const inverted = documentInput.signatureLog.safeParse({
+      signedFrom: "2026-10-09T00:00:00.000Z",
+      signedBefore: "2026-10-08T00:00:00.000Z",
+    })
+
+    expect(same.success).toBe(false)
+    expect(inverted.success).toBe(false)
+  })
+})
+
+describe("document.signatureLogCertificates", () => {
+  test("lists the certificates used to sign, flagging deleted ones", async () => {
+    fakeDb.queue("select", [
+      {
+        id: CERT_ID,
+        alias: "Personal",
+        holder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+        deletedAt: new Date(),
+      },
+      {
+        id: "00000000-0000-4000-8000-0000000000c2",
+        alias: "Trabajo",
+        holder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+        deletedAt: null,
+      },
+    ])
+
+    const result = await documentHandler.signatureLogCertificates({ context })
+
+    expect(result).toEqual([
+      {
+        id: CERT_ID,
+        alias: "Personal",
+        holder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+        deleted: true,
+      },
+      {
+        id: "00000000-0000-4000-8000-0000000000c2",
+        alias: "Trabajo",
+        holder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+        deleted: false,
+      },
+    ])
   })
 })

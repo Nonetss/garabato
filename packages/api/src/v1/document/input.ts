@@ -1,5 +1,7 @@
 import { z } from "zod"
 
+import { paginationCursor, paginationLimit } from "#shared/pagination"
+
 export const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 const id = z.uuid()
@@ -91,5 +93,35 @@ export const documentInput = {
         (input.documentId === undefined) !==
         (input.certificateId === undefined),
       "Pass exactly one of documentId or certificateId"
+    ),
+  signatureLog: z
+    .object({
+      limit: paginationLimit(25, 100),
+      cursor: paginationCursor(),
+      certificateId: id
+        .optional()
+        .describe("Only records made with this certificate"),
+      query: z
+        .string()
+        .trim()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe("Text the document name contains (case-insensitive)"),
+      signedFrom: z.iso
+        .datetime({ offset: true })
+        .optional()
+        .describe("Only records signed at or after this instant"),
+      signedBefore: z.iso
+        .datetime({ offset: true })
+        .optional()
+        .describe("Only records signed strictly before this instant"),
+    })
+    .refine(
+      (input) =>
+        input.signedFrom === undefined ||
+        input.signedBefore === undefined ||
+        new Date(input.signedFrom) < new Date(input.signedBefore),
+      "signedFrom must be before signedBefore"
     ),
 }

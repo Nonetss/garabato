@@ -127,4 +127,35 @@ export const documentRouter = {
     .handler(({ context, input }) =>
       documentHandler.signatures({ context, input })
     ),
+
+  signatureLog: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List my signature log",
+        description:
+          "Returns the caller's signature records across every document and certificate, newest first, paginated by cursor, including records of deleted documents and certificates. Optional filters: certificate, text the document name contains, and a signing-time interval (`signedFrom` inclusive, `signedBefore` exclusive). `total` counts every matching record.",
+        tags: ["Documents"],
+        method: "GET",
+      })
+    )
+    .input(documentInput.signatureLog)
+    .output(documentOutput.signatureLog)
+    .handler(({ context, input }) =>
+      documentHandler.signatureLog({ context, input })
+    ),
+
+  signatureLogCertificates: protectedProcedure
+    .meta(
+      openapi({
+        summary: "List the certificates of my signature log",
+        description:
+          "Returns every certificate the caller has signed with at least once, deleted ones included, ordered by alias. Meant for the signature log's certificate filter.",
+        tags: ["Documents"],
+        method: "GET",
+      })
+    )
+    .output(documentOutput.signatureLogCertificates)
+    .handler(({ context }) =>
+      documentHandler.signatureLogCertificates({ context })
+    ),
 }

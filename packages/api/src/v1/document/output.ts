@@ -36,6 +36,25 @@ const signatureRecord = z.object({
   ipAddress: z.string().nullable(),
 })
 
+const signatureLogRecord = signatureRecord.extend({
+  certificateDeleted: z.boolean(),
+  certificateTaxId: z.string().nullable(),
+  certificateIssuer: z.string(),
+  certificateSerialNumber: z.string(),
+  certificateFingerprint: z
+    .string()
+    .describe("SHA-256 of the certificate DER, hex"),
+  certificateNotBefore: z.string(),
+  certificateNotAfter: z.string(),
+})
+
+const signatureLogCertificate = z.object({
+  id: z.uuid(),
+  alias: z.string(),
+  holder: z.string(),
+  deleted: z.boolean(),
+})
+
 const documentSummary = z.object({
   id: z.uuid(),
   name: z.string(),
@@ -51,6 +70,8 @@ const documentSummary = z.object({
 export type DocumentSummary = z.infer<typeof documentSummary>
 export type DocumentVersionOutput = z.infer<typeof version>
 export type SignatureRecord = z.infer<typeof signatureRecord>
+export type SignatureLogRecord = z.infer<typeof signatureLogRecord>
+export type SignatureLogCertificate = z.infer<typeof signatureLogCertificate>
 
 export const documentOutput = {
   upload: documentSummary,
@@ -64,4 +85,14 @@ export const documentOutput = {
   delete: z.object({ id: z.uuid(), success: z.boolean() }),
   sign: z.object({ version, signature: signatureRecord }),
   signatures: z.array(signatureRecord),
+  signatureLog: z.object({
+    records: z.array(signatureLogRecord).describe("Newest first"),
+    total: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe("Records matching the filters, across every page"),
+    nextCursor: z.string().nullable(),
+  }),
+  signatureLogCertificates: z.array(signatureLogCertificate),
 }
