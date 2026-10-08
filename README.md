@@ -37,15 +37,7 @@ git push -u origin main
 
 ## How it fits together
 
-```txt
-browser ──▶ gateway (Caddy, the only published port)
-              │  /rpc/*, /api/*, /scalar*, /openapi.json ──▶ backend  (Hono + oRPC on Bun, :3000)
-              │  /health ──▶ "ok"                              │ packages/api   contract + handlers
-              │  everything else ──▶ frontend (Astro SSR, :4321)│ packages/auth  Better Auth
-              │                        │                       │ packages/cron  in-process scheduler
-              │                        └─ SSR session lookups ─┤ packages/db    Drizzle ──▶ PostgreSQL
-              │                           (BACKEND_URL)        │ packages/logger pino  ──▶ Loki (optional)
-```
+![The browser only talks to the gateway, which sends the API paths to the backend and everything else to the frontend](doc/diagrams/architecture.svg)
 
 - **One origin.** The gateway serves the site and the API from the same host,
   so the browser never makes cross-origin calls and session cookies just work.

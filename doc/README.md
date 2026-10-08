@@ -38,6 +38,11 @@ vuelve a generar el SVG. Los colores van como `var(--token)` en atributos
 de tokens (claro y oscuro) y las fuentes incrustadas. La exportación estándar
 de la skill `diagram-design` no lo hace, así que hay que revisar el resultado.
 
+`architecture.svg` es la versión en inglés de `arquitectura.svg` para el
+`README.md` de la raíz, con más detalle (las rutas que el gateway envía al
+backend, `/health`, `BACKEND_URL` y los paquetes que corre el backend). Si
+cambia una, hay que cambiar la otra.
+
 ## Glosario rápido
 
 | Término | Qué es |
