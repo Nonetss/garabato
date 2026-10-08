@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { textVariants } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
 import { Button } from "@/components/ui/button"
 import { CommentsSheet } from "@/features/comments/thread/components/comments-sheet"
@@ -59,7 +60,12 @@ export function CommentsButton({
       />
       {compact ? (
         count > 0 ? (
-          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+          <span
+            className={cn(
+              textVariants({ role: "meta-sm" }),
+              "absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground leading-none tabular-nums"
+            )}
+          >
             {count > 9 ? "9+" : count}
           </span>
         ) : null

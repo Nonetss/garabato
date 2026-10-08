@@ -109,7 +109,7 @@ export const cronJobDefinition: EntityListDefinition<CronJob, CronsRowContext> =
     getPrimary: (job) => job.name,
     getSecondary: (job, ctx) =>
       isDeclaredInCode(job) || ctx.handlerKeys.has(job.handlerKey) ? (
-        <span className="font-mono">{job.handlerKey}</span>
+        <Text variant="data">{job.handlerKey}</Text>
       ) : (
         <span className="text-destructive">
           {cronLabels.handlerUnavailable}

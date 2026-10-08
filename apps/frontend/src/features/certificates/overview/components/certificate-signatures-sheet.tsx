@@ -66,7 +66,7 @@ function SignatureList({ certificateId }: { certificateId: string }) {
       {data.map((entry) => (
         <li key={entry.id} className="space-y-0.5 px-4 py-3">
           <DocumentName entry={entry} />
-          <Text as="p" variant="meta-sm" tone="muted" className="tabular-nums">
+          <Text as="p" variant="compact" tone="muted" className="tabular-nums">
             {formatDateTime(entry.signedAt, { includeYear: true })} · v
             {entry.versionNumber} · {placementLabel(entry)}
           </Text>

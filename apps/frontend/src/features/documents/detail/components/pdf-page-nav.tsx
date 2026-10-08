@@ -67,7 +67,7 @@ export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
       />
       <Text
         as="span"
-        variant="meta-sm"
+        variant="compact"
         tone="muted"
         className="min-w-16 px-1 text-center tabular-nums"
         aria-live="polite"
