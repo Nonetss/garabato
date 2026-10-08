@@ -38,7 +38,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 | Running, building, type-checking, formatting, the dev database and Loki, Docker scripts | `references/commands.md` |
 | Imports between files/packages (`@/`, `#…`), adding a dependency or workspace | `references/aliases-and-deps.md` |
 | Env vars, auth URLs, cookies, proxies, middleware gating, oRPC handler plugins (error logging, body limit, SSE keep-alive), request ids | `references/env.md` |
-| Writing or running tests, validating a change | `references/testing.md` |
+| Writing or running tests, which tests a new procedure, helper, hook or component needs, validating a change | `references/testing.md` |
 | Any TypeScript code: casts, `??` chains, ternaries, generic defaults, `let` memoization — what is not allowed and what to write instead | `references/code-style.md` |
 | Dockerfiles, compose files (dev stack, production-like, registry images), CI images | `references/docker.md` |
 
@@ -71,6 +71,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 
 ### Tooling
 - **Validation** is `check-types` + Biome; `bun run test` runs the unit suites (`bun test` in `packages/api`, `packages/cron` and `apps/frontend`). Unit tests are hermetic: no database, network or running service; database code runs against the fake from `@nonete/db/testing` (`references/testing.md`).
+- **Implementing means testing.** A new or changed procedure, API helper, cron module, `src/lib` helper, `src/hooks` hook or `components/shared` component ships with its unit tests in the same change, and a bug fix with the test that catches it. What to cover and where the file goes: `references/testing.md`, "When to write tests".
 - **Never** run `db:generate`/`db:push`/`db:migrate`, edit `packages/db/src/migrations/`, kill running processes, stop or restart the user's Docker stack, or probe the live app with curl or a browser unless the user asks in that moment.
 - **Don't copy enumerations** (env vars, OpenSpec capabilities, procedures) — read their source files instead.
 - Code, comments and log/internal error messages in English; UI copy and user-facing API error messages in Spanish.

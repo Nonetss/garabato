@@ -8,6 +8,95 @@
 
 Live checks of `/scalar`, `/openapi.json`, `/rpc` or the UI happen only when the user explicitly asks. If runtime confirmation is needed, ask the user for a screenshot or a pasted response.
 
+## When to write tests
+
+Tests are part of the change, not a follow-up. Whenever code below is added or its behavior changes, the same change adds or updates its unit tests, and `bun run test` passes before the work is reported as done:
+
+| Code added or changed | Test file |
+|---|---|
+| A procedure in `packages/api/src/v1/<feature>/` (its `handler.ts`) | `packages/api/tests/v1/<feature>/handler.test.ts`, one `describe("<feature>.<method>")` per method |
+| A procedure builder or access rule in `packages/api/src/index.ts` | `packages/api/tests/index.test.ts` |
+| A helper in `packages/api/src/shared/` or `src/lib/` | `packages/api/tests/shared/<helper>.test.ts` |
+| The scheduler, cron service or declared-job sync in `packages/cron` | `packages/cron/tests/<module>.test.ts` |
+| A helper in `apps/frontend/src/lib` | `apps/frontend/tests/lib/<file>.test.ts` |
+| A hook in `apps/frontend/src/hooks` | `apps/frontend/tests/hooks/<hook>.test.tsx` |
+| A component in `apps/frontend/src/components/shared` | `apps/frontend/tests/components/<group>/<component>.test.tsx` |
+
+- A bug fix adds the test that fails without the fix.
+- Removing or renaming code removes or renames its tests; a dead test file is not left behind.
+- Not required (no harness yet): `router.ts` wiring, zod `input.ts`/`output.ts` schemas on their own, `apps/backend`, feature components under `src/features/`, and hooks built on TanStack Query or Better Auth's client. Don't build that harness unasked.
+- A test asserts behavior a caller can observe: the returned value, the `ORPCError` code, and the rows written. It doesn't pin private helpers, call order that doesn't matter, or the SQL text.
+
+### What a procedure's tests cover
+
+For each handler method, one test per branch, at least:
+
+- **Happy path**: the returned shape (`toEqual` / `toMatchObject`) and, for writes, the values written (`stepArgs(call, "values" | "set")`).
+- **Each error it throws**: `expectErrorCode(promise, "<CODE>")`, plus `expect(fakeDb.calls("insert" | "update" | "delete")).toEqual([])` so a rejected request wrote nothing.
+- **Ownership and permissions** checked in the handler: the caller allowed, another user refused.
+- **Edge cases the handler decides**: empty lists, already-deleted rows, idempotent repeats, pagination cursors.
+
+Access that the builder enforces (`protectedProcedure`, `adminProcedure`…) is already covered by `tests/index.test.ts`; test it per procedure only when the handler adds its own check.
+
+### Recipe: a new procedure
+
+1. **Row factory.** If the handler reads a table that has no factory yet, add `<table>Row(overrides)` and its `<Table>Row` type to `packages/db/testing/rows.ts`, with fixed defaults (`NOW`, stable ids). Never touch the schema or migrations for a test.
+2. **File.** Create or extend `packages/api/tests/v1/<feature>/handler.test.ts`. Import the handler through `#v1/<feature>/handler` and fixtures through `#tests/fixtures/*`; no relative imports.
+3. **Reset.** `beforeEach(() => fakeDb.reset())` (plus `resetCronService()` if the feature uses the cron service).
+4. **Queue, call, assert.** Queue one result per database await, in the order the handler awaits them (a write followed by a re-read queues both), call the handler with a fixture context, then assert the result and the recorded writes.
+5. **Validate.** `turbo run test --filter=@nonete/api`, then `check-types` and Biome on the test files too.
+
+```ts
+import { beforeEach, describe, expect, test } from "bun:test"
+import { commentRow, stepArgs, userRow } from "@nonete/db/testing"
+import { userContext } from "#tests/fixtures/context"
+import { fakeDb } from "#tests/fixtures/db"
+import { expectErrorCode } from "#tests/fixtures/errors"
+import { commentHandler } from "#v1/comment/handler"
+
+const context = userContext()
+const author = userRow({ id: "user-id" })
+const input = { id: "comment-1", content: "Edited" }
+
+beforeEach(() => fakeDb.reset())
+
+describe("comment.update", () => {
+  test("rejects a deleted comment with NOT_FOUND", async () => {
+    fakeDb.queue("query.comments.findFirst", {
+      ...commentRow({ deletedAt: new Date() }),
+      author,
+    })
+
+    await expectErrorCode(
+      commentHandler.update({ context, input }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+
+  test("stores the new content and returns the comment", async () => {
+    fakeDb.queue("query.comments.findFirst", { ...commentRow(), author })
+    fakeDb.queue("update", [])
+    fakeDb.queue("query.comments.findFirst", {
+      ...commentRow({ content: "Edited" }),
+      author,
+    })
+
+    const node = await commentHandler.update({ context, input })
+
+    const [update] = fakeDb.calls("update")
+    expect(update && stepArgs(update, "set")[0]).toEqual({
+      content: "Edited",
+    })
+    expect(node).toMatchObject({ id: "comment-1", content: "Edited" })
+  })
+})
+```
+
+`packages/api/tests/v1/comment/handler.test.ts` is the reference file: it covers reads, writes, every error code and an idempotent delete. Call the procedure with `call(procedure, input, { context })` instead of the handler only when the rule under test lives in the middleware chain.
+
+If an awaited chain has nothing queued, the test fails with the operation's name (`query.comments.findFirst`): queue the missing result, or the handler made a query the test didn't expect.
+
 ## Unit suites — `bun run test`
 
 `turbo test` runs every workspace `test` script and exits non-zero on any failure. Three workspaces have one, each run with `bun test`: `packages/api`, `packages/cron` and `apps/frontend`. Every suite follows the same rules:

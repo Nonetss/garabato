@@ -27,3 +27,5 @@ Search the codebase first, and reuse or extend what exists. Look, in this order:
 | A client-side helper (oRPC client and query utils, auth clients, formatting, folding text for search, toasts, navigation, theme, route identity) | `src/lib/`. |
 
 `rg -il "<keyword>" apps/frontend/src/components apps/frontend/src/hooks apps/frontend/src/lib` with a few words of the need (in English and Spanish, since UI copy is Spanish) finds most candidates; read the candidate's source and one of its callers before relying on it. A new piece starts in its feature slice even when it looks reusable, and is promoted on real reuse.
+
+A new or changed `src/lib` helper, `src/hooks` hook or `components/shared` component gets its unit test under `apps/frontend/tests/` in the same change (`references/testing.md`).

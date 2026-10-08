@@ -41,6 +41,10 @@ Some features also carry feature-specific modules beside those four (`cron/disco
 
 OpenAPI `summary`/`description`/`.describe()` texts are English.
 
+## Tests
+
+Every new or changed handler method gets its tests in `packages/api/tests/v1/<feature>/handler.test.ts` in the same change: happy path, each error code it throws, and the rows it writes. A new `src/shared` helper gets `tests/shared/<helper>.test.ts`. Recipe and fake database: `references/testing.md`.
+
 ## Wiring rules
 
 - Intra-feature imports use the version-scoped path (`import { apiKeyInput } from "#v1/api-key/input"`).
