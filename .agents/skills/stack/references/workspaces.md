@@ -44,7 +44,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 
 - `README.md` (English) is the human overview; `AGENTS.md` holds the hard rules for agents (`CLAUDE.md` only imports it); `PRODUCT.md` (Spanish) is the product context.
 - `DESIGN.md`, `PRODUCT.md` and `.impeccable/` feed the Impeccable design skill.
-- OpenSpec lives in `openspec/`: the specs of the current foundation are in `openspec/changes/adopt-stack-foundation/specs/<capability>/spec.md`; `openspec/specs/` is empty until that change is archived.
+- OpenSpec lives in `openspec/`: one spec per capability in `openspec/specs/<capability>/spec.md` (list them with `openspec list --specs`); finished changes are in `openspec/changes/archive/`.
 
 ## What git tracks (vs `.gitignore`)
 

@@ -20,7 +20,7 @@ better se opera como **consola técnica** corriendo en local o en un servidor pr
 
 ## Capabilities and Constraints
 
-Capacidades confirmadas (con spec en `openspec/specs/` una vez archivado el change inicial):
+Capacidades confirmadas (todas con spec en `openspec/specs/`):
 
 - **Autenticación** con email/password (y OIDC opcional) vía Better Auth, sesiones, roles (admin) y protección por rol en `/admin`.
 - **Organizaciones, equipos, miembros e invitaciones** vía el plugin `organization` de Better Auth, con control de acceso dinámico.
@@ -45,7 +45,7 @@ Voz: consola técnica, clara, sin ornamento.
 
 ## Evidence on Hand
 
-- **Capacidades**: specs del change `adopt-stack-foundation` (pasan a `openspec/specs/` al archivarlo).
+- **Capacidades**: una spec por capacidad en `openspec/specs/` (el change inicial está en `openspec/changes/archive/2026-10-08-adopt-stack-foundation`).
 - **Estilo visual**: `DESIGN.md` (raíz).
 - **Estructura**: `README.md` y `AGENTS.md`; la skill `stack` en `.agents/skills/stack`.
 - **APIs**: `apps/backend` expone `GET /` (`OK`), `/rpc/<version>/<feature>/<method>`, `/api/<version>/<feature>/<method>`, `/scalar` y `/openapi.json`.

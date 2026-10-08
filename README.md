@@ -169,9 +169,10 @@ There are no git hooks.
 ## Documentation
 
 Every capability (auth, admin, crons, collections, logging, Docker, …) has a
-spec under `openspec/specs/` (or, until it is archived, under the active change
-in `openspec/changes/`). Read those for the authoritative description of
-expected behavior before changing code in an area you're unfamiliar with.
+spec under `openspec/specs/`; finished changes are kept in
+`openspec/changes/archive/`. Read those for the authoritative description of
+expected behavior before changing code in an area you're unfamiliar with;
+`openspec validate --specs --strict` checks they stay well-formed.
 
 - `AGENTS.md` — normative conventions for contributors and coding agents
 - `.agents/skills/stack/` — the project skill: workspaces, commands, env, Docker, API layering and frontend structure
