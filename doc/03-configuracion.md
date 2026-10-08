@@ -49,7 +49,7 @@ algo que ya existe.
 ### Trampas habituales
 
 - **`ADMIN_EMAIL` tiene que ser un email válido.** `admin@localhost` no pasa
-  la validación y el backend no arranca. `setup:dev` usa `admin@better.local`.
+  la validación y el backend no arranca. `setup:dev` usa `admin@stack.local`.
 - **Las cookies son `Secure`.** Sobre `http` plano el navegador solo las
   guarda en `localhost`. En un servidor hay que servir la web por https o no
   se podrá iniciar sesión.

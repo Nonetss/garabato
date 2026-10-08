@@ -1,7 +1,7 @@
 {
-  "name": "Better",
-  "short_name": "Better",
-  "description": "Better",
+  "name": "Stack",
+  "short_name": "Stack",
+  "description": "Stack",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

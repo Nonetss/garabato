@@ -1,5 +1,5 @@
 {
-  "name": "better",
+  "name": "stack",
   "private": true,
   "workspaces": {
     "packages": [

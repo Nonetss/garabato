@@ -5,7 +5,7 @@ import { createLogger } from "#factory"
 export { type CreateLoggerOptions, createLogger, type LogLevel } from "#factory"
 
 export const logger: Logger = createLogger({
-  service: "better-backend",
+  service: "stack-backend",
   level: env.LOG_LEVEL,
   production: env.NODE_ENV === "production",
   lokiUrl: env.LOKI_URL,

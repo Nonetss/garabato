@@ -10,7 +10,7 @@ Defines the web navigation shell: authenticated and guest navbars driven by the 
 
 The web layout SHALL render an authenticated navbar for signed-in users and a
 guest navbar for public pages (such as login and registration) or when no
-session exists. Both navbars SHALL show the "BETTER" brand linking to `/`. The
+session exists. Both navbars SHALL show the "STACK" brand linking to `/`. The
 guest navbar SHALL omit application navigation links, the surface search and
 the user menu.
 

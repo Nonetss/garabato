@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# BETTER — bootstrap
+# STACK — bootstrap
 #
 # Generates a `.env` file with random secrets (openssl), prompts for the
 # initial admin credentials, and optionally starts the stack with docker
@@ -190,7 +190,7 @@ has_single_quote "$ADMIN_NAME" && { err "Name cannot contain a single quote (')"
 
 ADMIN_EMAIL=""
 until is_email "$ADMIN_EMAIL"; do
-  ADMIN_EMAIL=$(prompt "Admin email" "admin@better.local")
+  ADMIN_EMAIL=$(prompt "Admin email" "admin@stack.local")
   is_email "$ADMIN_EMAIL" || err "Invalid email, try again"
 done
 
@@ -248,7 +248,7 @@ POSTGRES_PASSWORD=$(env_quote "$POSTGRES_PASSWORD")
 # Written with resolved values rather than referencing POSTGRES_PASSWORD. For
 # an external DB (RDS, Cloud SQL, …) replace this line and remove the db
 # service from compose.prod.yml.
-DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/better")
+DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/stack")
 
 BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 

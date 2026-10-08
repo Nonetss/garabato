@@ -1,6 +1,6 @@
 # Arquitectura
 
-better es un monorepo de TypeScript que corre sobre Bun. Tiene tres
+stack es un monorepo de TypeScript que corre sobre Bun. Tiene tres
 aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
 
 ## Las piezas

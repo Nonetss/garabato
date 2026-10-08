@@ -8,7 +8,7 @@ Provides a hot-reloading Docker Compose dev stack with a local Loki that shares 
 
 ### Requirement: Hot-reloading Docker dev stack
 
-The repo SHALL provide `compose.dev.yml`, with compose project name `better-dev`, running `frontend`, `backend`, `gateway` and `loki`. The `frontend`, `backend` and `gateway` services SHALL run on the host network (`network_mode: host`), and each app SHALL run its development server from source on the same address as native dev: the frontend `astro dev` on `:4321` and the backend `bun --hot` on `:3000`. The services SHALL reach each other and Loki through `localhost`, and the database through `DATABASE_URL`. The gateway's HTTP site SHALL listen on `:8080`, never on the host's port 80. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
+The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `loki`. The `frontend`, `backend` and `gateway` services SHALL run on the host network (`network_mode: host`), and each app SHALL run its development server from source on the same address as native dev: the frontend `astro dev` on `:4321` and the backend `bun --hot` on `:3000`. The services SHALL reach each other and Loki through `localhost`, and the database through `DATABASE_URL`. The gateway's HTTP site SHALL listen on `:8080`, never on the host's port 80. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
 
 #### Scenario: Starting the dev stack
 

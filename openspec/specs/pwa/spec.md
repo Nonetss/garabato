@@ -8,12 +8,12 @@ Makes the frontend an installable progressive web app through a web app manifest
 
 ### Requirement: Web app manifest
 
-The frontend SHALL ship `apps/frontend/public/manifest.webmanifest` declaring `name` and `short_name` "Better", `description` "Better", `start_url` `/`, `scope` `/`, `display` `standalone`, `background_color` and `theme_color` `#262624`, `lang` `es`, and these icons: `/pwa/icon-192.png` (192x192, PNG, purpose `any`), `/pwa/icon-512.png` (512x512, PNG, purpose `any`) and `/pwa/maskable-512.png` (512x512, PNG, purpose `maskable`). Every icon file the manifest references SHALL exist under `apps/frontend/public/pwa/` with the declared dimensions.
+The frontend SHALL ship `apps/frontend/public/manifest.webmanifest` declaring `name` and `short_name` "Stack", `description` "Stack", `start_url` `/`, `scope` `/`, `display` `standalone`, `background_color` and `theme_color` `#262624`, `lang` `es`, and these icons: `/pwa/icon-192.png` (192x192, PNG, purpose `any`), `/pwa/icon-512.png` (512x512, PNG, purpose `any`) and `/pwa/maskable-512.png` (512x512, PNG, purpose `maskable`). Every icon file the manifest references SHALL exist under `apps/frontend/public/pwa/` with the declared dimensions.
 
 #### Scenario: Installing the app
 
 - **WHEN** a supporting browser offers to install the site
-- **THEN** it SHALL be installed as "Better", open at `/` in a standalone window and use the declared icons, the maskable one where the platform masks icons
+- **THEN** it SHALL be installed as "Stack", open at `/` in a standalone window and use the declared icons, the maskable one where the platform masks icons
 
 ### Requirement: Head tags in every layout
 
@@ -35,7 +35,7 @@ Both root layouts SHALL register `/sw.js` with an inline script that runs only w
 
 ### Requirement: Network-first service worker
 
-`apps/frontend/public/sw.js` SHALL be a minimal worker that makes the app installable and keeps a last-known copy of what it fetched for offline use, in a single versioned cache named `better-shell-v1`:
+`apps/frontend/public/sw.js` SHALL be a minimal worker that makes the app installable and keeps a last-known copy of what it fetched for offline use, in a single versioned cache named `stack-shell-v1`:
 
 - On `install` it SHALL call `skipWaiting()`; on `activate` it SHALL delete every cache with another name and claim open clients.
 - On `fetch` it SHALL ignore (leave to the browser) non-GET requests, cross-origin requests and requests whose path matches `/rpc/`, `/api/`, `/scalar` or `/openapi.json`, so API, auth and documentation responses are always fetched fresh and never cached.
@@ -44,7 +44,7 @@ Both root layouts SHALL register `/sw.js` with an inline script that runs only w
 #### Scenario: Online navigation
 
 - **WHEN** the network is available and the user navigates to `/crons`
-- **THEN** the page SHALL come from the network and a copy SHALL be stored in `better-shell-v1`
+- **THEN** the page SHALL come from the network and a copy SHALL be stored in `stack-shell-v1`
 
 #### Scenario: Offline navigation
 

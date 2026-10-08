@@ -1,11 +1,11 @@
-# better
+# stack
 
 **A project template.** A Turborepo monorepo with an Astro frontend and a
 Hono/oRPC backend (TypeScript, Bun) behind a Caddy gateway, on PostgreSQL,
 ready to be cloned as the starting point of a new project. It derives from
-the `stack` template and keeps its packages (`@nonete/*`), conventions and
-visual system, so code can move between projects unchanged. It leaves out
-`stack`'s Python services, gRPC and agent chat.
+the original `stack` template and keeps its packages (`@nonete/*`),
+conventions and visual system, so code can move between projects unchanged. It
+leaves out the original's Python services, gRPC and agent chat.
 
 A new project starts with a working foundation (auth, admin panel, typed API,
 cron scheduler, comments, entity icons, activity log, Docker) before any
@@ -150,7 +150,7 @@ page views are also shipped to Loki and become browsable at `/admin/logs`.
 ## Project Structure
 
 ```txt
-better/
+stack/
 ├── apps/
 │   ├── frontend/       # Astro app (TypeScript, Bun)
 │   ├── backend/        # Hono + oRPC API and cron scheduler (TypeScript, Bun)

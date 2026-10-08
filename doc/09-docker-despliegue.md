@@ -15,7 +15,7 @@ Está explicado en [Desarrollo local](02-desarrollo.md#con-docker-bun-run-dev).
 Lo importante: las apps usan la red del host y leen el `.env` sin cambios, así
 que se comportan exactamente igual que en nativo. No levanta base de datos:
 la de desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a
-ella por el `DATABASE_URL` del `.env`. Sí levanta Loki (`better-dev-loki`) en
+ella por el `DATABASE_URL` del `.env`. Sí levanta Loki (`stack-dev-loki`) en
 `localhost:3100`, el mismo que arranca `bun run loki:start` para el modo
 nativo, con la misma imagen y retención que en `compose.yml`.
 
@@ -33,7 +33,7 @@ servicios. La web queda en `http://localhost:${FRONTEND_PORT:-4444}`.
 | `gateway` | publica `FRONTEND_PORT` → 80 | El único que publica un puerto. Espera a que el frontend esté sano. |
 | `frontend` | interno 4321 | Solo accesible a través del gateway. Espera al backend. |
 | `backend` | interno 3000 | Espera a la base de datos. |
-| `db` | ninguno | `postgres:17`, base de datos `better`, volumen `db_data`. |
+| `db` | ninguno | `postgres:17`, base de datos `stack`, volumen `db_data`. |
 | `loki` | interno 3100 | Opcional; nadie espera por él. Retención de 720 horas. |
 
 Cada servicio tiene su *healthcheck* y arranca en orden: base de datos →
@@ -45,7 +45,7 @@ Comandos: `docker:build`, `docker:up`, `docker:logs` y `docker:down`.
 ## `compose.prod.yml`: producción
 
 Usa las imágenes publicadas `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main`
-y los mismos cinco servicios en una red `better`. Toda la configuración sale
+y los mismos cinco servicios en una red `stack`. Toda la configuración sale
 de un `.env` junto al compose, en el directorio del servidor.
 
 **Solo el gateway publica un puerto.** Un proxy inverso con https delante del

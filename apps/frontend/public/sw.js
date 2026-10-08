@@ -4,7 +4,7 @@
 // miss — falling back to cache only when the network actually fails. Never
 // touches /rpc, /api, /scalar or /openapi.json — that's live
 // monitoring/auth data and must always be fetched fresh.
-const CACHE = "better-shell-v1"
+const CACHE = "stack-shell-v1"
 const BYPASS = [/^\/rpc\//, /^\/api\//, /^\/scalar/, /^\/openapi\.json/]
 
 self.addEventListener("install", (event) => {

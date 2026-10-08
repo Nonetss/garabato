@@ -3,14 +3,14 @@
 #
 # Its HTTP site listens on :8080 (never the host's port 80) with the same
 # routing as production; the normal dev URL is still Vite on :4321.
-name: better-dev
+name: stack-dev
 
 services:
   gateway:
     build:
       context: ../..
       dockerfile: apps/gateway/Dockerfile
-    container_name: better-gateway-dev
+    container_name: stack-gateway-dev
     network_mode: host
     environment:
       GATEWAY_HTTP_PORT: "8080"

@@ -1,14 +1,14 @@
 # Production-like stack built from this checkout: `bun run docker:up`.
 # The gateway is the only published service; the app is on
 # http://localhost:${FRONTEND_PORT:-4444}.
-name: better
+name: stack
 
 services:
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile
-    container_name: better-frontend
+    container_name: stack-frontend
     init: true
     # Reached only through the gateway, which publishes the site
     expose:
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
-    container_name: better-backend
+    container_name: stack-backend
     init: true
     expose:
       - "3000"
@@ -44,7 +44,7 @@ services:
         required: false
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/better
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack
       BETTER_AUTH_URL: http://backend:3000
       CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-4444}
       LOKI_URL: http://loki:3100
@@ -66,7 +66,7 @@ services:
     build:
       context: .
       dockerfile: apps/gateway/Dockerfile
-    container_name: better-gateway
+    container_name: stack-gateway
     ports:
       - "${FRONTEND_PORT:-4444}:80"
     depends_on:
@@ -82,15 +82,15 @@ services:
 
   db:
     image: postgres:17
-    container_name: better-db
+    container_name: stack-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: better
+      POSTGRES_DB: stack
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d better" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d stack" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -101,7 +101,7 @@ services:
   # set, but neither depends on it at startup — the app works without it.
   loki:
     image: grafana/loki:3.7.7
-    container_name: better-loki
+    container_name: stack-loki
     expose:
       - "3100"
     volumes:

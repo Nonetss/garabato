@@ -40,7 +40,7 @@ The backend runtime image SHALL include the Drizzle migrations at `/app/packages
 
 #### Scenario: First start on an empty database
 
-- **WHEN** the production stack starts against an empty `better` database
+- **WHEN** the production stack starts against an empty `stack` database
 - **THEN** the backend SHALL apply every migration and create the admin from `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_NAME` before serving requests successfully
 
 ### Requirement: Frontend image runs the standalone Astro server internally
@@ -63,12 +63,12 @@ The gateway image (`apps/gateway/Dockerfile`) SHALL be built from `caddy:2-alpin
 
 ### Requirement: Production compose from registry images
 
-`compose.prod.yml`, with compose project name `better`, SHALL run `frontend`, `backend` and `gateway` from the registry images `ghcr.io/nonetss/stack-frontend:main`, `ghcr.io/nonetss/stack-backend:main` and `ghcr.io/nonetss/stack-gateway:main`, plus a `db` service (`postgres:17`, database `better`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `better-<service>` and SHALL share a bridge network `better`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
+`compose.prod.yml`, with compose project name `stack`, SHALL run `frontend`, `backend` and `gateway` from the registry images `ghcr.io/nonetss/stack-frontend:main`, `ghcr.io/nonetss/stack-backend:main` and `ghcr.io/nonetss/stack-gateway:main`, plus a `db` service (`postgres:17`, database `stack`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `stack-<service>` and SHALL share a bridge network `stack`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
 
 #### Scenario: Starting a deployment
 
 - **WHEN** an operator runs `docker compose -f compose.prod.yml --env-file .env up -d` in a directory holding a `.env` written by `scripts/bootstrap.sh`
-- **THEN** compose SHALL pull the `better-*` images, start `db`, `loki`, `backend`, `frontend` and `gateway`, and serve the app on `FRONTEND_PORT`
+- **THEN** compose SHALL pull the `stack-*` images, start `db`, `loki`, `backend`, `frontend` and `gateway`, and serve the app on `FRONTEND_PORT`
 
 #### Scenario: Data survives a redeploy
 
@@ -77,7 +77,7 @@ The gateway image (`apps/gateway/Dockerfile`) SHALL be built from `caddy:2-alpin
 
 ### Requirement: Healthchecks, startup order and restart policy
 
-Every service in `compose.prod.yml` SHALL declare a healthcheck and `restart: unless-stopped`; the Bun apps SHALL run with `init: true`. The backend healthcheck SHALL request `http://localhost:3000/`, the frontend healthcheck `http://localhost:4321/login`, the `db` healthcheck SHALL run `pg_isready -U postgres -d better`, the Loki healthcheck SHALL request `/ready`, and the gateway healthcheck SHALL probe Caddy inside its own container. The backend SHALL start only after `db` is healthy and the frontend only after the backend is healthy. No service SHALL depend on Loki at startup.
+Every service in `compose.prod.yml` SHALL declare a healthcheck and `restart: unless-stopped`; the Bun apps SHALL run with `init: true`. The backend healthcheck SHALL request `http://localhost:3000/`, the frontend healthcheck `http://localhost:4321/login`, the `db` healthcheck SHALL run `pg_isready -U postgres -d stack`, the Loki healthcheck SHALL request `/ready`, and the gateway healthcheck SHALL probe Caddy inside its own container. The backend SHALL start only after `db` is healthy and the frontend only after the backend is healthy. No service SHALL depend on Loki at startup.
 
 #### Scenario: Database not ready yet
 
@@ -96,7 +96,7 @@ Every service in `compose.prod.yml` SHALL declare a healthcheck and `restart: un
 
 ### Requirement: Local production-like compose
 
-`compose.yml`, with compose project name `better`, SHALL build the production images locally from the same `Dockerfile`s and run `frontend`, `backend`, `gateway` and `loki` with the same healthchecks, using the root `.env` (optional) through `env_file`. The gateway SHALL publish `4321:80` and the backend SHALL receive `CORS_ORIGIN=http://localhost:4321`. The root scripts `docker:build`, `docker:up`, `docker:down` and `docker:logs` SHALL operate on it.
+`compose.yml`, with compose project name `stack`, SHALL build the production images locally from the same `Dockerfile`s and run `frontend`, `backend`, `gateway` and `loki` with the same healthchecks, using the root `.env` (optional) through `env_file`. The gateway SHALL publish `4321:80` and the backend SHALL receive `CORS_ORIGIN=http://localhost:4321`. The root scripts `docker:build`, `docker:up`, `docker:down` and `docker:logs` SHALL operate on it.
 
 #### Scenario: Running production images locally
 
@@ -133,7 +133,7 @@ The root `.dockerignore` SHALL exclude every `.env` and `.env.*` file (except `.
 
 ### Requirement: Deployment bootstrap script
 
-`scripts/bootstrap.sh`, runnable from a clone or through `curl | bash`, SHALL generate a production `.env` in the current directory. It SHALL require `docker` (with the compose plugin), `openssl` and `curl`, read its prompts from `/dev/tty`, and refuse to run when a `.env` already exists there. It SHALL prompt for the host port (default `4444`), the public URL (default `http://localhost:<port>`), warning that Secure session cookies only work over plain `http` on `localhost`, and the admin name, email and password (at least 8 characters). After confirmation it SHALL generate `POSTGRES_PASSWORD` (URL-safe hex) and `BETTER_AUTH_SECRET` with `openssl`, and write `FRONTEND_PORT`, `CORS_ORIGIN` (the public URL), `POSTGRES_PASSWORD`, `DATABASE_URL` (pointing at `db:5432/better`), `BETTER_AUTH_SECRET`, `ADMIN_NAME`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`, every value single-quoted, to a file created with mode `600`. It SHALL download `compose.prod.yml` from the `better` repository when it is missing and SHALL offer to pull and start the stack.
+`scripts/bootstrap.sh`, runnable from a clone or through `curl | bash`, SHALL generate a production `.env` in the current directory. It SHALL require `docker` (with the compose plugin), `openssl` and `curl`, read its prompts from `/dev/tty`, and refuse to run when a `.env` already exists there. It SHALL prompt for the host port (default `4444`), the public URL (default `http://localhost:<port>`), warning that Secure session cookies only work over plain `http` on `localhost`, and the admin name, email and password (at least 8 characters). After confirmation it SHALL generate `POSTGRES_PASSWORD` (URL-safe hex) and `BETTER_AUTH_SECRET` with `openssl`, and write `FRONTEND_PORT`, `CORS_ORIGIN` (the public URL), `POSTGRES_PASSWORD`, `DATABASE_URL` (pointing at `db:5432/stack`), `BETTER_AUTH_SECRET`, `ADMIN_NAME`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`, every value single-quoted, to a file created with mode `600`. It SHALL download `compose.prod.yml` from the `stack` repository when it is missing and SHALL offer to pull and start the stack.
 
 #### Scenario: Fresh deployment
 

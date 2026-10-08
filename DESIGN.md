@@ -1,5 +1,5 @@
 ---
-name: better
+name: stack
 description: A quiet-editorial technical console on monochrome paper with one warm accent.
 colors:
   primary: "oklch(0.6724 0.1308 38.7559)"
@@ -147,13 +147,13 @@ components:
     rounded: "9999px"
 ---
 
-# Design System: better
+# Design System: stack
 
 ## Overview
 
 **Creative North Star: "El Espacio de Trabajo Sereno."**
 
-better is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or list, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) is reserved for the hero icon, the primary CTA, and the "alive" state dot. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
+stack is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or list, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) is reserved for the hero icon, the primary CTA, and the "alive" state dot. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.
 
 Density is calm rather than compact. Containers are flat by default (no shadows, no glows); depth comes from `border-y` rules, `divide-y` lists, and one optional `rounded-xl border bg-card/40` for navigation tiles or state blocks. Motion is short and useful: a 0.3s staggered entrance (`dash-enter`, ~40ms per item) and a 0.25s pop (`dash-pop`) for nested icons. The whole product lives in a `6xl` rhythm, framed by `PageShell` for list/overview pages and by `Detail.astro`'s own frame for detail routes, always headed by `PageHero`. Anti-references: "shadcn by default with badge primary + badge outline + icon box primary/15", and any surface that uses cards where a `divide-y` list would do.
 

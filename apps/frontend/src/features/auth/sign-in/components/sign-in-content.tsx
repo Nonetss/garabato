@@ -59,7 +59,7 @@ export function SignInContent() {
               className="font-mono"
               aria-hidden="true"
             >
-              BETTER · Acceso
+              STACK · Acceso
             </Text>
             <CardTitle className="font-semibold text-lg tracking-tight">
               Iniciar sesión

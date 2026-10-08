@@ -8,7 +8,7 @@ Serves an interactive Scalar reference and a generated OpenAPI document for the 
 
 ### Requirement: Interactive documentation UI
 
-The system SHALL serve an interactive API reference using Scalar at `/scalar` and the generated OpenAPI document, titled `Better API`, at `/openapi.json`. Access to both endpoints SHALL be restricted to authenticated users holding the `admin` role. Unauthenticated requests SHALL receive `401 Unauthorized`; authenticated non-admin requests SHALL receive `403 Forbidden`. The reference UI and the OpenAPI document SHALL NOT be reachable at any other path, in particular not under the REST prefix `/api`.
+The system SHALL serve an interactive API reference using Scalar at `/scalar` and the generated OpenAPI document, titled `Stack API`, at `/openapi.json`. Access to both endpoints SHALL be restricted to authenticated users holding the `admin` role. Unauthenticated requests SHALL receive `401 Unauthorized`; authenticated non-admin requests SHALL receive `403 Forbidden`. The reference UI and the OpenAPI document SHALL NOT be reachable at any other path, in particular not under the REST prefix `/api`.
 
 #### Scenario: Admin reaches documentation UI
 
@@ -18,7 +18,7 @@ The system SHALL serve an interactive API reference using Scalar at `/scalar` an
 #### Scenario: Admin reaches OpenAPI document
 
 - **WHEN** an authenticated user with the `admin` role requests `/openapi.json`
-- **THEN** the system SHALL return the generated OpenAPI specification with `info.title` set to `Better API`
+- **THEN** the system SHALL return the generated OpenAPI specification with `info.title` set to `Stack API`
 
 #### Scenario: Unauthenticated client is rejected
 

@@ -1,4 +1,4 @@
-# Documentación de better
+# Documentación de stack
 
 Esta carpeta explica cómo funciona el proyecto por dentro, pensada para leerse
 de principio a fin o por partes. El `README.md` de la raíz es el resumen rápido

@@ -13,7 +13,7 @@
 #
 # There is no database here: DATABASE_URL in .env points at a dev PostgreSQL
 # that lives outside the project, on another server.
-name: better-dev
+name: stack-dev
 
 x-node-ignore: &node-ignore
   - node_modules/
@@ -126,7 +126,7 @@ services:
   # Same image and flags as compose.yml; nothing waits for it.
   loki:
     image: grafana/loki:3.7.7
-    container_name: better-dev-loki
+    container_name: stack-dev-loki
     ports:
       - "3100:3100"
     volumes:

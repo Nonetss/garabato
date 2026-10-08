@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
 # scripts/setup-dev.sh
-# Bootstrap the local development `.env` for better.
+# Bootstrap the local development `.env` for stack.
 #
 # Writes the repo-root `.env` — the only env file every workspace and compose
 # file reads — from `.env.example`, replacing its placeholder secrets with real
@@ -64,7 +64,7 @@ fi
 BETTER_AUTH_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
 # Must be a valid address for zod's z.email() in packages/env: "admin@localhost"
 # has no TLD and fails validation, which crashes the backend on boot.
-ADMIN_EMAIL="admin@better.local"
+ADMIN_EMAIL="admin@stack.local"
 ADMIN_NAME="Admin"
 ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
 

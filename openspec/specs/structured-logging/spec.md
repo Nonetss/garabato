@@ -102,7 +102,7 @@ Every HTTP request SHALL receive a server-generated request id, and every log en
 
 ### Requirement: Shared logger factory with optional Loki shipping
 
-`@nonete/logger/factory` SHALL export an env-agnostic `createLogger({ service, level, production, lokiUrl })` used by both the backend (service `better-backend`) and the frontend's server (service `better-frontend`). When `lokiUrl` is given (from `LOKI_URL`), the logger SHALL additionally push its lines to Loki's HTTP push API in batches, with `service` as the only stream label. The logger SHALL use plain synchronous streams (`pino.multistream`), never `pino.transport()`, so it keeps working when bundled into an image without `node_modules`. A failed Loki push SHALL be swallowed and SHALL NOT affect console output or the application.
+`@nonete/logger/factory` SHALL export an env-agnostic `createLogger({ service, level, production, lokiUrl })` used by both the backend (service `stack-backend`) and the frontend's server (service `stack-frontend`). When `lokiUrl` is given (from `LOKI_URL`), the logger SHALL additionally push its lines to Loki's HTTP push API in batches, with `service` as the only stream label. The logger SHALL use plain synchronous streams (`pino.multistream`), never `pino.transport()`, so it keeps working when bundled into an image without `node_modules`. A failed Loki push SHALL be swallowed and SHALL NOT affect console output or the application.
 
 #### Scenario: No Loki configured
 
@@ -112,7 +112,7 @@ Every HTTP request SHALL receive a server-generated request id, and every log en
 #### Scenario: Loki configured
 
 - **WHEN** the backend runs with `LOKI_URL=http://loki:3100`
-- **THEN** its log lines SHALL be pushed to `http://loki:3100/loki/api/v1/push` under the label `service="better-backend"`, while still being written to stdout
+- **THEN** its log lines SHALL be pushed to `http://loki:3100/loki/api/v1/push` under the label `service="stack-backend"`, while still being written to stdout
 
 #### Scenario: Loki unreachable
 

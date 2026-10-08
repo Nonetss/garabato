@@ -6,7 +6,7 @@
   aria-labelledby="arquitectura-title arquitectura-desc"
   id="arquitectura-root"
 >
-  <title id="arquitectura-title">Arquitectura de better</title>
+  <title id="arquitectura-title">Arquitectura de stack</title>
   <desc id="arquitectura-desc">
     El navegador solo habla con el gateway Caddy, que envía las rutas de la API
     al backend y el resto al frontend; el backend usa PostgreSQL y ambas apps
