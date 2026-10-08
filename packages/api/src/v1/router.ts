@@ -5,6 +5,7 @@ import { authConfigRouter } from "#v1/auth-config/router"
 import { certificateRouter } from "#v1/certificate/router"
 import { commentRouter } from "#v1/comment/router"
 import { cronRouter } from "#v1/cron/router"
+import { documentRouter } from "#v1/document/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { healthRouter } from "#v1/health/router"
 import { logsRouter } from "#v1/logs/router"
@@ -19,6 +20,7 @@ export const appRouter = {
   apiKey: apiKeyRouter,
   comment: commentRouter,
   certificate: certificateRouter,
+  document: documentRouter,
   entityIcon: entityIconRouter,
   private: privateRouter,
   organization: organizationRouter,
