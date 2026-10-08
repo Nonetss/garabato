@@ -1,0 +1,9 @@
+---
+import { CertificatesPage } from "@/features/certificates"
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.certificates.title} scrollToTop>
+  <CertificatesPage client:only="react" />
+</Layout>

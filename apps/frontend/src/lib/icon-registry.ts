@@ -14,6 +14,7 @@ import type { ComponentType } from "react"
 const navigationIcons = {
   home: Lucide.Home,
   crons: Lucide.Clock,
+  certificates: Lucide.FileKey2,
   admin: Lucide.BrickWallFire,
   back: Lucide.ArrowLeft,
   forward: Lucide.ArrowRight,
@@ -58,10 +59,13 @@ const securityIcons = {
   verified: Lucide.ShieldCheck,
   grant: Lucide.ShieldPlus,
   locked: Lucide.Lock,
+  rememberPassword: Lucide.KeyRound,
+  forgetPassword: Lucide.LockOpen,
 } as const
 
 const actionIcons = {
   add: Lucide.Plus,
+  upload: Lucide.Upload,
   edit: Lucide.Pencil,
   delete: Lucide.Trash2,
   copy: Lucide.Copy,

@@ -9,6 +9,7 @@ export type SurfaceId =
   | "home"
   | "crons"
   | "cron-detail"
+  | "certificates"
   | "admin"
   | "admin-users"
   | "admin-sessions"
@@ -143,6 +144,16 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     description: "Detalle e historial de ejecuciones de la tarea.",
     icon: iconRef("navigation", "crons"),
     searchSource: "cron-jobs",
+  },
+  certificates: {
+    id: "certificates",
+    path: "/certificates",
+    title: "Certificados",
+    label: "Certificados",
+    description:
+      "Guarda tus certificados digitales para firmar documentos con ellos.",
+    icon: iconRef("navigation", "certificates"),
+    nav: { primary: true },
   },
   config: {
     id: "config",
