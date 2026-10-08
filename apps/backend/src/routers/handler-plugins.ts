@@ -10,11 +10,29 @@ import type { StandardHandlerRoutingInterceptorOptions } from "@orpc/server/stan
 import type { Level } from "pino"
 
 /**
- * Largest request body the API accepts. The biggest legitimate inputs today
- * are a 4000-character comment and 2000-character URLs; a feature that
- * uploads files raises this on purpose.
+ * Largest request body the API accepts. The biggest legitimate inputs are a
+ * 4000-character comment, 2000-character URLs and a PKCS#12 file (≤ 100 KiB).
  */
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024
+
+/**
+ * The limit of the routes in `UPLOAD_PROCEDURE_PATHS`: a 20 MiB PDF plus the
+ * multipart envelope.
+ */
+export const MAX_UPLOAD_BODY_BYTES = 21 * 1024 * 1024
+
+/**
+ * Procedures, by path below the handler prefix, that receive large files and
+ * are served by a handler built with `MAX_UPLOAD_BODY_BYTES`. Every other
+ * procedure keeps the 1 MiB limit.
+ */
+const UPLOAD_PROCEDURE_PATHS = new Set(["/v1/document/upload"])
+
+/** True when `path` (the full request path) calls an upload procedure. */
+export function isUploadPath(path: string, prefix: string): boolean {
+  if (!path.startsWith(prefix)) return false
+  return UPLOAD_PROCEDURE_PATHS.has(path.slice(prefix.length))
+}
 
 /**
  * Bun.serve closes a connection that sends nothing for 10 s (its default
@@ -76,15 +94,13 @@ export function loggingPlugin() {
 }
 
 /**
- * Rejects oversized bodies (413) and inputs carrying `__proto__` or
+ * Rejects bodies over `maxBodySize` (413) and inputs carrying `__proto__` or
  * `constructor.prototype` (400) before a procedure runs. Zod already drops
  * unknown keys, but not inside `z.record(...)` or `.passthrough()` inputs.
  */
-export function hardeningPlugins() {
+export function hardeningPlugins(maxBodySize = MAX_REQUEST_BODY_BYTES) {
   return [
-    new RequestLimitHandlerPlugin<Context>({
-      maxBodySize: MAX_REQUEST_BODY_BYTES,
-    }),
+    new RequestLimitHandlerPlugin<Context>({ maxBodySize }),
     new PrototypePollutionProtectionHandlerPlugin<Context>(),
   ]
 }

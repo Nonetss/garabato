@@ -11,7 +11,9 @@ import { requireAdmin } from "@/middlewares/auth"
 import {
   eventStreamResponseOptions,
   hardeningPlugins,
+  isUploadPath,
   loggingPlugin,
+  MAX_UPLOAD_BODY_BYTES,
 } from "@/routers/handler-plugins"
 
 // Relative on purpose: /scalar is served through the frontend's origin (Caddy
@@ -78,25 +80,36 @@ const docsHandler = new OpenAPIHandler(appRouter, {
   ],
 })
 
-const apiHandler = new OpenAPIHandler(appRouter, {
-  plugins: [
-    // /api is called both by browsers on the session cookie and by external
-    // clients on an API key or bearer token. Unsafe methods are covered by the
-    // SameSite=Lax session cookie; this rejects the one cross-site request a
-    // browser still sends it on: a top-level GET navigation. Server-to-server
-    // calls (API-key clients) carry no Fetch Metadata and pass.
-    new GetMethodCsrfProtectionHandlerPlugin(),
-    // Query and path values arrive as strings; coerce them to the type the
-    // input schema declares (e.g. `limit` to a number) before validation.
-    // /rpc doesn't need it: its serializer keeps the types.
-    new SmartCoercionHandlerPlugin({
-      converters: [new ZodToJsonSchemaConverter()],
-    }),
-    loggingPlugin(),
-    ...hardeningPlugins(),
-  ],
-  toFetchResponse: eventStreamResponseOptions,
-})
+function createApiHandler(maxBodySize?: number) {
+  return new OpenAPIHandler(appRouter, {
+    plugins: [
+      // /api is called both by browsers on the session cookie and by external
+      // clients on an API key or bearer token. Unsafe methods are covered by the
+      // SameSite=Lax session cookie; this rejects the one cross-site request a
+      // browser still sends it on: a top-level GET navigation. Server-to-server
+      // calls (API-key clients) carry no Fetch Metadata and pass.
+      new GetMethodCsrfProtectionHandlerPlugin(),
+      // Query and path values arrive as strings; coerce them to the type the
+      // input schema declares (e.g. `limit` to a number) before validation.
+      // /rpc doesn't need it: its serializer keeps the types.
+      new SmartCoercionHandlerPlugin({
+        converters: [new ZodToJsonSchemaConverter()],
+      }),
+      loggingPlugin(),
+      ...hardeningPlugins(maxBodySize),
+    ],
+    toFetchResponse: eventStreamResponseOptions,
+  })
+}
+
+// One handler per body limit (see the /rpc router): uploads get the larger one.
+const apiHandler = createApiHandler()
+const apiUploadHandler = createApiHandler(MAX_UPLOAD_BODY_BYTES)
+
+function apiHandlerFor(path: string) {
+  if (isUploadPath(path, "/api")) return apiUploadHandler
+  return apiHandler
+}
 
 const router = new Hono()
 
@@ -123,7 +136,7 @@ const apiMiddleware: Parameters<typeof router.use>[1] = async (c, next) => {
     context: c,
     request: c.get("requestScope"),
   })
-  const result = await apiHandler.handle(c.req.raw, {
+  const result = await apiHandlerFor(c.req.path).handle(c.req.raw, {
     prefix: "/api",
     context,
   })
