@@ -46,7 +46,7 @@ function escapeRegex(value: string): string {
 
 function buildLogQL(input: LogsQueryInput): string {
   let query =
-    '{service=~"nonete-backend|nonete-frontend"} | json | type=~"page_view|api_call"'
+    '{service=~"stack-backend|stack-frontend"} | json | type=~"page_view|api_call"'
   if (input.type) query += ` | type="${escapeLogQLString(input.type)}"`
   if (input.userId) query += ` | userId="${escapeLogQLString(input.userId)}"`
   if (input.method) query += ` | method="${escapeLogQLString(input.method)}"`
