@@ -1,0 +1,457 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-30T20:14:25.697320+00:00",
+  "title": "Design System: better",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Brand Terracotta",
+        "canonical": "oklch(0.6724 0.1308 38.7559)",
+        "tonalRamp": [
+          "oklch(0.3 0.1308 38.7559)",
+          "oklch(0.4 0.1308 38.7559)",
+          "oklch(0.5 0.1308 38.7559)",
+          "oklch(0.6 0.1308 38.7559)",
+          "oklch(0.6724 0.1308 38.7559)",
+          "oklch(0.75 0.1308 38.7559)",
+          "oklch(0.85 0.1308 38.7559)",
+          "oklch(0.95 0.1308 38.7559)"
+        ]
+      },
+      "neutral-bg": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(0.9818 0.0054 95.0986)",
+        "tonalRamp": [
+          "oklch(0.2 0.0054 95.0986)",
+          "oklch(0.35 0.0054 95.0986)",
+          "oklch(0.5 0.0054 95.0986)",
+          "oklch(0.65 0.0054 95.0986)",
+          "oklch(0.8 0.0054 95.0986)",
+          "oklch(0.9 0.0054 95.0986)",
+          "oklch(0.95 0.0054 95.0986)",
+          "oklch(0.9818 0.0054 95.0986)"
+        ]
+      },
+      "neutral-fg": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.3438 0.0269 95.7226)",
+        "tonalRamp": [
+          "oklch(0.2 0.0269 95.7226)",
+          "oklch(0.28 0.0269 95.7226)",
+          "oklch(0.3438 0.0269 95.7226)",
+          "oklch(0.45 0.02 95.7226)",
+          "oklch(0.55 0.015 95.7226)",
+          "oklch(0.7 0.01 95.7226)",
+          "oklch(0.85 0.008 95.7226)",
+          "oklch(0.95 0.005 95.7226)"
+        ]
+      },
+      "neutral-muted": {
+        "role": "neutral",
+        "displayName": "Mute",
+        "canonical": "oklch(0.5341 0.0078 97.4503)",
+        "tonalRamp": [
+          "oklch(0.25 0.0078 97.4503)",
+          "oklch(0.35 0.0078 97.4503)",
+          "oklch(0.45 0.0078 97.4503)",
+          "oklch(0.5341 0.0078 97.4503)",
+          "oklch(0.65 0.0078 97.4503)",
+          "oklch(0.75 0.0078 97.4503)",
+          "oklch(0.85 0.0078 97.4503)",
+          "oklch(0.95 0.0078 97.4503)"
+        ]
+      },
+      "neutral-card": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "oklch(0.9665 0.0067 97.3521)",
+        "tonalRamp": [
+          "oklch(0.3 0.0067 97.3521)",
+          "oklch(0.45 0.0067 97.3521)",
+          "oklch(0.6 0.0067 97.3521)",
+          "oklch(0.75 0.0067 97.3521)",
+          "oklch(0.85 0.0067 97.3521)",
+          "oklch(0.9 0.0067 97.3521)",
+          "oklch(0.9665 0.0067 97.3521)",
+          "oklch(0.99 0.003 97.3521)"
+        ]
+      },
+      "neutral-border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "oklch(0.94 0.003 97.3627)",
+        "tonalRamp": [
+          "oklch(0.35 0.003 97.3627)",
+          "oklch(0.5 0.003 97.3627)",
+          "oklch(0.65 0.003 97.3627)",
+          "oklch(0.8 0.003 97.3627)",
+          "oklch(0.88 0.003 97.3627)",
+          "oklch(0.94 0.003 97.3627)",
+          "oklch(0.97 0.003 97.3627)",
+          "oklch(0.99 0.002 97.3627)"
+        ]
+      },
+      "destructive": {
+        "role": "destructive",
+        "displayName": "Editorial Ink",
+        "canonical": "oklch(0.1908 0.002 106.5859)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 106.5859)",
+          "oklch(0.1908 0.002 106.5859)",
+          "oklch(0.3 0.002 106.5859)",
+          "oklch(0.45 0.002 106.5859)",
+          "oklch(0.6 0.002 106.5859)",
+          "oklch(0.75 0.002 106.5859)",
+          "oklch(0.88 0.002 106.5859)",
+          "oklch(0.96 0.002 106.5859)"
+        ]
+      },
+      "dark-destructive": {
+        "role": "destructive",
+        "displayName": "Dark Destructive Red",
+        "canonical": "oklch(0.6368 0.2078 25.3313)",
+        "tonalRamp": [
+          "oklch(0.3 0.2078 25.3313)",
+          "oklch(0.4 0.2078 25.3313)",
+          "oklch(0.5 0.2078 25.3313)",
+          "oklch(0.6368 0.2078 25.3313)",
+          "oklch(0.72 0.18 25.3313)",
+          "oklch(0.8 0.14 25.3313)",
+          "oklch(0.88 0.1 25.3313)",
+          "oklch(0.95 0.05 25.3313)"
+        ]
+      },
+      "dark-input": {
+        "role": "neutral",
+        "displayName": "Night Input Line",
+        "canonical": "oklch(0.34 0.005 100.2195)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 100.2195)",
+          "oklch(0.26 0.005 100.2195)",
+          "oklch(0.34 0.005 100.2195)",
+          "oklch(0.45 0.005 100.2195)",
+          "oklch(0.58 0.005 100.2195)",
+          "oklch(0.7 0.005 100.2195)",
+          "oklch(0.83 0.005 100.2195)",
+          "oklch(0.95 0.005 100.2195)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "sans": {
+        "displayName": "Sans",
+        "purpose": "Space Grotesk Variable — UI face for display and body."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Space Mono — cron expressions, IDs, durations, tabular values."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page title in PageHero, used identically on overview pages (inside PageShell) and detail pages (inside Detail.astro's own frame). Single line, never eyebrowed; the `display` role of Text."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Tile and card titles (SurfaceCard, collection cards); the `headline` role of Text."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Name of a list row, picker result or selected entity at body size; the `title` role of Text."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, form values and MetadataCell fact values; the `body` role of Text."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary copy: PageHero descriptions and counters, hints, tile descriptions, inline errors; the `meta` role of Text."
+      },
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "A single big number in an overview fact cell; the `stat` role of Text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Micro-caps in fact rows, form fields, filters, section headings (SectionHeading) and tile subaccess. Signature detail that ties the whole system together; the `label` role of Text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-sm",
+        "value": "0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1)",
+        "purpose": "Focus ring, dialog overlay, and navbar scroll cue only. Never decorative on rows or tiles."
+      },
+      {
+        "name": "floating",
+        "value": "0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1)",
+        "purpose": "shadow-lg on the floating back-to-top button only — the Floating-Layer Exception. Nothing in page flow uses it."
+      }
+    ],
+    "motion": [
+      {
+        "name": "dash-enter",
+        "value": "animation: dash-enter 0.3s ease-out both; animation-delay: var(--dash-delay, 0ms);",
+        "purpose": "Staggered list entrance. Apply per-item delay ~40ms via --dash-delay. Disabled under prefers-reduced-motion: reduce, landing directly on the resting state (opacity: 1, transform: none)."
+      },
+      {
+        "name": "dash-pop",
+        "value": "animation: dash-pop 0.25s ease-out both; animation-delay: var(--dash-delay, 0ms);",
+        "purpose": "Pop-in for icons nested inside dash-enter containers. Disabled under prefers-reduced-motion: reduce."
+      },
+      {
+        "name": "floating-enter",
+        "value": "200ms fade-in 0 + zoom-in 75% + slide-in-from-bottom 1rem",
+        "purpose": "Back-to-top button appearing; reversed on exit, then unmounted."
+      },
+      {
+        "name": "action-bar-slide",
+        "value": "transform 200ms ease-out (translate-y-0 ↔ translate-y-full)",
+        "purpose": "Mobile ListActionBar hiding on scroll down and returning on scroll up."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Brand Terracotta background, white text. Reserved for primary CTAs.",
+      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
+      "css": ".ds-btn-primary { background-color: oklch(0.6724 0.1308 38.7559); color: oklch(1 0 0); padding: 0.5rem 1.5rem; border-radius: 0.25rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500; border: none; cursor: pointer; transition: background-color 0.2s ease-out; } .ds-btn-primary:hover { background-color: oklch(0.6 0.1308 38.7559); } .ds-btn-primary:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Hairline border cancel/secondary action. Hover muted wash only.",
+      "html": "<button class=\"ds-btn-outline\">Cancelar</button>",
+      "css": ".ds-btn-outline { background: transparent; color: oklch(0.3438 0.0269 95.7226); padding: 0.5rem 1.25rem; border: 1px solid oklch(0.94 0.003 97.3627); border-radius: 0.25rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 0.15s ease-out; } .ds-btn-outline:hover { background-color: oklch(0.9665 0.0067 97.3521 / 0.55); } .ds-btn-outline:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-base",
+      "description": "Compact form input. Hairline border. Focus: Brand Terracotta ring.",
+      "html": "<input type=\"text\" placeholder=\"Valor\" class=\"ds-input\" />",
+      "css": ".ds-input { height: 2rem; width: 100%; padding: 0.5rem 0.75rem; border: 1px solid oklch(0.92 0.004 98.3528); border-radius: 0.25rem; background-color: oklch(1 0 0); color: oklch(0.3438 0.0269 95.7226); font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; font-size: 0.875rem; transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out; } .ds-input:focus { outline: none; border-color: oklch(0.6724 0.1308 38.7559); box-shadow: 0 0 0 3px oklch(0.6724 0.1308 38.7559 / 0.12); }"
+    },
+    {
+      "name": "Page Hero",
+      "kind": "custom",
+      "refersTo": "page-hero-title",
+      "description": "Flat header: primary icon, title, description, optional meta/action. No icon box.",
+      "html": "<header class=\"ds-page-hero\"><div class=\"ds-page-hero-icon\" aria-hidden=\"true\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><polyline points=\"12 6 12 12 16 14\"/></svg></div><div><h1 class=\"ds-page-hero-title\">Crons</h1><p class=\"ds-page-hero-desc\">Jobs programados en UTC</p></div><button class=\"ds-page-hero-action\">Nuevo</button></header>",
+      "css": ".ds-page-hero { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-page-hero-icon { display: flex; width: 1.25rem; height: 1.25rem; align-items: center; justify-content: center; color: oklch(0.6724 0.1308 38.7559); flex-shrink: 0; margin-right: 0.625rem; } .ds-page-hero-title { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.025em; line-height: 1.2; color: oklch(0.3438 0.0269 95.7226); } .ds-page-hero-desc { margin: 0.125rem 0 0; font-size: 0.8125rem; line-height: 1.625; color: oklch(0.5341 0.0078 97.4503); } .ds-page-hero-action { background-color: oklch(0.6724 0.1308 38.7559); color: oklch(1 0 0); border: none; border-radius: 0.25rem; padding: 0.4rem 0.9rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; } .ds-page-hero-action:hover { background-color: oklch(0.6 0.1308 38.7559); } .ds-page-hero-action:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; }"
+    },
+    {
+      "name": "List Row",
+      "kind": "custom",
+      "refersTo": "row-list-container",
+      "description": "One rounded-xl bg-card/40 divide-y container; rows hover muted, status via dots.",
+      "html": "<div class=\"ds-list\"><div class=\"ds-list-row\"><span class=\"ds-dot ds-dot-alive\"></span><span class=\"ds-list-name\">nightly-backup</span><span class=\"ds-list-meta\">0 2 * * *</span></div><div class=\"ds-list-row\"><span class=\"ds-dot ds-dot-idle\"></span><span class=\"ds-list-name\">health-ping</span><span class=\"ds-list-meta\">*/5 * * * *</span></div></div>",
+      "css": ".ds-list { border: 1px solid oklch(0.94 0.003 97.3627); border-radius: 0.75rem; background: oklch(0.9665 0.0067 97.3521 / 0.4); overflow: hidden; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-list-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-bottom: 1px solid oklch(0.94 0.003 97.3627); transition: background-color 0.15s ease-out; } .ds-list-row:last-child { border-bottom: none; } .ds-list-row:hover { background-color: oklch(0.94 0.003 97.3627 / 0.45); } .ds-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; flex-shrink: 0; } .ds-dot-alive { background: oklch(0.6724 0.1308 38.7559); } .ds-dot-idle { background: oklch(0.94 0.003 97.3627); } .ds-list-name { flex: 1; font-size: 0.875rem; font-weight: 500; letter-spacing: -0.01em; color: oklch(0.3438 0.0269 95.7226); } .ds-list-meta { font-family: 'Space Mono', ui-monospace, monospace; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: oklch(0.5341 0.0078 97.4503); }"
+    },
+    {
+      "name": "State Card",
+      "kind": "card",
+      "refersTo": "state-card-default",
+      "description": "Dashed placeholder for empty/loading/error. Flat icon, no box.",
+      "html": "<div class=\"ds-state-card\"><div class=\"ds-state-icon\" aria-hidden=\"true\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 8v4\"/><path d=\"M12 16h.01\"/></svg></div><p class=\"ds-state-title\">Sin resultados</p><p class=\"ds-state-desc\">Ajusta los filtros o crea un nuevo job.</p></div>",
+      "css": ".ds-state-card { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; padding: 4rem 1.5rem; border: 1px dashed oklch(0.94 0.003 97.3627); border-radius: 0.75rem; background: oklch(0.9665 0.0067 97.3521 / 0.4); font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-state-icon { width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; color: oklch(0.5341 0.0078 97.4503); } .ds-state-title { margin: 0; font-size: 1rem; font-weight: 500; letter-spacing: -0.025em; color: oklch(0.3438 0.0269 95.7226); } .ds-state-desc { margin: 0; max-width: 24rem; font-size: 0.875rem; line-height: 1.625; color: oklch(0.5341 0.0078 97.4503); }"
+    },
+    {
+      "name": "Form Dialog",
+      "kind": "custom",
+      "refersTo": "form-dialog-header",
+      "description": "Quiet-editorial dialog: p-0 frame, header/footer hairlines, FormField body.",
+      "html": "<div class=\"ds-form-dialog\" role=\"dialog\" aria-labelledby=\"ds-form-title\"><header class=\"ds-form-header\"><h2 id=\"ds-form-title\" class=\"ds-form-title\">Nuevo cron</h2><p class=\"ds-form-desc\">Define el handler y la expresión UTC.</p></header><div class=\"ds-form-body\"><label class=\"ds-field-label\">Nombre</label><input class=\"ds-input\" type=\"text\" placeholder=\"nightly-backup\" /></div><footer class=\"ds-form-footer\"><button class=\"ds-btn-outline\" type=\"button\">Cancelar</button><button class=\"ds-btn-primary\" type=\"button\">Crear</button></footer></div>",
+      "css": ".ds-form-dialog { max-width: 32rem; border: 1px solid oklch(0.94 0.003 97.3627); border-radius: 0.75rem; background: oklch(0.9818 0.0054 95.0986); overflow: hidden; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-form-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid oklch(0.94 0.003 97.3627); } .ds-form-title { margin: 0; font-size: 1rem; font-weight: 600; letter-spacing: -0.025em; color: oklch(0.3438 0.0269 95.7226); } .ds-form-desc { margin: 0.375rem 0 0; font-size: 0.8125rem; line-height: 1.625; color: oklch(0.5341 0.0078 97.4503); } .ds-form-body { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; } .ds-field-label { font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(0.5341 0.0078 97.4503); } .ds-form-footer { display: flex; justify-content: flex-end; gap: 0.5rem; padding: 1rem 1.5rem; border-top: 1px solid oklch(0.94 0.003 97.3627); } .ds-form-dialog .ds-input { height: 2rem; padding: 0.5rem 0.75rem; border: 1px solid oklch(0.92 0.004 98.3528); border-radius: 0.25rem; background: oklch(1 0 0); color: oklch(0.3438 0.0269 95.7226); font-size: 0.875rem; } .ds-form-dialog .ds-input:focus { outline: none; border-color: oklch(0.6724 0.1308 38.7559); box-shadow: 0 0 0 3px oklch(0.6724 0.1308 38.7559 / 0.12); } .ds-form-dialog .ds-btn-primary { background-color: oklch(0.6724 0.1308 38.7559); color: oklch(1 0 0); padding: 0.5rem 1.25rem; border: none; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; } .ds-form-dialog .ds-btn-primary:hover { background-color: oklch(0.6 0.1308 38.7559); } .ds-form-dialog .ds-btn-outline { background: transparent; color: oklch(0.3438 0.0269 95.7226); padding: 0.5rem 1.25rem; border: 1px solid oklch(0.94 0.003 97.3627); border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; } .ds-form-dialog .ds-btn-outline:hover { background-color: oklch(0.9665 0.0067 97.3521 / 0.55); }"
+    },
+    {
+      "name": "Collapsible Filters",
+      "kind": "custom",
+      "refersTo": "field-label",
+      "description": "Collapsed-by-default Filtros accordion; active count as typeset text, never Badge.",
+      "html": "<div class=\"ds-filters\"><button type=\"button\" class=\"ds-filters-trigger\" aria-expanded=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\"/><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\"/><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\"/><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\"/><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\"/><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\"/><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\"/><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\"/><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\"/></svg>Filtros<span class=\"ds-filters-count\">2 activos</span></button><div class=\"ds-filters-body\"><label class=\"ds-field-label\">Estado</label><input class=\"ds-input\" type=\"text\" placeholder=\"Activo\" /></div></div>",
+      "css": ".ds-filters { font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-filters-trigger { display: flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; width: 100%; padding: 0.5rem 0; background: transparent; border: none; font-size: 0.875rem; font-weight: 500; color: oklch(0.3438 0.0269 95.7226); cursor: pointer; } .ds-filters-trigger svg { color: oklch(0.5341 0.0078 97.4503); flex-shrink: 0; } .ds-filters-count { font-weight: 400; font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: oklch(0.5341 0.0078 97.4503); } .ds-filters-body { display: grid; gap: 0.75rem; padding-bottom: 0.5rem; } .ds-filters .ds-field-label { display: block; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(0.5341 0.0078 97.4503); margin-bottom: 0.375rem; } .ds-filters .ds-input { height: 2rem; width: 100%; padding: 0.5rem 0.75rem; border: 1px solid oklch(0.92 0.004 98.3528); border-radius: 0.25rem; background: oklch(1 0 0); color: oklch(0.3438 0.0269 95.7226); font-size: 0.875rem; } .ds-filters .ds-input:focus { outline: none; border-color: oklch(0.6724 0.1308 38.7559); box-shadow: 0 0 0 3px oklch(0.6724 0.1308 38.7559 / 0.12); }"
+    },
+    {
+      "name": "Field Label",
+      "kind": "custom",
+      "refersTo": "field-label",
+      "description": "Micro-caps signature label. Full-opacity muted-foreground for WCAG AA.",
+      "html": "<p class=\"ds-field-label-solo\">Expresión cron</p>",
+      "css": ".ds-field-label-solo { margin: 0; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(0.5341 0.0078 97.4503); }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "section-heading",
+      "description": "Micro-caps section title with an optional (n) count and a right-aligned action; PageHero one level down.",
+      "html": "<div class=\"ds-section-heading\"><h2 class=\"ds-section-title\">Miembros <span class=\"ds-section-count\">(12)</span></h2><button class=\"ds-section-action\" type=\"button\">Añadir</button></div>",
+      "css": ".ds-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; max-width: 32rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-section-title { margin: 0; font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: oklch(0.5341 0.0078 97.4503); } .ds-section-count { font-weight: 400; letter-spacing: normal; text-transform: none; font-variant-numeric: tabular-nums; } .ds-section-action { background-color: oklch(0.6724 0.1308 38.7559); color: oklch(1 0 0); border: none; border-radius: 0.25rem; padding: 0.3rem 0.75rem; font-size: 0.8125rem; font-weight: 500; cursor: pointer; } .ds-section-action:hover { background-color: oklch(0.6 0.1308 38.7559); } .ds-section-action:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; }"
+    },
+    {
+      "name": "Nav Pill (active)",
+      "kind": "nav",
+      "description": "Navbar hub active state: primary/10 wash + primary text.",
+      "html": "<a class=\"ds-nav-pill ds-nav-pill-active\" href=\"#\">Crons</a>",
+      "css": ".ds-nav-pill { display: inline-flex; align-items: center; padding: 0.375rem 0.75rem; border-radius: 0.25rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; font-size: 0.75rem; font-weight: 500; text-decoration: none; color: oklch(0.5341 0.0078 97.4503); transition: background-color 0.15s ease-out, color 0.15s ease-out; } .ds-nav-pill:hover { background-color: oklch(0.94 0.003 97.3627 / 0.45); color: oklch(0.3438 0.0269 95.7226); } .ds-nav-pill:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; } .ds-nav-pill-active { background-color: oklch(0.6724 0.1308 38.7559 / 0.1); color: oklch(0.6724 0.1308 38.7559); }"
+    },
+    {
+      "name": "Status Tag",
+      "kind": "custom",
+      "description": "Dot + micro-caps state label; the typographic replacement for a status badge.",
+      "html": "<div class=\"ds-tags\"><span class=\"ds-tag\"><span class=\"ds-tag-dot ds-tag-alive\"></span>Activo</span><span class=\"ds-tag\"><span class=\"ds-tag-dot ds-tag-ok\"></span>Ok</span><span class=\"ds-tag\"><span class=\"ds-tag-dot ds-tag-paused\"></span>Pausado</span><span class=\"ds-tag\"><span class=\"ds-tag-dot ds-tag-failed\"></span>Fallido</span></div>",
+      "css": ".ds-tags { display: flex; gap: 1.25rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-tag { display: inline-flex; align-items: center; gap: 0.375rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: oklch(0.5341 0.0078 97.4503); } .ds-tag-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; } .ds-tag-alive { background: oklch(0.6724 0.1308 38.7559); } .ds-tag-ok { background: oklch(0.3438 0.0269 95.7226); } .ds-tag-paused { background: oklch(0.94 0.003 97.3627); box-shadow: inset 0 0 0 1px oklch(0.92 0.004 98.3528); } .ds-tag-failed { background: oklch(0.1908 0.002 106.5859); }"
+    },
+    {
+      "name": "Hint",
+      "kind": "custom",
+      "refersTo": "hint",
+      "description": "Inverted bubble with an arrow that names an icon-only control on hover or focus; replaces the native title tooltip.",
+      "html": "<div class=\"ds-hint-demo\"><button class=\"ds-hint-trigger\" type=\"button\" aria-label=\"Editar nombre\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\"/><path d=\"m15 5 4 4\"/></svg></button><span class=\"ds-hint\" role=\"tooltip\">Editar nombre</span></div>",
+      "css": ".ds-hint-demo { position: relative; display: inline-flex; flex-direction: column-reverse; align-items: center; gap: 0.6875rem; padding-top: 0.5rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-hint-trigger { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 0.25rem; background: transparent; color: oklch(0.5341 0.0078 97.4503); cursor: pointer; transition: background-color 0.15s ease-out, color 0.15s ease-out; } .ds-hint-trigger:hover, .ds-hint-trigger:focus-visible { background-color: oklch(0.9665 0.0067 97.3521 / 0.6); color: oklch(0.3438 0.0269 95.7226); outline: none; } .ds-hint-trigger:focus-visible { box-shadow: 0 0 0 2px oklch(0.6724 0.1308 38.7559); } .ds-hint { position: relative; padding: 0.375rem 0.75rem; border-radius: 0.25rem; background: oklch(0.3438 0.0269 95.7226); color: oklch(0.9818 0.0054 95.0986); font-size: 0.75rem; text-wrap: balance; white-space: nowrap; } .ds-hint::after { content: ''; position: absolute; left: 50%; bottom: -4px; width: 8px; height: 8px; background: oklch(0.3438 0.0269 95.7226); transform: translateX(-50%) rotate(45deg); }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "Removable active-filter chip; the only chip in the product. Exclude variant uses the destructive ramp.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip\"><span>Rol: admin</span><button class=\"ds-chip-x\" aria-label=\"Quitar filtro: Rol: admin\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></span><span class=\"ds-chip ds-chip-exclude\"><span>Sin: baneados</span><button class=\"ds-chip-x\" aria-label=\"Quitar filtro: Sin: baneados\"><svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></span><button class=\"ds-chip-clear\">Limpiar</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-chip { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.75rem; padding: 0 0.25rem 0 0.625rem; border: 1px solid oklch(0.94 0.003 97.3627); border-radius: calc(0.375rem - 2px); font-size: 0.75rem; color: oklch(0.3438 0.0269 95.7226); } .ds-chip-exclude { border-color: oklch(0.1908 0.002 106.5859 / 0.3); color: oklch(0.1908 0.002 106.5859); } .ds-chip-x { display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border: 0; border-radius: calc(0.375rem - 4px); background: transparent; color: oklch(0.5341 0.0078 97.4503); cursor: pointer; transition: background-color 0.15s, color 0.15s; } .ds-chip-x:hover { background: oklch(0.94 0.003 97.3627); color: oklch(0.3438 0.0269 95.7226); } .ds-chip-x:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 1px; } .ds-chip-clear { margin-left: 0.25rem; height: 2rem; padding: 0 0.625rem; border: 0; border-radius: calc(0.375rem - 2px); background: transparent; font: inherit; font-size: 0.75rem; color: oklch(0.5341 0.0078 97.4503); cursor: pointer; } .ds-chip-clear:hover { background: oklch(0.94 0.003 97.3627 / 0.45); color: oklch(0.3438 0.0269 95.7226); }"
+    },
+    {
+      "name": "Segmented Picker",
+      "kind": "custom",
+      "refersTo": "segmented-option-selected",
+      "description": "Compact radiogroup grid; selection inverts to ink, never the accent.",
+      "html": "<div class=\"ds-seg\" role=\"radiogroup\" aria-label=\"Día\"><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">L</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"true\">M</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">X</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">J</button><button class=\"ds-seg-opt\" role=\"radio\" aria-checked=\"false\">V</button></div>",
+      "css": ".ds-seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.25rem; max-width: 16rem; font-family: 'Space Grotesk Variable', 'Space Grotesk', sans-serif; } .ds-seg-opt { height: 2rem; border: 1px solid oklch(0.92 0.004 98.3528); border-radius: calc(0.375rem - 2px); background: transparent; font: inherit; font-size: 0.75rem; color: oklch(0.5341 0.0078 97.4503); cursor: pointer; transition: background-color 0.15s, color 0.15s; } .ds-seg-opt:hover { background: oklch(0.94 0.003 97.3627 / 0.45); color: oklch(0.3438 0.0269 95.7226); } .ds-seg-opt[aria-checked=\"true\"] { background: oklch(0.3438 0.0269 95.7226); border-color: oklch(0.3438 0.0269 95.7226); color: oklch(0.9818 0.0054 95.0986); } .ds-seg-opt:focus-visible { outline: none; box-shadow: 0 0 0 2px oklch(0.6724 0.1308 38.7559 / 0.5); }"
+    },
+    {
+      "name": "Scroll-to-top",
+      "kind": "button",
+      "refersTo": "scroll-to-top",
+      "description": "Floating round primary button; the one sanctioned resting shadow.",
+      "html": "<button class=\"ds-totop\" aria-label=\"Volver arriba\" title=\"Volver arriba\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m5 12 7-7 7 7\"/><path d=\"M12 19V5\"/></svg></button>",
+      "css": ".ds-totop { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border: 0; border-radius: 9999px; background: oklch(0.6724 0.1308 38.7559); color: oklch(1 0 0); cursor: pointer; box-shadow: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1); transition: filter 0.15s, transform 0.2s ease-out; } .ds-totop:hover { filter: brightness(0.95); } .ds-totop:active { transform: scale(0.96); } .ds-totop:focus-visible { outline: 2px solid oklch(0.6724 0.1308 38.7559); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Espacio de Trabajo Sereno.",
+    "overview": "better is a quiet-editorial technical console. Every page reads like a watchmaker's catalogue page or a typeset datasheet: a single primary hero, a facts strip or list, and a state column — never a wall of cards. The personality is **typography-first, monochrome-by-default, one-accent-by-policy**: hierarchy comes from size, weight, tracking, and tabular numerals, not from a rainbow of semantic colors. The single warm accent (Brand Terracotta) is reserved for the hero icon, the primary CTA, and the \"alive\" state dot. Everything else is the foreground/muted-foreground/border vocabulary of a printed page.\n\nDensity is calm rather than compact. Containers are flat by default (no shadows, no glows); depth comes from `border-y` rules, `divide-y` lists, and one optional `rounded-xl border bg-card/40` for navigation tiles or state blocks. Motion is short and useful: a 0.3s staggered entrance (`dash-enter`, ~40ms per item) and a 0.25s pop (`dash-pop`) for nested icons. The whole product lives in a `6xl` rhythm, framed by `PageShell` for list/overview pages and by `Detail.astro`'s own frame for detail routes, always headed by `PageHero`. Anti-references: \"shadcn by default with badge primary + badge outline + icon box primary/15\", and any surface that uses cards where a `divide-y` list would do.\n\n**The Marginalia Rule.** Every screen must pass this test: if the design \"shows up\" because it adds color, a card, a glow, or a chip cluster, it is almost certainly out of style. It earns notice by making the eye land on the name, the expression, and the state — not on the chrome.",
+    "keyCharacteristics": [
+      "Monochrome page; one warm accent reserved for three jobs.",
+      "Hierarchy lives in type, not color.",
+      "Lists are `divide-y`, not free-floating cards.",
+      "Hairlines (`border-y`, `divide-y`, dialog `border-b`/`border-t`) carry structure.",
+      "Motion is staggered entrance + pop, never decorative."
+    ],
+    "rules": [
+      {
+        "name": "The Marginalia Rule",
+        "body": "Every screen must pass this test: if the design \"shows up\" because it adds color, a card, a glow, or a chip cluster, it is almost certainly out of style. It earns notice by making the eye land on the name, the expression, and the state — not on the chrome.",
+        "section": "overview"
+      },
+      {
+        "name": "The One Accent Rule",
+        "body": "Brand Terracotta appears on ≤ 3 elements per screen: hero icon, primary CTA, alive-state dot. It is **never** used for badges, success indicators, info, or warning. Its rarity is the point. The one standing exception is the floating back-to-top control (see Components → Scroll-to-top), which only exists once the page has scrolled well past the hero, so the two never share a viewport in practice.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Green-No-Blue-No-Amber Rule",
+        "body": "Inventing semantic colors for success/info/warning is prohibited. Success is communicated by a `bg-foreground` dot and the word \"ok\"; failure is the destructive ramp above; everything else is mute.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular-Nums Rule",
+        "body": "Any column or list of values rendered with `font-mono` must include `tabular-nums` so digits line up. Default Tailwind doesn't apply it; add it on every mono block that aligns.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label-Not-Badge Rule",
+        "body": "Field labels, counts, and statuses are typeset as **micro-caps text**, not as `Badge` components. If a value can be expressed as `<FieldLabel/>` it must be.",
+        "section": "typography"
+      },
+      {
+        "name": "The Role-Not-Utility Rule",
+        "body": "Text is set through a `Text` role, never by rebuilding `font-medium text-label uppercase tracking-[0.12em]` or `text-xs text-muted-foreground` at the call site. A new recurring type style becomes a new role (token in `global.css`, recipe in `textVariants`, name registered in `cn()`), not a copied class string.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces are flat at rest. Shadows appear only as a response to state (focus ring, dialog overlay, dropdown menus) and use the small Tailwind/Shadcn ramp. Decorative `shadow-md` / `shadow-lg` / `shadow-xl` on rows, tiles, or heroes is out of style.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Floating-Layer Exception",
+        "body": "Elements that float over scrolling content — the fixed `ListActionBar` and the back-to-top control — need to read as detached from the page beneath them. The bar does it with a hairline `border-t` over a 95% translucent, blurred background (the same recipe as the navbar); the back-to-top button carries the system's only resting `shadow-lg`, because a round control hovering over arbitrary content has no hairline to lean on. Nothing anchored in the page flow inherits this.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Icon Rule",
+        "body": "If crons use the `Clock` icon, that icon **must** appear in:",
+        "section": "icons"
+      }
+    ],
+    "dos": [
+      "**Do** use `PageShell` to frame list/overview authenticated pages; let it own `QueryProvider`, padding, and max-width. Detail routes use `Detail.astro` (bare `QueryProvider` + `PageHero`); auth keeps its own frame.",
+      "**Do** keep the page header to one icon, one title, one description, and one primary action. Counters and statuses are typeset, not badged.",
+      "**Do** express state as a dot (`bg-primary` / `bg-border` / `bg-destructive` / `bg-foreground`) plus a micro-caps label, never as a filled `Badge`.",
+      "**Do** reserve Brand Terracotta for hero icon, primary CTA, and \"alive\" state dot.",
+      "**Do** wrap list rows in one `divide-y` container; one container per page.",
+      "**Do** use `FieldLabel` for form labels, `SectionHeading` for section titles and the `label` role of `Text` for every other micro-caps label; never hand-build the class string.",
+      "**Do** set text through a `Text` role (or `textVariants` on a component's `className`); use the `data` role (Space Mono, `tabular-nums`) for cron expressions, durations, ISO timestamps, and IDs.",
+      "**Do** name every icon-only control with a `Hint` bubble and keep its `aria-label`.",
+      "**Do** animate list entrances with `dash-enter` and a `--dash-delay` step of ~40ms.",
+      "**Do** reach for `FormDialog` + `FormField` for every create/edit dialog; let it own header/footer hairlines.",
+      "**Do** drive list-page filters through `ResourceFilters` descriptors: `CollapsibleFilters` at `md+`, `ListActionBar` + `FilterSheet` below; never a hand-rolled always-open filter row.",
+      "**Do** show active filters as `FilterChips` above the list, with a 44px hit area on every remove control.",
+      "**Do** keep every fixed bottom element clear of `env(safe-area-inset-bottom)` and give its controls 44px touch targets.",
+      "**Do** express selection in compact pickers by inverting to ink (`bg-foreground text-background`), not with the accent.",
+      "**Do** keep `DialogHeader` `border-b` and `DialogFooter` `border-t`; long bodies separated with `border-t`.",
+      "**Do** reach for `AppLink` for internal routing; raw `<a>` is out.",
+      "**Do** format dates through `@/lib/format`; never reinvent `formatDate`.",
+      "**Do** import icons from `@/lib/icon-registry`; never import Lucide icons directly. One icon per feature, consistent everywhere."
+    ],
+    "donts": [
+      "**Don't** wrap an icon in `rounded-lg bg-primary/15 text-primary` on a row or tile; the flat accent is the accent.",
+      "**Don't** invent semantic colors for success/info/warning; success is `bg-foreground` + word, failure is destructive, neutral state is `bg-border`.",
+      "**Don't** render rows as free-floating cards with `shadow-md`; one `divide-y` container.",
+      "**Don't** count things with `Badge variant=\"outline\"`; typeset `3 activos · 5 total` as text.",
+      "**Don't** nest cards (`Card` inside `Card`, or `Card` around a facts grid); `border-y` + `<dl>` is enough.",
+      "**Don't** use gradients, glow, or decorative `shadow-lg`/`shadow-xl` in product chrome. The floating back-to-top button is the single sanctioned resting shadow.",
+      "**Don't** build chip/pill clusters in the hero or on tiles; subaccess is a typographic list. The only chips in the product are removable active-filter chips.",
+      "**Don't** add another `<main class=\"container…\">` in the `.astro`; `PageShell` is the frame.",
+      "**Don't** use `formatDate` / `formatDateTime` locals; the helper `@/lib/format` is the source of truth.",
+      "**Don't** link internally with raw `<a>`; `AppLink` is the source of truth.",
+      "**Don't** use generic `DialogContent` + `Label` for forms; reach for `FormDialog` + `FieldLabel`.",
+      "**Don't** reach for `Badge`, `Button` chips, or primary-colored borders when type and dots would do.",
+      "**Don't** rely on the browser's native `title` tooltip on a control; it carries no design. Use `Hint`.",
+      "**Don't** hand-build initials tiles; `UserAvatar` owns the monochrome fill and initials.",
+      "**Don't** import Lucide icons directly (`import { Clock } from \"lucide-react\"`); always go through `icon-registry`. If a feature's icon isn't registered, add it to the registry first."
+    ]
+  }
+}

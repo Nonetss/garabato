@@ -1,110 +1,178 @@
 # better
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Astro, Hono, ORPC, and more.
+A Turborepo monorepo: an Astro frontend and a Hono/oRPC backend (TypeScript,
+Bun) behind a Caddy gateway. It starts from the user's template
+([stack](https://git.noneweb.online/nonete/stack)) and keeps its packages
+(`@nonete/*`), conventions and visual system, without the template's Python
+services, gRPC or agent chat.
+
+## Architecture
+
+Browser → gateway (Caddy) → Astro frontend and Hono/oRPC backend →
+PostgreSQL, with structured logs to Loki.
 
 ## Features
 
-- **TypeScript** - For type safety and improved developer experience
-- **Astro** - The web framework for content-driven websites
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Hono** - Lightweight, performant server framework
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Biome** - Linting and formatting
-- **Turborepo** - Optimized monorepo build system
-
-## Getting Started
-
-First, install the dependencies:
-
-```bash
-bun install
-```
-
-## Database Setup
-
-This project uses PostgreSQL with Drizzle ORM.
-
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/server/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
-
-```bash
-bun run db:push
-```
-
-Then, run the development server:
-
-```bash
-bun run dev
-```
-
-Open [http://localhost:4321](http://localhost:4321) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
-
-## Environment Configuration
-
-Each app owns its environment schema in `.env.schema`. Varlock generates `src/env.ts` during installation; run `bun run env:generate` after changing a schema. Commit schemas, and keep secrets in ignored env files or your deployment platform.
-
-Import the generated `ENV` accessor in application code. Shared database and auth packages receive configuration or initialized clients from the application. See [Varlock's monorepo guide](https://varlock.dev/guides/monorepos/).
-
-Bun's automatic env loading is disabled in `bunfig.toml`; the framework integration or server bootstrap loads Varlock. Node deployments must include Varlock and its dependencies alongside the app schema.
-
-Run standalone Node/Bun tools that use Varlock from the owning app directory so they load that app's schema and env files. `env:generate` only generates TypeScript files; it does not initialize environment values in a subsequent command.
-
-## Deployment
-
-### Docker Compose
-
-- Target: web + server
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
-
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
-
-For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
-
-## Git Hooks and Formatting
-
-- Run checks: `bun run check`
+- **Astro + TailwindCSS** — SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI)
+- **Hono + oRPC** — type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
+- **Better Auth** — email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
+- **Drizzle + PostgreSQL** — schema per domain; committed migrations applied automatically when the backend starts
+- **Cron scheduler** — persistent jobs that run cron-eligible API procedures, managed at `/crons`
+- **Collections, comments and entity icons** — favorites/custom collections, threaded comments and custom icons over any resource
+- **Activity log** — pino logs shipped to Loki and browsable at `/admin/logs`
+- **PWA** — installable, with a web manifest and a service worker
+- **Bun + Turborepo** — package manager and monorepo task runner
+- **Biome** — linting and formatting
+- **OpenSpec** (`openspec/`) — spec-driven documentation of every capability
 
 ## Project Structure
 
-```
+```txt
 better/
 ├── apps/
-│   ├── web/         # Frontend application (Astro)
-│   └── server/      # Backend API (Hono, ORPC)
-├── packages/
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+│   ├── frontend/       # Astro app (TypeScript, Bun)
+│   ├── backend/        # Hono + oRPC API and cron scheduler (TypeScript, Bun)
+│   └── gateway/        # Caddy: public HTTP entry point (not a workspace)
+├── packages/           # Shared TypeScript libraries (bun workspaces, @nonete/*)
+│   ├── api/            # oRPC contract + handlers, versioned per-feature
+│   ├── auth/           # Better Auth config and permissions
+│   ├── cron/           # Scheduler and cron job service
+│   ├── db/             # Drizzle schema, migrations, seed
+│   ├── env/            # @t3-oss/env-core validated env access
+│   ├── logger/         # Shared pino logger (+ Loki stream)
+│   └── config/         # Shared tsconfig base
+├── openspec/           # Capability specs (openspec/specs) and change proposals
+└── scripts/
+    ├── setup-dev.sh    # Generates the local root .env with real secrets
+    └── bootstrap.sh    # Interactive installer: .env + docker compose (prod)
 ```
+
+Imports: `@nonete/<pkg>` between workspaces, `#…` subpath imports (each
+package's `package.json` `imports`) inside a package, and `@/…` inside an app.
+
+## Getting Started
+
+Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, and Docker (for the
+database, Loki and the containerized stacks).
+
+```bash
+bun install
+bun run setup:dev   # writes the root .env with real secrets and the admin seed
+```
+
+The whole repo is configured from one `.env` at the repo root; every app,
+package, script and compose file reads it. `.env.example` lists every variable
+with its default. `setup:dev` leaves an existing `.env` untouched unless you
+pass `--force`, and prints the admin credentials it generated.
+
+### Database
+
+`bun run db:start` starts PostgreSQL from `compose.dev.yml` on
+`POSTGRES_PORT` (default `5432`), matching `DATABASE_URL` in `.env`. If that
+port is taken on your machine, change both. There is no manual schema step: on
+startup the backend applies the committed migrations from
+`packages/db/src/migrations/` and creates the admin user from `ADMIN_EMAIL` /
+`ADMIN_PASSWORD`. After changing the schema, generate a migration with
+`bun run db:generate` and restart the backend.
+
+### Run everything
+
+```bash
+bun run dev        # Docker dev stack with hot reload (database included); Ctrl+C stops
+bun run dev:local  # the same apps natively through Turbo (start the db with `bun run db:start`)
+```
+
+- Frontend: [http://localhost:4321](http://localhost:4321)
+- Backend API: [http://localhost:3000](http://localhost:3000) — API docs at [http://localhost:4321/scalar](http://localhost:4321/scalar) (admin session)
+- Gateway (optional in dev, `bun run gateway`): [http://localhost:8080](http://localhost:8080), production-like routing in front of both apps
+
+### Develop in Docker (hot reload)
+
+```bash
+bun run dev        # build, start and watch; Ctrl+C stops
+bun run dev:down   # remove the dev containers
+```
+
+`compose.dev.yml` runs the frontend (`astro dev`), the backend (`bun --hot`)
+and the gateway from `apps/*/Dockerfile.dev`, plus the `db` service. The apps
+run on the host network and read the root `.env` unchanged, so they use the
+same ports and `localhost` addresses as native dev. `docker compose watch`
+copies your edits into the containers:
+
+| You edit | What happens |
+|---|---|
+| `apps/*/src`, `packages/*/src`, `apps/frontend/public` | synced, hot reload picks it up |
+| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile` | synced, that service restarts |
+| `package.json`, `bun.lock` | the affected images rebuild |
+
+- It uses the same ports as native dev (`4321`, `3000`, `8080`): run one or the other, not both.
+- Host networking needs Linux (or Docker Desktop with host networking enabled).
+- Requires Docker Compose ≥ 2.22 (`watch`).
+
+## Deployment
+
+### Docker Compose (local, builds from source)
+
+- Config: `compose.yml` — builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL) and `loki`. Only the gateway publishes a port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`.
+- Build images: `bun run docker:build`
+- Start: `bun run docker:up`
+- Logs: `bun run docker:logs`
+- Stop: `bun run docker:down`
+
+Environment variables come from the root `.env` (`env_file:`), with
+container-networking values (service hostnames, ports, the database URL)
+overridden in the compose file.
+
+### Docker Compose (production, prebuilt images)
+
+- Config: `compose.prod.yml` — pulls the `better-frontend`, `better-backend` and `better-gateway` images (published by `.github/workflows/docker-build.yml` on pushes to `main`), plus `db` (Postgres) and `loki`
+- Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port
+- One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
+
+For a fresh server, `scripts/bootstrap.sh` is a standalone installer — it
+prompts for the public URL and admin credentials, generates `.env`, downloads
+`compose.prod.yml` if missing, and can start the stack:
+
+```bash
+curl -fsSL https://git.noneweb.online/nonete/better/raw/branch/main/scripts/bootstrap.sh | bash
+```
+
+Session cookies are `Secure`, so outside `localhost` the stack must be served
+over https for sign-in to work.
+
+## Checks and Formatting
+
+- `bun run check` — Biome format + lint
+- `bun run format` — Biome format only
+- `bun run check-types` — TypeScript (tsc / astro check)
+- `bun run test` — the `packages/api` unit tests (`bun test`)
+- `bun run tailwind:check` — Tailwind class linting (`tailwint`)
+
+There are no git hooks.
 
 ## Available Scripts
 
-- `bun run dev`: Start all applications in development mode
+- `bun run dev`: Start the Docker dev stack with hot reload (`compose.dev.yml`); `dev:down` removes it
+- `bun run dev:local`: Start all applications natively through Turbo
+- `bun run dev:frontend` / `dev:backend`: Start a single app
+- `bun run gateway`: Start the gateway in front of the native apps (`:8080`)
 - `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Biome formatting and linting
-- `bun run docker:build`: Build the Docker Compose images
-- `bun run docker:up`: Build and start the Docker Compose stack
-- `bun run docker:logs`: Tail logs from the Docker Compose stack
-- `bun run docker:down`: Stop the Docker Compose stack
+- `bun run setup:dev`: Generate the local root `.env`
+- `bun run db:start` / `db:watch` / `db:stop` / `db:down`: The dev PostgreSQL container
+- `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
+- `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
+- `bun run check` / `bun run format`: Biome formatting and linting
+- `bun run test`: Unit tests
+- `bun run tailwind:check` / `tailwind:fix`: Tailwind class linting
+- `bun run docker:build` / `docker:up` / `docker:down` / `docker:logs`: Local Docker Compose (`compose.yml`)
 
-## Better Auth Schema Generation
+## Documentation
 
-After changing auth plugins or schema options, run `bun run auth:generate` from the project root. The script runs the Better Auth CLI through `varlock run` from the owning app directory, loading the auth instance from `src/services.ts`. Review the schema changes, then use your ORM's migration workflow to apply them.
+Every capability (auth, admin, crons, collections, logging, Docker, …) has a
+spec under `openspec/specs/` (or, until it is archived, under the active change
+in `openspec/changes/`). Read those for the authoritative description of
+expected behavior before changing code in an area you're unfamiliar with.
+
+- `AGENTS.md` — normative conventions for contributors and coding agents
+- `.agents/skills/stack/` — the project skill: workspaces, commands, env, Docker, API layering and frontend structure
+- `DESIGN.md` / `PRODUCT.md` — visual system and product context, used by the `impeccable` design skill

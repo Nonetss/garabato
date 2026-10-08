@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(bun run db:generate*)",
+      "Bash(bun run db:push*)",
+      "Bash(bun run db:migrate*)",
+      "Bash(bunx drizzle-kit generate*)",
+      "Bash(bunx drizzle-kit push*)",
+      "Bash(bunx drizzle-kit migrate*)",
+      "Bash(npx drizzle-kit generate*)",
+      "Bash(npx drizzle-kit push*)",
+      "Bash(npx drizzle-kit migrate*)",
+      "Bash(drizzle-kit generate*)",
+      "Bash(drizzle-kit push*)",
+      "Bash(drizzle-kit migrate*)"
+    ]
+  }
+}

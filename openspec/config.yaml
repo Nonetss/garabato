@@ -1,13 +1,78 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
+# Project context, shown to AI when creating artifacts. Adapted from the
+# reference repo (/opt/dev/stack); see the stack skill in .agents/skills/stack.
+
+context: |
 #     Tech stack: TypeScript, React, Node.js
 #     We use conventional commits
 #     Domain: e-commerce platform
+
+context: |
+  Frontend feature convention: features live under
+  apps/frontend/src/features/<domain>/. Each direct child is a semantic
+  use-case slice (overview, detail, workspace, sign-in, etc.), a domain-local
+  shared slice, or index.ts. Technical folders (components, definitions,
+  hooks, model, optional schemas) live below a semantic slice;
+  create only those the slice uses. Route React islands use *-page.tsx and
+  typed renderer contracts use *.definition.ts(x). Each slice exposes a
+  narrow index.ts. Astro and cross-domain consumers import public entry
+  points, cross-slice consumers never import another slice's private technical
+  folders, and files inside a slice import direct internal paths instead of
+  their own barrel. Domain-local shared code must have at least two slice
+  consumers. Runtime providers live under apps/frontend/src/providers and are
+  mounted at application/island/page boundaries rather than visual layouts.
+  components/ui cannot import components/shared or features;
+  components/shared cannot import features. Promote visual patterns to
+  components/shared after three production consumers share the same intent,
+  except for cross-cutting correctness boundaries.
+
+  React islands in Astro: always use client:only="react" when mounting a
+  React component from an .astro file. Never use client:load or any other
+  client:* directive.
+
+  Backend API convention (packages/api): context.ts, errors.ts, and the
+  procedure builders in index.ts live at the package root and are shared
+  by every API version. Everything else is versioned under src/<version>/
+  (currently only src/v1/). Every oRPC feature (api-key, health, private,
+  ...) is colocated in one folder per feature under src/<version>/<feature>/,
+  split across input.ts (zod request schema, exported as <feature>Input),
+  output.ts (zod response schema, exported as <feature>Output), handler.ts
+  (business logic, exported as <feature>Handler, methods take a single
+  { context, input? } options object), and router.ts (oRPC wiring only:
+  .meta(openapi(), cronMeta()?) -> .input() -> .output() ->
+  .handler() calling the matching handler method). A new feature is a new
+  folder plus one new key in that version's src/<version>/router.ts
+  appRouter (e.g. apiKey: apiKeyRouter).
+  The package-root router.ts nests each version's router under its own key
+  (v1: v1Router) on the top-level appRouter — this is what makes the
+  version segment appear automatically in client calls
+  (orpc.<version>.<feature>.<method>()) and HTTP paths
+  (/rpc/<version>/<feature>/<method>, /api/<version>/<feature>/<method>),
+  never a flat or unversioned procedure name. A new version is a new
+  src/<version>/ folder plus one new key in the package-root router.ts;
+  existing versions are never touched. Throw errors via the shared
+  errors.ts constructor map (errors.UNAUTHORIZED(), etc.), never
+  new ORPCError(...).
+
+  TypeScript code style: no casts (as, as unknown as, !), no made-up
+  generic defaults or never[] shapes, no ?? chains or ?? with a
+  non-literal default, no ternaries nested or inside expressions, no
+  let + ??= memoization. Narrow with guards, keep real types with
+  satisfies, and write defaults as named functions with early returns
+  (stack skill, references/code-style.md).
+
+  Import aliasing: apps (frontend, backend) use @/ for their own src only.
+  Shared packages (packages/api, cron, db, logger; auth uses #auth/*) use
+  Node subpath imports
+  (# prefix) declared in their package.json "imports" field — the general
+  pattern is "#*": "./src/*.ts". That single wildcard also covers
+  packages/api's versioned paths (#v1/health/handler ->
+  ./src/v1/health/handler.ts), since a version folder is just a nested
+  directory under src/; shared root files stay reachable via #context,
+  #errors, #index. Never use @/ inside a shared package, and never add
+  cross-package paths to a tsconfig: other workspaces are imported by
+  their package name (@nonete/<pkg>).
 
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.

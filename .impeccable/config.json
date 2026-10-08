@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-radius",
+        "value": "9999px",
+        "createdAt": "2026-08-04T08:12:21.885Z",
+        "reason": "Scrollbar thumb requires fully-rounded pill shape; outside design scale intentionally"
+      }
+    ]
+  }
+}
