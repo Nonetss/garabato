@@ -8,11 +8,6 @@ dist
 build
 *.tsbuildinfo
 
-# Generated files
-apps/web/src/routeTree.gen.ts
-local.db
-local.db-*
-
 # Environment variables
 .env
 .env*.local
@@ -30,8 +25,7 @@ local.db-*
 .DS_Store
 
 # Logs
-logs
-.evlog/
+/logs
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -43,9 +37,7 @@ lerna-debug.log*
 .turbo
 .nx
 
-# Better-T-Stack
 .alchemy
-.vercel
 
 # Testing
 coverage
@@ -56,3 +48,43 @@ coverage
 .cache
 tmp
 temp
+
+# Claude — only the project skill and the OpenSpec skills are versioned;
+# third-party skills are reinstalled from skills-lock.json
+.claude/*
+.claude.lock
+!.claude/settings.json
+!.claude/commands/
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/stack
+!.claude/skills/openspec-*/
+
+# Agents
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/stack/
+.agents.lock
+
+# Node
+.node_modules/
+.node_modules.lock
+
+# Bun
+.bun/
+.bun.lock
+.codex/*
+
+# Astro
+.astro
+
+# Impeccable
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+
+.github/*
+!.github/workflows/
+
+.impeccable/critique/*
