@@ -2,6 +2,7 @@
   "name": "@nonete/db",
   "type": "module",
   "imports": {
+    "#testing/*": "./testing/*.ts",
     "#schema": "./src/schema/index.ts",
     "#schema/*": "./src/schema/*/index.ts",
     "#seed": "./src/seed/index.ts",
@@ -11,6 +12,9 @@
   "exports": {
     ".": {
       "default": "./src/index.ts"
+    },
+    "./testing": {
+      "default": "./testing/index.ts"
     },
     "./*": {
       "default": "./src/*.ts"
