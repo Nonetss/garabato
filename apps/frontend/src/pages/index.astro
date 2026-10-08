@@ -2,11 +2,8 @@
 import { HomePage } from "@/features/home"
 import Layout from "@/layouts/Layout.astro"
 import { appSurfaces } from "@/lib/app-surfaces"
-import { isAdminUser } from "@/lib/auth"
-
-const isAdmin = isAdminUser(Astro.locals.user)
 ---
 
 <Layout title={appSurfaces.home.title}>
-  <HomePage client:only="react" isAdmin={isAdmin} />
+  <HomePage client:only="react" />
 </Layout>

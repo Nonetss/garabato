@@ -1,1 +1,7 @@
-export { CertificatesPage } from "@/features/certificates/overview"
+export {
+  type Certificate,
+  CertificatesPage,
+  certificateLabels,
+  certificateStatusLabels,
+  useCertificates,
+} from "@/features/certificates/overview"

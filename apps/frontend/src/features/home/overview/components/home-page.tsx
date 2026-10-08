@@ -1,13 +1,15 @@
 import { PageShell } from "@/components/shared/layout/page-shell"
-import {
-  HomeContent,
-  type HomePageProps,
-} from "@/features/home/overview/components/home-content"
+import { HomeContent } from "@/features/home/overview/components/home-content"
+import { QueryProvider } from "@/providers/query-provider"
 
-export function HomePage(props: HomePageProps) {
+export function HomePage() {
   return (
-    <PageShell maxWidth="full" className="lg:w-4/5">
-      <HomeContent {...props} />
-    </PageShell>
+    <QueryProvider>
+      <div className="flex flex-1 flex-col bg-desk">
+        <PageShell maxWidth="6xl" className="py-4 sm:py-8">
+          <HomeContent />
+        </PageShell>
+      </div>
+    </QueryProvider>
   )
 }

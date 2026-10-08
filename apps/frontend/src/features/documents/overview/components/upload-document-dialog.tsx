@@ -3,11 +3,13 @@ import { Text } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
 import { Input } from "@/components/ui/input"
-import { documentLabels, useDocumentUpload } from "@/features/documents/shared"
+import {
+  documentLabels,
+  pdfFileProblem,
+  useDocumentUpload,
+} from "@/features/documents/shared"
 import { useOnOpen } from "@/hooks/use-on-open"
 
-/** Mirrors the API cap. */
-const MAX_PDF_BYTES = 20 * 1024 * 1024
 const FILE_INPUT_ID = "document-upload-file"
 
 function errorMessage(error: unknown) {
@@ -49,7 +51,12 @@ export function UploadDocumentDialog({
       setSubmitError(documentLabels.fileRequired)
       return
     }
-    if (file.size > MAX_PDF_BYTES) {
+    const problem = pdfFileProblem(file)
+    if (problem === "not-pdf") {
+      setSubmitError(documentLabels.fileNotPdf)
+      return
+    }
+    if (problem === "too-large") {
       setSubmitError(documentLabels.fileTooLarge)
       return
     }

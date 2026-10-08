@@ -13,6 +13,9 @@ export { usePdfDocument } from "@/features/documents/shared/hooks/use-pdf-docume
 export {
   formatFileSize,
   formatPages,
+  MAX_PDF_BYTES,
+  type PdfFileProblem,
+  pdfFileProblem,
   saveFile,
 } from "@/features/documents/shared/model/files"
 export type {
