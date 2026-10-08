@@ -34,6 +34,8 @@ export const env = createEnv({
     ADMIN_NAME: z.string().optional(),
     // OIDC (generic OAuth client). All three must be set to enable the
     // "oidc" sign-in provider; otherwise it's left out of the auth plugins.
+    // OIDC_DISCOVERY_URL is the issuer's base URL, without the
+    // /.well-known/openid-configuration suffix.
     OIDC_CLIENT_ID: z.string().min(1).optional(),
     OIDC_CLIENT_SECRET: z.string().min(1).optional(),
     OIDC_DISCOVERY_URL: z.url().optional(),

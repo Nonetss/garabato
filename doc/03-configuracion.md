@@ -41,7 +41,7 @@ algo que ya existe.
 | `CORS_ORIGIN` | El origen público que usa el navegador. Se usa para CORS y como origen de confianza de Better Auth. |
 | `BACKEND_URL` | Cómo llega el frontend al backend: consultas de sesión en SSR y el proxy de `astro dev`. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | El administrador que se crea al arrancar el backend si no existe. Los jobs de cron declarados en código se ejecutan como este usuario. |
-| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | Inicio de sesión con un proveedor OIDC. Solo se activa si están las tres. |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | Inicio de sesión con un proveedor OIDC. Solo se activa si están las tres. `OIDC_DISCOVERY_URL` es la URL base del emisor (`https://idp.example.com`); el backend le añade `/.well-known/openid-configuration`. |
 | `LOKI_URL` | Opcional. Si está, los logs se envían a Loki y aparece el registro de actividad. |
 | `LOG_LEVEL` | Nivel mínimo de log (por defecto `info`). |
 | `SKIP_ENV_VALIDATION` | Desactiva la validación. Solo para builds y tareas de CLI; los Dockerfiles lo usan al compilar. |
