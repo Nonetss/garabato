@@ -11,11 +11,12 @@ interface Props {
   /** Section href in `siteNavItems` (e.g. "/crons"). Must declare `subItems`. */
   section: string
   /**
-   * Persist the inset scroller offset across View Transitions. The header
-   * island is `transition:persist`, so this flag is stamped on `main` for
-   * the header to read from the URL-swapped DOM rather than as a frozen
-   * island prop. Off still snaps to the top so leftover offset from the
-   * previous route does not leak in.
+   * Persist the inset scroller offset across View Transitions, per path plus
+   * query string. The header island is `transition:persist`, so this flag is
+   * stamped on `main` for the header to read from the URL-swapped DOM rather
+   * than as a frozen island prop. Restoring reserves the saved content height
+   * on the `data-app-scroll-content` wrapper until the islands render, so the
+   * offset applies at once. Off starts at the top and saves nothing.
    */
   persistScroll?: boolean
   /** Shows a floating "back to top" button once the page scrolls past its threshold. */
@@ -48,7 +49,7 @@ const sidebarOpen = Astro.cookies.get("sidebar_state")?.value !== "false"
       <WithSidebarChrome client:only="react" defaultOpen={sidebarOpen} />
     </div>
     <main
-      class="flex min-h-0 min-w-0 w-auto max-w-full flex-1 flex-col overflow-y-auto"
+      class="flex min-h-0 min-w-0 w-auto max-w-full flex-1 flex-col overflow-y-auto [overflow-anchor:none]"
       data-app-scroller=""
       data-scroll-to-top={scrollToTop ? "" : undefined}
       data-persist-scroll={persistScroll ? undefined : "false"}
@@ -57,6 +58,7 @@ const sidebarOpen = Astro.cookies.get("sidebar_state")?.value !== "false"
         <WithSidebarHeader client:only="react" />
       </div>
       <div
+        data-app-scroll-content=""
         class="min-w-0 flex-1 p-3 sm:p-4"
         transition:animate={fade({ duration: "0.2s" })}
         transition:name="sidebar-page"

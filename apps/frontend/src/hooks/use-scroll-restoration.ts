@@ -1,211 +1,239 @@
-import {
-  type RefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-} from "react"
-import { createSimpleViewState, type createViewState } from "@/lib/view-state"
+import { useLayoutEffect } from "react"
+import { createViewState } from "@/lib/view-state"
 
-type ViewStateApi<TExtra extends object> = ReturnType<
-  typeof createViewState<TExtra>
->
+/** How long a restored page keeps its saved content height reserved while
+ *  its islands load and fetch. Past it, a page that is now shorter clamps. */
+export const RESERVE_MS = 10_000
+
+export type ScrollRestorationTarget = {
+  /** The element that scrolls. */
+  scroller: HTMLElement
+  /** The scroller's content wrapper, which takes the reserved height.
+   *  `null` restores the offset without reserving. */
+  content: HTMLElement | null
+  /** Resolves the sessionStorage key. `undefined` starts at the top and
+   *  saves nothing. */
+  resolveStorageKey: (() => string) | undefined
+}
+
+function readContentHeight(value: unknown): number | null {
+  if (typeof value !== "number") return null
+  if (!Number.isFinite(value) || value <= 0) return null
+  return value
+}
+
+function createScrollViewState(storageKey: string) {
+  return createViewState<{ contentHeight: number | null }>(
+    storageKey,
+    (raw) => ({ contentHeight: readContentHeight(raw.contentHeight) })
+  )
+}
+
+/** The laid-out boxes directly under `el`, descending through
+ *  `display: contents` wrappers (`astro-island`), which have no box. */
+function contentBoxes(el: Element): Element[] {
+  const boxes: Element[] = []
+  for (const child of el.children) {
+    if (getComputedStyle(child).display === "contents") {
+      boxes.push(...contentBoxes(child))
+      continue
+    }
+    boxes.push(child)
+  }
+  return boxes
+}
+
+function paddingBottom(el: Element): number {
+  const value = Number.parseFloat(getComputedStyle(el).paddingBottom)
+  if (Number.isFinite(value)) return value
+  return 0
+}
 
 /**
- * Restores and persists a page's scroll position (and whatever extra state
- * its view-state tracks) across navigation. Defaults to `window` as the
- * scrolled element; pass `getScrollElement` for a page that scrolls an
- * inner container instead.
+ * The height `content`'s own children take up, plus its bottom padding.
+ * Measured from the children rather than by clearing `min-height`: reading
+ * the wrapper without its reservation forces a layout that would clamp the
+ * scroller's offset in the middle of a restore.
  */
-export function useScrollRestoration<TExtra extends object>({
-  viewState,
-  ready = true,
-  onRestore,
-  getExtra = () => ({}) as TExtra,
-  getScrollElement,
-}: {
-  viewState: ViewStateApi<TExtra>
-  /** Defer restoring/persisting until the page's data has settled. */
-  ready?: boolean
-  /** Called once, when a saved view is restored, with the saved extra state. */
-  onRestore?: (extra: TExtra) => void
-  /** Read the current extra state to persist alongside scroll position. Omit for pages with no extra state. */
-  getExtra?: () => TExtra
-  getScrollElement?: () => HTMLElement | null
-}) {
-  const restoredRef = useRef(false)
+export function measureContentHeight(content: HTMLElement): number {
+  const top = content.getBoundingClientRect().top
+  let bottom = top
+  for (const box of contentBoxes(content)) {
+    bottom = Math.max(bottom, box.getBoundingClientRect().bottom)
+  }
+  return bottom - top + paddingBottom(content)
+}
 
-  const scrollTo = useCallback(
-    (top: number) => {
-      const el = getScrollElement?.()
-      if (el) el.scrollTop = top
-      else window.scrollTo({ top, behavior: "auto" })
-    },
-    [getScrollElement]
-  )
+function reservedHeight(
+  contentHeight: number | null,
+  target: number,
+  content: HTMLElement | null
+): number {
+  if (!content || target <= 0) return 0
+  if (contentHeight === null) return 0
+  return contentHeight
+}
 
-  const readScrollY = useCallback(
-    () => getScrollElement?.()?.scrollTop ?? window.scrollY,
-    [getScrollElement]
-  )
+/**
+ * One page's restoration: applies the saved offset to `scroller` and keeps
+ * saving it until the returned stop function runs.
+ *
+ * The saved state is the offset plus the content height. Restoring reserves
+ * that height as the content wrapper's `min-height` before writing
+ * `scrollTop`, so the offset applies at once even though the page's islands
+ * have not rendered yet. The reservation is released when the content
+ * reaches it, when the user presses a pointer or key in the scroller, after
+ * `RESERVE_MS`, or when the page stops. Wheel and touch scrolling keep it, so
+ * the user can scroll through space whose content is still arriving. State
+ * saved without a height applies its offset once, without a reservation.
+ *
+ * The key is resolved again on each save while the page is current, so a
+ * `history.replaceState` change made elsewhere (e.g. a filter change) is
+ * picked up. Once a navigation starts (`popstate`,
+ * `astro:before-preparation`) the key is frozen: `location` is about to
+ * point at the destination, and resolving it would store this page's offset
+ * under the next page's key.
+ */
+function startScrollRestoration({
+  scroller,
+  content,
+  resolveStorageKey,
+}: ScrollRestorationTarget): () => void {
+  if (!resolveStorageKey) {
+    scroller.scrollTop = 0
+    return () => {}
+  }
 
-  useLayoutEffect(() => {
-    if (!ready || restoredRef.current) return
-    restoredRef.current = true
-    const saved = viewState.read()
-    if (!saved) return
+  let key = resolveStorageKey()
+  let leaving = false
+  const currentKey = () => {
+    if (!leaving) key = resolveStorageKey()
+    return key
+  }
 
-    onRestore?.(saved)
+  const saved = createScrollViewState(key).read()
+  const target = Math.max(0, saved?.scrollY ?? 0)
+  const reserved = reservedHeight(saved?.contentHeight ?? null, target, content)
+  let reserving = reserved > 0
+  let lastY = target
+  let lastHeight = reserved
+  let frame = 0
 
-    const restore = () => scrollTo(saved.scrollY)
-    restore()
-    const frame = requestAnimationFrame(restore)
-    const t1 = window.setTimeout(restore, 50)
-    const t2 = window.setTimeout(restore, 200)
-    return () => {
-      cancelAnimationFrame(frame)
-      window.clearTimeout(t1)
-      window.clearTimeout(t2)
-    }
-  }, [ready, scrollTo, onRestore, viewState.read])
+  const currentHeight = () => {
+    if (!content?.isConnected) return lastHeight
+    const natural = measureContentHeight(content)
+    if (reserving) return Math.max(natural, reserved)
+    return natural
+  }
 
-  useEffect(() => {
-    if (!ready) return
+  const persist = (y: number) => {
+    lastY = y
+    lastHeight = currentHeight()
+    createScrollViewState(currentKey()).save(y, { contentHeight: lastHeight })
+  }
 
-    let frame = 0
-    const persist = () => viewState.save(readScrollY(), getExtra())
-    const schedulePersist = () => {
-      if (frame) return
-      frame = requestAnimationFrame(() => {
-        frame = 0
-        persist()
-      })
-    }
+  const check = () => {
+    frame = 0
+    if (!content || !reserving) return
+    for (const box of contentBoxes(content)) resize.observe(box)
+    if (measureContentHeight(content) >= reserved - 1) release()
+  }
+  const scheduleCheck = () => {
+    if (frame === 0) frame = window.requestAnimationFrame(check)
+  }
 
-    const target = getScrollElement?.() ?? window
-    persist()
-    target.addEventListener("scroll", schedulePersist, { passive: true })
-    return () => {
-      if (frame) cancelAnimationFrame(frame)
-      target.removeEventListener("scroll", schedulePersist)
-    }
-  }, [ready, readScrollY, getScrollElement, viewState.save, getExtra])
+  const resize = new ResizeObserver(scheduleCheck)
+  const mutations = new MutationObserver(scheduleCheck)
+  let timeout = 0
 
-  return {
-    persist: (extra: TExtra) => viewState.save(readScrollY(), extra),
+  function release() {
+    if (!reserving) return
+    reserving = false
+    if (content) content.style.minHeight = ""
+    resize.disconnect()
+    mutations.disconnect()
+    window.clearTimeout(timeout)
+    window.cancelAnimationFrame(frame)
+    frame = 0
+  }
+
+  if (reserving && content) {
+    content.style.minHeight = `${reserved}px`
+    mutations.observe(content, { childList: true, subtree: true })
+    timeout = window.setTimeout(release, RESERVE_MS)
+    check()
+  }
+  scroller.scrollTop = target
+
+  const onScroll = () => {
+    // Scroll events fired while the next page swaps in are not the user:
+    // they must not overwrite this page's saved offset.
+    if (leaving) return
+    persist(scroller.scrollTop)
+  }
+  // Once the user operates anything in the scroller, the reserved space is
+  // no longer theirs to keep: a filter change scrolls to the top and must
+  // not leave empty space below the new result.
+  const onUserIntent = () => release()
+  const beforeLeave = () => {
+    leaving = true
+    persist(lastY)
+  }
+  const onPopState = () => {
+    leaving = true
+  }
+  // A reload keeps the URL, so the key may still be resolved.
+  const onPageHide = () => persist(lastY)
+
+  scroller.addEventListener("scroll", onScroll, { passive: true })
+  scroller.addEventListener("pointerdown", onUserIntent, { passive: true })
+  scroller.addEventListener("keydown", onUserIntent)
+  window.addEventListener("popstate", onPopState)
+  document.addEventListener("astro:before-preparation", beforeLeave)
+  document.addEventListener("astro:before-swap", beforeLeave)
+  window.addEventListener("pagehide", onPageHide)
+
+  return () => {
+    persist(lastY)
+    release()
+    scroller.removeEventListener("scroll", onScroll)
+    scroller.removeEventListener("pointerdown", onUserIntent)
+    scroller.removeEventListener("keydown", onUserIntent)
+    window.removeEventListener("popstate", onPopState)
+    document.removeEventListener("astro:before-preparation", beforeLeave)
+    document.removeEventListener("astro:before-swap", beforeLeave)
+    window.removeEventListener("pagehide", onPageHide)
   }
 }
 
-const RESTORE_MS = 2500
+function startFor(target: ScrollRestorationTarget | null): () => void {
+  if (!target) return () => {}
+  return startScrollRestoration(target)
+}
 
 /**
- * Restores an element's scrollTop across Astro View Transitions. When
- * `storageKey` is set, the offset is persisted in sessionStorage; when it
- * is omitted, the scroller still snaps to 0 (the same overflow container is
- * reused across sidebar pages, so a leftover offset from the previous route
- * would otherwise land the new page at the bottom) but nothing is saved.
- *
- * Restore keeps retrying while the content grows (nested islands, infinite
- * lists) and never overwrites a saved offset with 0 when the scroller is
- * swapped out from under us.
+ * Restores a scroller's offset across Astro View Transitions for a hook
+ * mounted outside the swapped content (a `transition:persist` island).
+ * `resolveTarget` is read at mount (first load, reload) and again
+ * synchronously on every `astro:after-swap`, which runs inside the view
+ * transition's update callback: the swapped-in page is first painted at its
+ * restored offset, not at the top. `null` means the page has nothing to
+ * restore. Keep `resolveTarget` stable: a new identity restarts the page's
+ * restoration.
  */
 export function useElementScrollRestoration(
-  elementRef: RefObject<HTMLElement | null>,
-  storageKey: string | undefined
+  resolveTarget: () => ScrollRestorationTarget | null
 ) {
-  const lastYRef = useRef(0)
-
   useLayoutEffect(() => {
-    const el = elementRef.current
-    if (!el) return
-
-    const viewState = storageKey ? createSimpleViewState(storageKey) : null
-    const saved = viewState?.read()?.scrollY ?? 0
-    const target = Math.max(0, saved)
-    lastYRef.current = target
-    el.scrollTop = target
-    let done = target <= 0
-    let interval = 0
-
-    const persist = (y: number) => {
-      lastYRef.current = y
-      viewState?.save(y, {})
+    let stop = startFor(resolveTarget())
+    const onAfterSwap = () => {
+      stop()
+      stop = startFor(resolveTarget())
     }
-
-    const stopRestoring = () => {
-      done = true
-      resize.disconnect()
-      mutations.disconnect()
-      window.clearInterval(interval)
-    }
-
-    const restore = () => {
-      if (done) return
-      el.scrollTop = target
-      if (Math.abs(el.scrollTop - target) <= 1) {
-        persist(target)
-        stopRestoring()
-      }
-    }
-
-    const onScroll = () => {
-      if (done) {
-        persist(el.scrollTop)
-        return
-      }
-      if (Math.abs(el.scrollTop - target) <= 1) {
-        persist(target)
-        stopRestoring()
-        return
-      }
-      const max = Math.max(0, el.scrollHeight - el.clientHeight)
-      // Content is still too short: restore clamped to the max and must
-      // not clobber the saved offset with that temporary value.
-      if (max < target - 1) return
-      persist(el.scrollTop)
-      stopRestoring()
-    }
-
-    // A restoration may still be waiting for async content to reach its saved
-    // offset. Once the user operates anything inside the scroller, that
-    // position is no longer authoritative. In particular, an accordion adds
-    // its panel after its trigger is pressed; the mutation observer below must
-    // not then pull the viewport back to the old offset.
-    const onUserIntent = () => {
-      if (!done) stopRestoring()
-    }
-
-    const resize = new ResizeObserver(restore)
-    resize.observe(el)
-    const mutations = new MutationObserver(restore)
-    mutations.observe(el, { childList: true, subtree: true })
-    interval = window.setInterval(restore, 50)
-    const stop = window.setTimeout(() => {
-      window.clearInterval(interval)
-    }, RESTORE_MS)
-
-    restore()
-    el.addEventListener("scroll", onScroll, { passive: true })
-    el.addEventListener("pointerdown", onUserIntent, { passive: true })
-    el.addEventListener("keydown", onUserIntent)
-
-    const beforeLeave = () => persist(lastYRef.current)
-    document.addEventListener("astro:before-preparation", beforeLeave)
-    document.addEventListener("astro:before-swap", beforeLeave)
-    window.addEventListener("pagehide", beforeLeave)
-
+    document.addEventListener("astro:after-swap", onAfterSwap)
     return () => {
-      window.clearInterval(interval)
-      window.clearTimeout(stop)
-      resize.disconnect()
-      mutations.disconnect()
-      el.removeEventListener("scroll", onScroll)
-      el.removeEventListener("pointerdown", onUserIntent)
-      el.removeEventListener("keydown", onUserIntent)
-      document.removeEventListener("astro:before-preparation", beforeLeave)
-      document.removeEventListener("astro:before-swap", beforeLeave)
-      window.removeEventListener("pagehide", beforeLeave)
-      persist(lastYRef.current)
+      document.removeEventListener("astro:after-swap", onAfterSwap)
+      stop()
     }
-  }, [elementRef, storageKey])
+  }, [resolveTarget])
 }
