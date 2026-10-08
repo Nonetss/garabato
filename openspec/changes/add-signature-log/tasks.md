@@ -1,0 +1,24 @@
+## 1. API: signature log procedures
+
+- [x] 1.1 Add `signatureLog` input to `packages/api/src/v1/document/input.ts` (`limit`, `cursor`, optional `certificateId`, `query`, `signedFrom`, `signedBefore`, refine `signedFrom < signedBefore`) and `signatureLogCertificates` (no input); verify with `check-types`
+- [x] 1.2 Add the `signatureLogRecord` (existing `signatureRecord` plus certificate deleted flag, tax id, issuer, serial number, fingerprint, validity) and `signatureLog` (`{ records, nextCursor, total }`) and `signatureLogCertificates` outputs to `output.ts`, exporting the inferred types; verify with `check-types`
+- [x] 1.3 Implement `documentHandler.signatureLog` in `handler.ts`: caller scope, certificate ownership check (deleted included, not-found otherwise), `likePattern` name filter, date bounds, `withKeysetPagination` over `(signed_at, id)`, `paginateWithTotal` with a cursor-less `count()`, record mapping that keeps `document.get`/`document.signatures` outputs unchanged; verify existing document handler tests still pass
+- [x] 1.4 Implement `documentHandler.signatureLogCertificates`: distinct certificates used in the caller's records, deleted included, ordered by alias then id; verify with `check-types`
+- [x] 1.5 Wire both procedures in `router.ts` with `protectedProcedure`, `method: "GET"`, `tags: ["Documents"]` and English summaries/descriptions; verify `check-types` and that `orpc.v1.document.signatureLog` resolves on the frontend
+- [x] 1.6 Add tests in `packages/api/tests/v1/document/handler.test.ts` covering every scenario of "List the signature log", "Filter the signature log" and "Certificates of the signature log" (other users' records excluded, two-page paging without gaps or repeats, total, deleted document/certificate flags, certificate/text/wildcard/date filters, inclusive start and exclusive end, inverted range, malformed cursor, foreign certificate); verify `bun run test` passes
+
+## 2. Frontend: surface and page
+
+- [ ] 2.1 Add `signatures: Lucide.FileSignature` to `navigationIcons` in `apps/frontend/src/lib/icon-registry.ts` and the `signatures` surface (`/signatures`, title "Registro de firmas", label "Firmas", Spanish description, `nav: { primary: true }`) after `certificates` in `apps/frontend/src/lib/app-surfaces.ts`; verify `check-types` and that the navbar entry and surface search include it
+- [ ] 2.2 Re-export `formatPages` (and the record types it needs, if any) from `apps/frontend/src/features/documents/index.ts`; verify `check-types`
+- [ ] 2.3 Create the `signatures` feature (`apps/frontend/src/features/signatures/{index.ts,overview/}`) with `model/filters.ts`: filters → query input (day bounds in the browser's time zone, empty text and "all" dropped), placement label and deleted labels; verify with unit tests in `apps/frontend/tests/features/signatures/filters.test.ts` (one-day range, empty filters, placement for invisible/one page/several pages)
+- [ ] 2.4 Add `overview/hooks/use-signature-log.ts` (filter state, debounced text, `useHydratedInfiniteQuery` over `document.signatureLog.infiniteOptions`, certificate options query, `clearFilters`), modelled on `use-activity-log.ts`; verify with `check-types`
+- [ ] 2.5 Add `signature-row.tsx` (document, certificate alias and holder, date and time, version, placement, "eliminado" marks) and `signature-detail-sheet.tsx` (`<dl>` facts, document link unless deleted, `CopyButton` on both hashes and the fingerprint, certificate data with validity) using `Text` roles; verify with `check-types` and Biome
+- [ ] 2.6 Add `signatures-content.tsx` (`PageHero` with the total, `ResourceFilters` with search/select/"Desde"/"Hasta", `divide-y` list, `InfiniteScrollSentinel`, empty-state `StateCard` linking to `/documents`, no-match `StateCard` with "Limpiar filtros") and `signatures-page.tsx` (provider boundary); export the page from the feature's `index.ts`; verify with `check-types`
+- [ ] 2.7 Add `apps/frontend/src/pages/signatures/index.astro` mounting `SignaturesPage` with `client:only="react"`, the surface title and `scrollToTop`; verify `check-types`
+
+## 3. Docs and validation
+
+- [ ] 3.1 Update `PRODUCT.md` "Firma de documentos" capability line to mention the `/signatures` log, and `.agents/skills/stack/references/workspaces.md` if it enumerates frontend features or pages; verify every cited path exists
+- [ ] 3.2 Run `bun run check-types`, Biome, `bun run tailwind:check` and `bun run test` and fix any failure; verify all pass
+- [ ] 3.3 Run `openspec validate add-signature-log --strict`; verify it reports the change as valid
