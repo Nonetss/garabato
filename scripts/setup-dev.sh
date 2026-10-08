@@ -104,9 +104,10 @@ fi
 
 echo ""
 echo "✓ Done. Next:"
+echo "  # set DATABASE_URL in .env to your external dev PostgreSQL"
 echo "  bun install"
-echo "  bun run dev         # Docker dev stack, database included"
-echo "  # or: bun run db:start && bun run dev:local"
+echo "  bun run dev         # Docker dev stack, Loki included"
+echo "  # or: bun run loki:start && bun run dev:local"
 echo "  # the backend applies migrations and seeds the admin on boot"
 echo ""
 echo "  Admin credentials (created on first backend boot, idempotent):"

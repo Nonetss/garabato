@@ -74,5 +74,7 @@ las páginas visitadas por usuarios con sesión.
 
 Es opcional: sin `LOKI_URL` los logs solo salen por consola y `/admin/logs`
 aparece vacío. Si `LOKI_URL` está definido pero Loki no responde, la consulta
-falla con `BAD_GATEWAY` (502). Los compose `compose.yml` y `compose.prod.yml`
-ya incluyen un Loki con 30 días de retención.
+falla con `BAD_GATEWAY` (502). Los tres compose (`compose.dev.yml`,
+`compose.yml` y `compose.prod.yml`) ya incluyen un Loki con 30 días de
+retención; en desarrollo escucha en `localhost:3100`, el `LOKI_URL` de
+`.env.example`.

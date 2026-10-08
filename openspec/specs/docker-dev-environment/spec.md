@@ -2,17 +2,17 @@
 
 ## Purpose
 
-Provides a hot-reloading Docker Compose dev stack with a local Postgres that shares the native dev configuration and coexists with native dev.
+Provides a hot-reloading Docker Compose dev stack with a local Loki that shares the native dev configuration, uses an external dev PostgreSQL and coexists with native dev.
 
 ## Requirements
 
 ### Requirement: Hot-reloading Docker dev stack
 
-The repo SHALL provide `compose.dev.yml`, with compose project name `better-dev`, running `frontend`, `backend`, `gateway` and `db`. The `frontend`, `backend` and `gateway` services SHALL run on the host network (`network_mode: host`), and each app SHALL run its development server from source on the same address as native dev: the frontend `astro dev` on `:4321` and the backend `bun --hot` on `:3000`. The services SHALL reach each other and the database through `localhost`. The gateway's HTTP site SHALL listen on `:8080`, never on the host's port 80. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
+The repo SHALL provide `compose.dev.yml`, with compose project name `better-dev`, running `frontend`, `backend`, `gateway` and `loki`. The `frontend`, `backend` and `gateway` services SHALL run on the host network (`network_mode: host`), and each app SHALL run its development server from source on the same address as native dev: the frontend `astro dev` on `:4321` and the backend `bun --hot` on `:3000`. The services SHALL reach each other and Loki through `localhost`, and the database through `DATABASE_URL`. The gateway's HTTP site SHALL listen on `:8080`, never on the host's port 80. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
 
 #### Scenario: Starting the dev stack
 
-- **WHEN** a developer runs `bun run dev` on a machine with no other Postgres running
+- **WHEN** a developer runs `bun run dev` with `DATABASE_URL` pointing at a reachable dev PostgreSQL
 - **THEN** compose SHALL build the dev images, start all four services with file watching enabled, and the app SHALL be reachable at `http://localhost:4321`
 
 #### Scenario: Production-like entry in the dev stack
@@ -20,19 +20,28 @@ The repo SHALL provide `compose.dev.yml`, with compose project name `better-dev`
 - **WHEN** the dev stack runs and a developer opens `http://localhost:8080`
 - **THEN** the gateway SHALL forward `/rpc`, `/api`, `/scalar` and `/openapi.json` to `localhost:3000` and every other path to `localhost:4321`
 
-### Requirement: Local Postgres service
+### Requirement: External dev database
 
-`compose.dev.yml` SHALL define a `db` service running `postgres:17` with database `better`, reachable from the host at `localhost:5432` with the credentials of the default `DATABASE_URL` in `.env.example` (`postgresql://postgres:postgres@localhost:5432/better`), and keeping its data in a named volume. The root scripts `db:start` and `db:stop` SHALL start (detached) and stop only that `db` service, so native dev can use the same database without the rest of the dev stack.
+`compose.dev.yml` SHALL NOT define a database service. Development SHALL use a PostgreSQL that lives outside the project, on another server, reached through the `DATABASE_URL` of the root `.env`, and the documentation SHALL say so.
 
-#### Scenario: Standalone database for native dev
+#### Scenario: Removing the dev stack keeps the data
 
-- **WHEN** a developer runs `bun run db:start`
-- **THEN** only the `db` service of `compose.dev.yml` SHALL start, and the backend started with `bun run dev:local` SHALL connect to it with the default `DATABASE_URL`
+- **WHEN** a developer runs `bun run dev:down`
+- **THEN** no database container or volume SHALL be removed, and the data SHALL stay on the external dev server
 
-#### Scenario: Stopping the database
+### Requirement: Local Loki service
 
-- **WHEN** a developer runs `bun run db:stop`
-- **THEN** only the `db` service SHALL stop, and its data SHALL be kept for the next `bun run db:start`
+`compose.dev.yml` SHALL define a `loki` service running `grafana/loki` with the same flags and 720h retention as `compose.yml`, keeping its data in a named volume and reachable from the host at `localhost:3100`, the `LOKI_URL` of `.env.example`. No service SHALL wait for it. The root scripts `loki:start` and `loki:stop` SHALL start (detached) and stop only that `loki` service, so native dev can ship logs without the rest of the dev stack.
+
+#### Scenario: Activity log in the dev stack
+
+- **WHEN** a developer runs `bun run dev` with the default `LOKI_URL`
+- **THEN** backend API calls and frontend page views SHALL reach the dev Loki and show up at `/admin/logs`
+
+#### Scenario: Standalone Loki for native dev
+
+- **WHEN** a developer runs `bun run loki:start`
+- **THEN** only the `loki` service of `compose.dev.yml` SHALL start, and the apps started with `bun run dev:local` SHALL ship logs to it with the default `LOKI_URL`
 
 ### Requirement: Edits reach containers without rebuilding
 
@@ -79,8 +88,8 @@ Each dev app container SHALL read its configuration only from the root `.env` fi
 
 #### Scenario: Shared data with native dev
 
-- **WHEN** a developer creates a record while running the Docker dev stack, stops it, and later runs `bun run db:start` and native `bun run dev:local`
-- **THEN** the record SHALL be visible, because both use the `DATABASE_URL` from the same root `.env` file and the same `db` service
+- **WHEN** a developer creates a record while running the Docker dev stack, stops it, and later runs native `bun run dev:local`
+- **THEN** the record SHALL be visible, because both use the `DATABASE_URL` from the same root `.env` file, which points at the same external dev database
 
 ### Requirement: Configurable Astro dev proxy target
 
@@ -93,9 +102,9 @@ Each dev app container SHALL read its configuration only from the root `.env` fi
 
 ### Requirement: Coexistence with native dev
 
-Native dev (`bun run db:start`, `bun run dev:local` and optionally `bun run gateway`) SHALL keep working alongside the Docker dev stack. Because both use the same host ports, the documentation SHALL state that only one of them runs at a time.
+Native dev (`bun run dev:local`, and optionally `bun run loki:start` and `bun run gateway`) SHALL keep working alongside the Docker dev stack. Because both use the same host ports, the documentation SHALL state that only one of them runs at a time.
 
 #### Scenario: Switching back to native dev
 
-- **WHEN** a developer stops the Docker dev stack and runs `bun run db:start` and `bun run dev:local`
+- **WHEN** a developer stops the Docker dev stack and runs `bun run dev:local`
 - **THEN** native dev SHALL work with the same root `.env` file and no extra changes

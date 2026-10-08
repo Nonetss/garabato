@@ -4,12 +4,15 @@
 #
 #   bun run dev        # build, start and watch (Ctrl+C stops)
 #   bun run dev:down   # remove the containers
-#   bun run db:start   # only the database, for native dev (`bun run dev:local`)
+#   bun run loki:start # only Loki, for native dev (`bun run dev:local`)
 #
 # Behaves like native dev (`bun run dev:local` + `bun run gateway`): the apps
 # run on the host network, read the root .env unchanged and reach each other
-# and the database through the same localhost addresses and ports. Run one or
-# the other, not both.
+# and Loki through the same localhost addresses and ports. Run one or the
+# other, not both.
+#
+# There is no database here: DATABASE_URL in .env points at a dev PostgreSQL
+# that lives outside the project, on another server.
 name: better-dev
 
 x-node-ignore: &node-ignore
@@ -70,9 +73,6 @@ services:
     env_file:
       - path: .env
         required: false
-    depends_on:
-      db:
-        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -122,25 +122,29 @@ services:
           path: ./apps/gateway/Caddyfile
           target: /etc/caddy/Caddyfile
 
-  # Published on POSTGRES_PORT (default 5432), the port DATABASE_URL in .env
-  # points at, so native and Docker dev share one database.
-  db:
-    image: postgres:17
-    container_name: better-dev-db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: better
+  # Activity log sink, published on localhost:3100 (the LOKI_URL in .env).
+  # Same image and flags as compose.yml; nothing waits for it.
+  loki:
+    image: grafana/loki:3.7.7
+    container_name: better-dev-loki
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "3100:3100"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - loki_data:/loki
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+      - -validation.allow-structured-metadata=true
+      - -store.retention=720h
+      - -compactor.working-directory=/loki/compactor
+      - -compactor.delete-request-store=filesystem
+      - -compactor.retention-enabled=true
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d better" ]
-      interval: 5s
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
 volumes:
-  db_data:
+  loki_data:

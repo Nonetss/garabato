@@ -181,8 +181,9 @@ package's `package.json` `imports`) inside a package, and `@/…` inside an app.
 
 ## Getting Started
 
-Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, and Docker (for the
-database, Loki and the containerized stacks).
+Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for Loki and the
+containerized stacks) and a PostgreSQL database for development (see
+[Database](#database)).
 
 ```bash
 bun install
@@ -211,9 +212,10 @@ prints the admin credentials it generated.
 
 ### Database
 
-`bun run db:start` starts PostgreSQL from `compose.dev.yml` on
-`POSTGRES_PORT` (default `5432`), matching `DATABASE_URL` in `.env`. If that
-port is taken on your machine, change both. There is no manual schema step: on
+The repo runs no database in development. Use a dev PostgreSQL that lives
+outside the project, on another server, and point `DATABASE_URL` in `.env` at
+it: native dev and the Docker dev stack share it, and it survives removing the
+dev containers. There is no manual schema step: on
 startup the backend applies the committed migrations from
 `packages/db/src/migrations/` and creates the admin user from `ADMIN_EMAIL` /
 `ADMIN_PASSWORD`. After changing the schema in `packages/db/src/schema/`,
@@ -223,8 +225,8 @@ restart the backend.
 ### Run everything
 
 ```bash
-bun run dev        # Docker dev stack with hot reload (database included); Ctrl+C stops
-bun run dev:local  # the same apps natively through Turbo (start the db with `bun run db:start`)
+bun run dev        # Docker dev stack with hot reload (Loki included); Ctrl+C stops
+bun run dev:local  # the same apps natively through Turbo (start Loki with `bun run loki:start`)
 ```
 
 - Frontend: [http://localhost:4321](http://localhost:4321)
@@ -239,9 +241,12 @@ bun run dev:down   # remove the dev containers
 ```
 
 `compose.dev.yml` runs the frontend (`astro dev`), the backend (`bun --hot`)
-and the gateway from `apps/*/Dockerfile.dev`, plus the `db` service. The apps
-run on the host network and read the root `.env` unchanged, so they use the
-same ports and `localhost` addresses as native dev. `docker compose watch`
+and the gateway from `apps/*/Dockerfile.dev`, plus `loki` on
+`localhost:3100` (the `LOKI_URL` in `.env.example`) so `/admin/logs` works in
+development. There is no database service: the backend uses the external dev
+PostgreSQL in `DATABASE_URL`. The apps run on the host network and read the
+root `.env` unchanged, so they use the same ports and `localhost` addresses as
+native dev. `docker compose watch`
 copies your edits into the containers:
 
 | You edit | What happens |
@@ -304,7 +309,7 @@ There are no git hooks.
 - `bun run gateway`: Start the gateway in front of the native apps (`:8080`)
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
-- `bun run db:start` / `db:watch` / `db:stop` / `db:down`: The dev PostgreSQL container
+- `bun run loki:start` / `loki:stop`: Only the dev Loki container, for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
 - `bun run check` / `bun run format`: Biome formatting and linting

@@ -35,7 +35,7 @@ algo que ya existe.
 | Variable | Significado |
 | --- | --- |
 | `NODE_ENV` | Entorno de ejecución. En `production`, los logs salen como JSON. |
-| `DATABASE_URL` | La única configuración de base de datos que leen las apps. |
+| `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo apunta a una base de datos fuera del proyecto, en otro servidor. |
 | `BETTER_AUTH_URL` | La URL base de Better Auth (el backend). Solo la lee el backend. |
 | `BETTER_AUTH_SECRET` | Firma sesiones y cookies. Al menos 32 caracteres (`openssl rand -base64 48`). |
 | `CORS_ORIGIN` | El origen público que usa el navegador. Se usa para CORS y como origen de confianza de Better Auth. |

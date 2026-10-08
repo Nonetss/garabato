@@ -3,7 +3,9 @@
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.4.2 (es a la vez runtime, gestor de paquetes y test runner).
-- Docker con Compose 2.22 o superior (para la base de datos y el stack en contenedores).
+- Docker con Compose 2.22 o superior (para Loki y el stack en contenedores).
+- Una base de datos PostgreSQL de desarrollo fuera del proyecto, en otro
+  servidor (ver [Base de datos](#base-de-datos)).
 - `openssl` (lo usan los scripts que generan secretos).
 
 ## Primera vez
@@ -16,7 +18,8 @@ bun run setup:dev
 `setup:dev` crea el `.env` de la raíz a partir de `.env.example`, rellena los
 secretos con valores aleatorios y añade las credenciales del administrador
 inicial, que imprime por pantalla. Si ya existe un `.env` no lo toca, salvo
-que le pases `--force`.
+que le pases `--force`. Después pon en `DATABASE_URL` la dirección de tu base
+de datos de desarrollo.
 
 ## Dos formas de arrancar
 
@@ -30,8 +33,9 @@ bun run dev        # construye, arranca y vigila cambios; Ctrl+C para parar
 bun run dev:down   # elimina los contenedores
 ```
 
-Levanta el frontend (`astro dev`), el backend (`bun --hot`), el gateway y la
-base de datos con `compose.dev.yml`. Las apps usan la red del host, así que
+Levanta el frontend (`astro dev`), el backend (`bun --hot`), el gateway y
+Loki con `compose.dev.yml`. No levanta ninguna base de datos: el backend usa la
+de `DATABASE_URL`, que está en otro servidor. Las apps usan la red del host, así que
 leen el mismo `.env` sin cambios y escuchan en los mismos puertos que en
 nativo. No hay volúmenes montados: `docker compose watch` copia tus cambios
 dentro de los contenedores.
@@ -48,7 +52,7 @@ activada.
 ### En nativo (`bun run dev:local`)
 
 ```bash
-bun run db:start    # solo la base de datos, en Docker
+bun run loki:start  # solo Loki, en Docker (opcional)
 bun run dev:local   # frontend y backend con Turbo
 ```
 
@@ -68,16 +72,22 @@ producción.
 
 ## Base de datos
 
-`bun run db:start` arranca PostgreSQL 17 en el puerto `POSTGRES_PORT`
-(por defecto 5432), que coincide con el `DATABASE_URL` del `.env`. Si ese
-puerto está ocupado en tu máquina, cambia los dos.
+El proyecto no levanta ninguna base de datos en desarrollo. La de desarrollo
+vive **fuera del proyecto, en otro servidor**, y `DATABASE_URL` en el `.env`
+apunta a ella. Así:
+
+- El modo Docker y el nativo usan siempre los mismos datos.
+- Borrar los contenedores o los volúmenes del stack de desarrollo no toca los
+  datos.
+- Tu máquina no tiene que ejecutar PostgreSQL ni reservar el puerto 5432.
+
+Necesitas una base de datos PostgreSQL vacía (o con datos de desarrollo) y un
+usuario con permisos para crear tablas, porque el backend aplica las
+migraciones al arrancar. No apuntes `DATABASE_URL` a la base de datos de
+producción.
 
 | Comando | Qué hace |
 | --- | --- |
-| `bun run db:start` | Arranca Postgres en segundo plano. |
-| `bun run db:watch` | Lo mismo, en primer plano. |
-| `bun run db:stop` | Lo para. |
-| `bun run db:down` | Elimina el contenedor. Los datos siguen en el volumen `db_data`. |
 | `bun run db:studio` | Abre Drizzle Studio para explorar los datos. |
 
 **No hay que aplicar el esquema a mano.** El backend aplica las migraciones al

@@ -13,8 +13,11 @@ Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
 
 Está explicado en [Desarrollo local](02-desarrollo.md#con-docker-bun-run-dev).
 Lo importante: las apps usan la red del host y leen el `.env` sin cambios, así
-que se comportan exactamente igual que en nativo. La base de datos
-(`better-dev-db`) es la misma que usa `bun run db:start`.
+que se comportan exactamente igual que en nativo. No levanta base de datos:
+la de desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a
+ella por el `DATABASE_URL` del `.env`. Sí levanta Loki (`better-dev-loki`) en
+`localhost:3100`, el mismo que arranca `bun run loki:start` para el modo
+nativo, con la misma imagen y retención que en `compose.yml`.
 
 Cuando un servicio empieza a importar un paquete o una carpeta nueva, hay que
 añadir su entrada `sync` en este fichero, o los cambios no llegarán al

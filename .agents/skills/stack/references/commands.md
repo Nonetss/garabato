@@ -6,21 +6,22 @@ Root scripts (`package.json`) go through Turbo (`turbo.json`) or `docker compose
 
 | Command | What it does |
 |---|---|
-| `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, database included (see `docker.md`); `bun run dev:down` removes it. |
-| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the database (`bun run db:start`). Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
+| `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, Loki included and no database (see `docker.md`); `bun run dev:down` removes it. |
+| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the external dev database in `DATABASE_URL`; `bun run loki:start` for the activity log. Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
 | `bun run dev:frontend` / `dev:backend` | `turbo watch -F frontend dev` / `-F backend dev`. |
 | `bun run gateway` | Runs only the gateway container (`apps/gateway/compose.yml`, host network, HTTP on `:8080`) in front of natively running apps, to try production-like routing. Optional: the normal dev URL is `astro dev` on `:4321`, whose proxy already forwards the API. |
 | `bun run setup:dev` | `scripts/setup-dev.sh`: writes the root `.env` from `.env.example` with generated secrets and the admin seed (`--force` overwrites). |
 
 Per package: backend `bun run --hot src/index.ts`; frontend `astro dev`.
 
-## Dev database (`compose.dev.yml` `db` service)
+## Dev database and Loki
+
+The repo runs no dev database: `DATABASE_URL` in `.env` points at a PostgreSQL outside the project, on another server.
 
 | Command | What it does |
 |---|---|
-| `bun run db:start` | `docker compose -f compose.dev.yml up -d db`: Postgres 17 on `${POSTGRES_PORT:-5432}`, matching the default `DATABASE_URL`. |
-| `bun run db:watch` | Same, in the foreground. |
-| `bun run db:stop` / `db:down` | Stop it / remove the container (the `db_data` volume stays). |
+| `bun run loki:start` | `docker compose -f compose.dev.yml up -d loki`: only the dev Loki on `localhost:3100`, for native dev. |
+| `bun run loki:stop` | Stop it (the `loki_data` volume stays). |
 
 ## Build and validate
 

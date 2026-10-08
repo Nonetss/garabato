@@ -1,6 +1,6 @@
 ---
 name: stack
-description: Map and conventions of the better monorepo. Covers which workspace owns what (apps/frontend, apps/backend, apps/gateway, packages/api, auth, config, cron, db, env, logger under the `@nonete/*` scope), path aliases (`@/` in apps, `#` subpath imports in packages), dependencies, root commands, env gotchas, tests and Docker (the hot-reloading dev stack, native dev with the dev database, the production-like compose.yml and the registry compose.prod.yml); frontend structure (features and slices, barrels, pages, app-surfaces and site-nav, Astro layouts, typography with the `Text` roles, `Hint` bubbles on icon-only controls, container queries, entity icons); how to find an existing component, hook, helper or procedure before writing new code; packages/api layering (feature files, procedure builders, errors, pagination, HTTP methods and status codes, free-text search, versions); cron scheduling with `cronMeta`; and the TypeScript code style (no casts, no `??` chains or inline ternaries). Use before any code change in this repo, before choosing or writing a React/UI component, hook, helper or procedure, to find where code lives, which convention applies and how to validate it.
+description: Map and conventions of the better monorepo. Covers which workspace owns what (apps/frontend, apps/backend, apps/gateway, packages/api, auth, config, cron, db, env, logger under the `@nonete/*` scope), path aliases (`@/` in apps, `#` subpath imports in packages), dependencies, root commands, env gotchas, tests and Docker (the hot-reloading dev stack with Loki, native dev, the external dev database, the production-like compose.yml and the registry compose.prod.yml); frontend structure (features and slices, barrels, pages, app-surfaces and site-nav, Astro layouts, typography with the `Text` roles, `Hint` bubbles on icon-only controls, container queries, entity icons); how to find an existing component, hook, helper or procedure before writing new code; packages/api layering (feature files, procedure builders, errors, pagination, HTTP methods and status codes, free-text search, versions); cron scheduling with `cronMeta`; and the TypeScript code style (no casts, no `??` chains or inline ternaries). Use before any code change in this repo, before choosing or writing a React/UI component, hook, helper or procedure, to find where code lives, which convention applies and how to validate it.
 ---
 
 # Stack
@@ -18,7 +18,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
            │  packages/api    (contract + handlers)
            │  packages/auth   (Better Auth)
            │  packages/cron   (in-process scheduler)
-           │  packages/db     (Drizzle) ──▶ PostgreSQL (`db` service)
+           │  packages/db     (Drizzle) ──▶ PostgreSQL (`db` service; dev: external server)
            │  packages/logger (pino)    ──▶ Loki (optional, LOKI_URL)
 ```
 
@@ -35,12 +35,12 @@ Read only the references the task needs. A task crossing layers reads several (a
 | Task touches | Read |
 |---|---|
 | Which workspace owns something, entrypoints, ports, what git tracks | `references/workspaces.md` |
-| Running, building, type-checking, formatting, the dev database, Docker scripts | `references/commands.md` |
+| Running, building, type-checking, formatting, the dev database and Loki, Docker scripts | `references/commands.md` |
 | Imports between files/packages (`@/`, `#…`), adding a dependency or workspace | `references/aliases-and-deps.md` |
 | Env vars, auth URLs, cookies, proxies, middleware gating, oRPC handler plugins (error logging, body limit, SSE keep-alive), request ids | `references/env.md` |
 | Writing or running tests, validating a change | `references/testing.md` |
 | Any TypeScript code: casts, `??` chains, ternaries, generic defaults, `let` memoization — what is not allowed and what to write instead | `references/code-style.md` |
-| Dockerfiles, compose files (dev stack, dev database, production-like, registry images), CI images | `references/docker.md` |
+| Dockerfiles, compose files (dev stack, production-like, registry images), CI images | `references/docker.md` |
 
 ### Frontend (`apps/frontend`)
 
