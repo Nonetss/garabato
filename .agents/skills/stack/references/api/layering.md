@@ -14,7 +14,8 @@ The package root holds infrastructure shared by every API version:
 | `permissionProcedure(resource, action)` | organization-scoped permission via Better Auth `hasPermission` in the session's active organization; global admins bypass it. Resources/actions come from `appStatements` in `packages/auth/src/permissions.ts` |
 | `cronProcedure` | reachable only from the in-process scheduler |
 
-- `shared/` holds cross-feature helpers: `pagination.ts` (`paginate`, `paginateWithTotal`, keyset cursor codec, `paginationLimit`/`paginationCursor`), `search.ts` (inputs and `likePattern` for `search` procedures, see `references/api/free-text-search.md`), `dates.ts` (`toIso`, `toIsoOrNull`), `not-found.ts` (`assertFound`), `procedure-docs.ts` (a procedure's OpenAPI summary/description/tags and input JSON Schema, used by cron discovery). `lib/permissions.ts` wraps the organization permission check.
+- `shared/` holds cross-feature helpers. Besides the generic ones below, the security and storage helpers shared by `certificate` and `document`: `vault.ts` (envelope AES-256-GCM, scoped `<kind>:<id>:<purpose>` AAD), `pkcs12.ts` (`readPkcs12`, `openSigningKey`), `certificate-secrets.ts` (open a stored certificate's file and remembered password, Spanish PKCS#12 errors), `object-storage.ts` (`createObjectStorage` and the S3 error mapping), `caller.ts` (`requireUserId`) and `db-errors.ts` (`isUniqueViolation`). `lib/object-storage.ts` holds the real `Bun.S3Client` instance; `tests/setup.ts` replaces it with the in-memory fake from `tests/fixtures/object-storage.ts`, the way it installs the fake database.
+- Generic helpers in `shared/`: `pagination.ts` (`paginate`, `paginateWithTotal`, keyset cursor codec, `paginationLimit`/`paginationCursor`), `search.ts` (inputs and `likePattern` for `search` procedures, see `references/api/free-text-search.md`), `dates.ts` (`toIso`, `toIsoOrNull`), `not-found.ts` (`assertFound`), `procedure-docs.ts` (a procedure's OpenAPI summary/description/tags and input JSON Schema, used by cron discovery). `lib/permissions.ts` wraps the organization permission check.
 - `router.ts` assembles the top-level `appRouter` by nesting each version's router under its own key (`v1: v1Router`) — the only place a new version gets wired in.
 
 Procedure metadata (`cron`): see `references/cron.md`.
@@ -45,7 +46,7 @@ OpenAPI `summary`/`description`/`.describe()` texts are English.
 
 A procedure that receives a file declares it in its zod input with `z.file().max(<bytes>)` (`certificate.import` is the reference). Over `/rpc` the frontend passes the `File` straight into `.call()` and oRPC sends the call as multipart; the OpenAPI document shows a `multipart/form-data` body with a binary field. Rules:
 
-- Always cap the size in the schema, well below the 1 MiB body limit of `hardeningPlugins()`.
+- Always cap the size in the schema. Small files (a PKCS#12) stay under the default 1 MiB body limit; a procedure that needs more (`document.upload`, 20 MiB) is added to `UPLOAD_PROCEDURE_PATHS` in `apps/backend/src/routers/handler-plugins.ts`, which serves it with the larger handler (`references/env.md`).
 - Don't trust the MIME type (browsers send several or none for the same extension): parse the bytes and map a failed parse to `errors.BAD_REQUEST` with a Spanish message.
 - Read it in the handler with `new Uint8Array(await input.file.arrayBuffer())`. Never log the file or any secret that travels with it (a password).
 

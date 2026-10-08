@@ -223,7 +223,8 @@ restart the backend.
 ```bash
 bun run dev        # Docker dev stack with hot reload (Loki and the gateway included); Ctrl+C stops
 bun run dev:local  # the same apps natively through Turbo; also run `bun run gateway`
-                   # (and `bun run loki:start` for the activity log)
+                   # (plus `bun run minio:start` for document storage and
+                   # `bun run loki:start` for the activity log)
 ```
 
 - App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
@@ -256,11 +257,13 @@ bun run dev:down   # remove the dev containers
 
 `compose.dev.yml` runs the frontend (`astro dev` on `:4320`) and the backend
 (`bun --hot`) from `apps/*/Dockerfile.dev`, the gateway with
-`apps/gateway/Caddyfile.dev` and `loki`, so `/admin/logs` works in
-development. As in production, **only the gateway publishes a port**
-(`https://localhost:4321`). The apps and Loki stay on the stack's private
-network and reach each other by service name: compose overrides `BACKEND_URL`
-and `LOKI_URL`, and everything else comes from the root `.env` unchanged.
+`apps/gateway/Caddyfile.dev`, `loki` (so `/admin/logs` works in development)
+and `minio` (the document store, with a one-shot `minio-init` that creates the
+bucket). As in production, **only the gateway publishes a port**
+(`https://localhost:4321`). The apps, Loki and MinIO stay on the stack's
+private network and reach each other by service name: compose overrides
+`BACKEND_URL`, `LOKI_URL` and `S3_ENDPOINT`, and everything else comes from the
+root `.env` unchanged.
 There is no database service: the backend uses the external dev PostgreSQL in
 `DATABASE_URL`. `docker compose watch` copies your edits into the containers:
 
@@ -278,7 +281,7 @@ There is no database service: the backend uses the external dev PostgreSQL in
 
 ### Docker Compose (local, builds from source)
 
-- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL) and `loki`. Only the gateway publishes a port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`.
+- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL), `loki` and `minio` (document store). Only the gateway publishes a public port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`; MinIO's console listens on `127.0.0.1:9001` only.
 - Build images: `bun run docker:build`
 - Start: `bun run docker:up`
 - Logs: `bun run docker:logs`
@@ -290,9 +293,9 @@ overridden in the compose file.
 
 ### Docker Compose (production, prebuilt images)
 
-- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres) and `loki`
+- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres) and `loki`, and a bundled MinIO (`pgsty/silo`) for documents under the `minio` profile (`COMPOSE_PROFILES=minio` in `.env`); leave the profile off to use an external S3-compatible store set in the `S3_*` variables
 - Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
-- Only the gateway publishes a port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port
+- Only the gateway publishes a public port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port. The bundled MinIO's console is on the host's loopback (`127.0.0.1:9001`, use an SSH tunnel) and its S3 API is never published
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
 
 For a fresh server, `scripts/bootstrap.sh` is a standalone installer: it
@@ -326,6 +329,7 @@ There are no git hooks.
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
 - `bun run loki:start` / `loki:stop`: Only the dev Loki container on `127.0.0.1:3100` (`loki-native`), for native dev
+- `bun run minio:start` / `minio:stop`: Only the dev MinIO on `127.0.0.1:9000` (console `:9001`) with its bucket (`minio-native`), for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
 - `bun run check` / `bun run format`: Biome formatting and linting

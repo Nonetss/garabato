@@ -7,7 +7,7 @@ Root scripts (`package.json`) go through Turbo (`turbo.json`) or `docker compose
 | Command | What it does |
 |---|---|
 | `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, Loki included and no database (see `docker.md`); `bun run dev:down` removes it. |
-| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the external dev database in `DATABASE_URL` and `bun run gateway` for the dev URL `https://localhost:4321` (`astro dev` itself is on `:4320`); `bun run loki:start` for the activity log. Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
+| `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the external dev database in `DATABASE_URL` and `bun run gateway` for the dev URL `https://localhost:4321` (`astro dev` itself is on `:4320`); `bun run loki:start` for the activity log, and an object store for documents: `bun run minio:start` (or an external one in `S3_ENDPOINT`). Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
 | `bun run dev:frontend` / `dev:backend` | `turbo watch -F frontend dev` / `-F backend dev`. |
 | `bun run gateway` | Runs only the dev gateway container (`apps/gateway/compose.yml`, host network, `Caddyfile.dev`) in front of natively running apps: the dev URL `https://localhost:4321` (local CA, HTTP/2). Required for native dev. |
 | `bun run dev:cert` | Exports the dev gateway's local CA root (volume `stack-dev_gateway_data`) to `caddy-local-root.crt` (git-ignored), to import once in the browser as a trusted authority. The gateway must have started once. |
@@ -22,6 +22,7 @@ The repo runs no dev database: `DATABASE_URL` in `.env` points at a PostgreSQL o
 | Command | What it does |
 |---|---|
 | `bun run loki:start` | `docker compose -f compose.dev.yml --profile native up -d loki-native`: only the dev Loki, on `127.0.0.1:3100`, for native dev (`loki:stop` stops it). |
+| `bun run minio:start` | `docker compose -f compose.dev.yml --profile native up -d minio-native minio-native-init`: only the dev MinIO, on `127.0.0.1:9000` (console `:9001`), with its bucket, for native dev (`minio:stop` stops it). |
 | `bun run loki:stop` | Stop it (the `loki_data` volume stays). |
 
 ## Build and validate
