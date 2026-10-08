@@ -4,8 +4,11 @@ const ShieldPlus = getIcon("security", "grant")
 const Trash2 = getIcon("actions", "delete")
 
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
-import { Hint } from "@/components/shared/feedback/hint"
+import {
+  SoftCardList,
+  SoftCardListItem,
+} from "@/components/shared/data-display/soft-card-list"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
 import { describePermissions } from "@/features/admin/organizations/definitions/role-options"
@@ -43,31 +46,20 @@ export function OrganizationRolesSection({
       ) : (
         <SoftCardList as="ul">
           {roles.map((role) => (
-            <li key={role.id} className="flex items-center gap-3 px-3 py-2.5">
-              <div className="min-w-0 flex-1">
-                <Text as="p" variant="title" className="truncate">
-                  {role.role}
-                </Text>
-                <Text
-                  as="p"
-                  variant="compact"
-                  tone="muted"
-                  className="truncate"
-                >
-                  {describePermissions(role.permission)}
-                </Text>
-              </div>
-              <Hint label="Eliminar rol">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Eliminar rol"
+            <SoftCardListItem
+              key={role.id}
+              density="dense"
+              truncate
+              title={role.role}
+              description={describePermissions(role.permission)}
+              trailing={
+                <IconButton
+                  label="Eliminar rol"
+                  icon={Trash2}
                   onClick={() => onRemoveClick(role.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </Hint>
-            </li>
+                />
+              }
+            />
           ))}
         </SoftCardList>
       )}

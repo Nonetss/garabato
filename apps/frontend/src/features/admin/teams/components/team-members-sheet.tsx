@@ -1,17 +1,18 @@
 import { getIcon } from "@/lib/icon-registry"
 
-const Loader2 = getIcon("status", "loading")
 const Trash2 = getIcon("actions", "delete")
 const UserPlus = getIcon("identity", "addUser")
 
 import { useState } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
-import { Hint } from "@/components/shared/feedback/hint"
+import {
+  SoftCardList,
+  SoftCardListItem,
+} from "@/components/shared/data-display/soft-card-list"
 import { StateCard } from "@/components/shared/feedback/state-card"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { UserAvatar } from "@/components/shared/user/avatar"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -106,21 +107,15 @@ export function TeamMembersSheet({
                 )}
               </SelectContent>
             </Select>
-            <Hint label="Añadir miembro">
-              <Button
-                type="button"
-                size="icon"
-                disabled={!pickedUserId || addTeamMember.isPending}
-                onClick={handleAdd}
-                aria-label="Añadir miembro"
-              >
-                {addTeamMember.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <UserPlus className="size-4" />
-                )}
-              </Button>
-            </Hint>
+            <IconButton
+              label="Añadir miembro"
+              icon={UserPlus}
+              variant="default"
+              size="icon"
+              pending={addTeamMember.isPending}
+              disabled={!pickedUserId || addTeamMember.isPending}
+              onClick={handleAdd}
+            />
           </div>
 
           {isPending ? (
@@ -134,35 +129,25 @@ export function TeamMembersSheet({
               <SectionHeading title="Miembros" count={members.length} />
               <SoftCardList as="ul">
                 {members.map((member) => (
-                  <li
+                  <SoftCardListItem
                     key={member.userId}
-                    className="flex items-center gap-3 px-3 py-2.5"
-                  >
-                    <UserAvatar
-                      displayName={member.user.name}
-                      email={member.user.email}
-                      imageUrl={member.user.image}
-                      size="sm"
-                      className="shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <Text as="p" variant="title" className="truncate">
-                        {member.user.name}
-                      </Text>
-                      <Text
-                        as="p"
-                        variant="compact"
-                        tone="muted"
-                        className="truncate"
-                      >
-                        {member.user.email}
-                      </Text>
-                    </div>
-                    <Hint label="Eliminar del equipo">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Eliminar del equipo"
+                    density="dense"
+                    truncate
+                    leading={
+                      <UserAvatar
+                        displayName={member.user.name}
+                        email={member.user.email}
+                        imageUrl={member.user.image}
+                        size="sm"
+                        className="shrink-0"
+                      />
+                    }
+                    title={member.user.name}
+                    description={member.user.email}
+                    trailing={
+                      <IconButton
+                        label="Eliminar del equipo"
+                        icon={Trash2}
                         disabled={removeTeamMember.isPending}
                         onClick={() =>
                           teamId &&
@@ -171,11 +156,9 @@ export function TeamMembersSheet({
                             userId: member.userId,
                           })
                         }
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </Hint>
-                  </li>
+                      />
+                    }
+                  />
                 ))}
               </SoftCardList>
             </div>

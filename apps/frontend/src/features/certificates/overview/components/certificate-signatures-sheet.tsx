@@ -1,5 +1,8 @@
 import { Text, textVariants } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
+import {
+  SoftCardList,
+  SoftCardListItem,
+} from "@/components/shared/data-display/soft-card-list"
 import { AppLink } from "@/components/ui/app-link"
 import {
   Sheet,
@@ -34,16 +37,13 @@ function placementLabel(entry: SignatureEntry) {
 function DocumentName({ entry }: { entry: SignatureEntry }) {
   if (entry.documentDeleted) {
     return (
-      <Text as="p" variant="title" tone="muted">
+      <Text tone="muted" variant="title">
         {entry.documentName} (eliminado)
       </Text>
     )
   }
   return (
-    <AppLink
-      href={`/documents/${entry.documentId}`}
-      className={textVariants({ role: "title" })}
-    >
+    <AppLink href={`/documents/${entry.documentId}`}>
       {entry.documentName}
     </AppLink>
   )
@@ -64,13 +64,16 @@ function SignatureList({ certificateId }: { certificateId: string }) {
   return (
     <SoftCardList as="ul">
       {data.map((entry) => (
-        <li key={entry.id} className="space-y-0.5 px-4 py-3">
-          <DocumentName entry={entry} />
-          <Text as="p" variant="compact" tone="muted" className="tabular-nums">
-            {formatDateTime(entry.signedAt, { includeYear: true })} · v
-            {entry.versionNumber} · {placementLabel(entry)}
-          </Text>
-        </li>
+        <SoftCardListItem
+          key={entry.id}
+          title={<DocumentName entry={entry} />}
+          description={
+            <>
+              {formatDateTime(entry.signedAt, { includeYear: true })} · v
+              {entry.versionNumber} · {placementLabel(entry)}
+            </>
+          }
+        />
       ))}
     </SoftCardList>
   )

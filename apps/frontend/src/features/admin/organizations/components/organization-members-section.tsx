@@ -4,8 +4,11 @@ const Trash2 = getIcon("actions", "delete")
 const UserPlus = getIcon("identity", "addUser")
 
 import { Text } from "@/components/shared/brand/typography"
-import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
-import { Hint } from "@/components/shared/feedback/hint"
+import {
+  SoftCardList,
+  SoftCardListItem,
+} from "@/components/shared/data-display/soft-card-list"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { UserAvatar } from "@/components/shared/user/avatar"
 import { Button } from "@/components/ui/button"
@@ -50,45 +53,38 @@ export function OrganizationMembersSection({
       ) : (
         <SoftCardList as="ul">
           {members.map((member) => (
-            <li key={member.id} className="flex items-center gap-3 px-3 py-2.5">
-              <UserAvatar
-                displayName={member.user.name}
-                email={member.user.email}
-                imageUrl={member.user.image}
-                size="sm"
-                className="shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <Text as="p" variant="title" className="truncate">
-                  {member.user.name}
-                </Text>
-                <Text
-                  as="p"
-                  variant="compact"
-                  tone="muted"
-                  className="truncate"
-                >
-                  {member.user.email}
-                </Text>
-              </div>
-              <RoleSelect
-                size="sm"
-                className="w-32 shrink-0"
-                value={member.role}
-                onValueChange={(role) => onRoleChange(member.id, role)}
-                customRoles={customRoles}
-              />
-              <Hint label="Eliminar miembro">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Eliminar miembro"
-                  onClick={() => onRemoveClick(member.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
-              </Hint>
-            </li>
+            <SoftCardListItem
+              key={member.id}
+              density="dense"
+              truncate
+              leading={
+                <UserAvatar
+                  displayName={member.user.name}
+                  email={member.user.email}
+                  imageUrl={member.user.image}
+                  size="sm"
+                  className="shrink-0"
+                />
+              }
+              title={member.user.name}
+              description={member.user.email}
+              trailing={
+                <>
+                  <RoleSelect
+                    size="sm"
+                    className="w-32"
+                    value={member.role}
+                    onValueChange={(role) => onRoleChange(member.id, role)}
+                    customRoles={customRoles}
+                  />
+                  <IconButton
+                    label="Eliminar miembro"
+                    icon={Trash2}
+                    onClick={() => onRemoveClick(member.id)}
+                  />
+                </>
+              }
+            />
           ))}
         </SoftCardList>
       )}
