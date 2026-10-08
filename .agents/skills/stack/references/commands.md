@@ -44,7 +44,7 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 
 ## Tests
 
-`bun run test` — `turbo test`: runs every workspace `test` script; today only `packages/api` (`bun test`). Exits non-zero on any failure. One suite: `turbo run test --filter=@nonete/api`. See `testing.md`.
+`bun run test` — `turbo test`: runs every workspace `test` script: `packages/api`, `packages/cron` and `apps/frontend`, each with `bun test`. Exits non-zero on any failure. One suite: `turbo run test --filter=<workspace>` (`@nonete/api`, `@nonete/cron`, `frontend`). See `testing.md`.
 
 ## Database migrations and Docker
 

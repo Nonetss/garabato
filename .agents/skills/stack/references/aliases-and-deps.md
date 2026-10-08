@@ -13,6 +13,7 @@
 - General pattern: `"#*": "./src/*.ts"`. Resolvers don't search extensions on the target, so the `.ts` is load-bearing.
 - `packages/db` adds explicit entries before the wildcard: `#schema`, `#schema/*` (→ `./src/schema/*/index.ts`), `#seed`, `#seed/*`. Add any new directory that needs an `index.ts` target the same way (and mirror it in `exports` if other workspaces import it).
 - In `packages/api`, the single `#*` also covers versioned paths (`#v1/health/handler` → `./src/v1/health/handler.ts`); no separate `#v1/*` entry is needed.
+- Folders outside `src/` get their own entry before the wildcard, never a relative import: `"#tests/*": "./tests/*.ts"` in `packages/api` and `packages/cron`, `"#testing/*": "./testing/*.ts"` in `packages/db`. No file uses `./` or `../` imports, tests included.
 
 ### In practice
 

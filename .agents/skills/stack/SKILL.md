@@ -70,7 +70,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 ## Always true
 
 ### Tooling
-- **Validation** is `check-types` + Biome; `bun run test` runs the only unit suite (`bun test` in `packages/api`). Unit tests are hermetic: no database, network or running service (`references/testing.md`).
+- **Validation** is `check-types` + Biome; `bun run test` runs the unit suites (`bun test` in `packages/api`, `packages/cron` and `apps/frontend`). Unit tests are hermetic: no database, network or running service; database code runs against the fake from `@nonete/db/testing` (`references/testing.md`).
 - **Never** run `db:generate`/`db:push`/`db:migrate`, edit `packages/db/src/migrations/`, kill running processes, stop or restart the user's Docker stack, or probe the live app with curl or a browser unless the user asks in that moment.
 - **Don't copy enumerations** (env vars, OpenSpec capabilities, procedures) — read their source files instead.
 - Code, comments and log/internal error messages in English; UI copy and user-facing API error messages in Spanish.
