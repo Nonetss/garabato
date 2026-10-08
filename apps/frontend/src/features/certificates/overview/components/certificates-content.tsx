@@ -73,15 +73,20 @@ export function CertificatesContent() {
     <>
       <ResourceOverview
         surface="certificates"
-        heroMeta={
-          <HeroCount
-            segments={[
-              { count: usableCount, label: "vigentes" },
-              { count: certificates.length, label: "total" },
-            ]}
-          />
-        }
         heroAction={importButton}
+        heroChildren={
+          // Same ledger line as the document library, ruled off from the desk.
+          certificates.length > 0 ? (
+            <div className="border-b pb-4">
+              <HeroCount
+                segments={[
+                  { count: usableCount, label: "vigentes" },
+                  { count: certificates.length, label: "total" },
+                ]}
+              />
+            </div>
+          ) : null
+        }
         query={{ data: certificates, isPending, isError, refetch }}
         loading="Cargando certificados..."
         error={{

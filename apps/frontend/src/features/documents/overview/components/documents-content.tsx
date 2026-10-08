@@ -97,19 +97,19 @@ export function DocumentsContent() {
     <>
       <ResourceOverview
         surface="documents"
-        heroMeta={
-          <HeroCount
-            segments={[
-              { count: signedCount, label: "firmados" },
-              { count: documents.length, label: "total" },
-            ]}
-          />
-        }
         heroAction={uploadButton}
-        filters={
+        heroChildren={
+          // The library's ledger line: what is on the desk and how it is
+          // laid out, ruled off from the sheets below.
           documents.length > 0 ? (
-            <div className="-mt-2 flex justify-end">
-              <div className="w-52">
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b pb-4">
+              <HeroCount
+                segments={[
+                  { count: signedCount, label: "firmados" },
+                  { count: documents.length, label: "total" },
+                ]}
+              />
+              <div className="w-44">
                 <SegmentedPicker
                   label="Vista"
                   options={viewOptions}
