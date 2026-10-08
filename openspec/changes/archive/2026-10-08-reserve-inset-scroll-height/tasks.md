@@ -18,4 +18,4 @@
 
 - [x] 3.1 Document `persistScroll` and the height reservation in `.agents/skills/stack/references/frontend/navigation-and-layouts.md`
 - [x] 3.2 Run `check-types`, Biome on the changed files and `bun run tailwind:check`
-- [ ] 3.3 Ask the user to confirm in the browser: going back to a deep list with slow data shows the saved offset without a top frame, a filter click during the reservation leaves no gap, and filtered and unfiltered views of a list keep their own offsets
+- [x] 3.3 Ask the user to confirm in the browser: going back to a deep list with slow data shows the saved offset without a top frame, a filter click during the reservation leaves no gap, and filtered and unfiltered views of a list keep their own offsets
