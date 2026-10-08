@@ -126,9 +126,12 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     path: "/",
     title: "Inicio",
     label: "Inicio",
-    description: "Revisa las tareas programadas.",
+    description: "Sube un PDF y fírmalo con uno de tus certificados.",
     icon: iconRef("navigation", "home"),
   },
+  // Crons stay routable by URL (the scheduler and `/crons` pages are kept for
+  // future use) but are out of the navbar, the home and the surface search:
+  // signing documents does not need them today.
   crons: {
     id: "crons",
     path: "/crons",
@@ -136,7 +139,7 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     label: "Crons",
     description: "Consulta y gestiona tareas que se ejecutan automáticamente.",
     icon: iconRef("navigation", "crons"),
-    nav: { primary: true },
+    search: false,
   },
   "cron-detail": {
     id: "cron-detail",
@@ -145,7 +148,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     label: "Cron",
     description: "Detalle e historial de ejecuciones de la tarea.",
     icon: iconRef("navigation", "crons"),
-    searchSource: "cron-jobs",
   },
   documents: {
     id: "documents",

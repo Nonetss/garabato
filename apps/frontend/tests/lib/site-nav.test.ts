@@ -18,7 +18,9 @@ function requireNavItem(href: string) {
 
 describe("current navigation item", () => {
   test("a leaf section stays current on nested pages", () => {
-    expect(isNavItemCurrent(requireNavItem("/crons"), "/crons/abc")).toBe(true)
+    expect(
+      isNavItemCurrent(requireNavItem("/documents"), "/documents/abc")
+    ).toBe(true)
   })
 
   test("a parent yields to its more specific child", () => {
@@ -32,6 +34,13 @@ describe("current navigation item", () => {
 })
 
 describe("getSiteNavItems", () => {
+  test("keeps crons out of the navigation", () => {
+    const hrefs = getSiteNavItems(true).map((item) => item.href)
+    expect(hrefs).not.toContain("/crons")
+    expect(hrefs).toContain("/documents")
+    expect(hrefs).toContain("/certificates")
+  })
+
   test("filters admin-only sections by role", () => {
     const userHrefs = getSiteNavItems(false).map((item) => item.href)
     const adminHrefs = getSiteNavItems(true).map((item) => item.href)
@@ -55,7 +64,9 @@ describe("surface search", () => {
     const hrefs = getSearchableSurfaces(false).flatMap((group) =>
       group.items.map((item) => item.href)
     )
-    expect(hrefs).toContain("/crons")
+    expect(hrefs).toContain("/documents")
+    // Crons stay routable but are hidden from the search.
+    expect(hrefs).not.toContain("/crons")
     expect(hrefs.some((href) => href.includes("["))).toBe(false)
     expect(hrefs).not.toContain("/login")
     expect(hrefs.some((href) => href.startsWith("/admin"))).toBe(false)
