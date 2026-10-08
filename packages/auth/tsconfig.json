@@ -1,12 +1,9 @@
 {
-  "extends": "@better/config/tsconfig.base.json",
+  "extends": "@nonete/config/tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": true,
-    "outDir": "dist"
-  },
-  "include": ["src/**/*.ts"],
-  "references": [{ "path": "../db" }]
+    "noEmit": true,
+    "paths": {
+      "#auth/*": ["./src/*"]
+    }
+  }
 }
