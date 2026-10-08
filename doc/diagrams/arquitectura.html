@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>stack · Arquitectura</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&display=swap"
       rel="stylesheet"
     >
     <style>
@@ -17,18 +17,32 @@
       padding: 0;
     }
     :root {
-      --color-paper: #faf9f5;
-      --color-ink: #3d3929;
-      --color-muted: #6e6d68;
-      --color-accent: #d97757;
-      --font-sans: "Space Grotesk", system-ui, sans-serif;
-      --font-serif: "Instrument Serif", serif;
+      --background: oklch(0.9818 0.0054 95.0986);
+      --foreground: oklch(0.3438 0.0269 95.7226);
+      --card: oklch(0.9665 0.0067 97.3521);
+      --muted-foreground: oklch(0.5341 0.0078 97.4503);
+      --border: oklch(0.94 0.003 97.3627);
+      --primary: oklch(0.6724 0.1308 38.7559);
+      --surface: color-mix(in oklch, var(--card) 40%, var(--background));
+      --edge: color-mix(in oklch, var(--foreground) 15%, transparent);
+      --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
       --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: oklch(0.2679 0.0036 106.6427);
+        --foreground: oklch(0.9576 0.0027 106.4494);
+        --card: oklch(0.2928 0.0018 106.5092);
+        --muted-foreground: oklch(0.7713 0.0169 99.0657);
+        --border: oklch(0.31 0.004 106.8928);
+        --primary: oklch(0.6724 0.1308 38.7559);
+      }
     }
     body {
       font-family: var(--font-sans);
-      background: var(--color-paper);
-      color: var(--color-ink);
+      background: var(--background);
+      color: var(--foreground);
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -43,22 +57,22 @@
       width: 100%;
       overflow-x: auto;
     }
+    /* `label` role of the Text component */
     .eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.66rem;
-      font-weight: 400;
-      letter-spacing: 0.18em;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--color-muted);
+      color: var(--muted-foreground);
       margin-bottom: 0.5rem;
     }
+    /* `display` role (PageHero title) */
     h1 {
-      font-family: var(--font-serif);
-      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      color: var(--color-ink);
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: var(--foreground);
       margin-bottom: 1.5rem;
     }
     svg {
@@ -102,7 +116,10 @@
               refY="3"
               orient="auto"
             >
-              <polygon points="0 0, 8 3, 0 6" fill="#6e6d68" />
+              <polygon
+                points="0 0, 8 3, 0 6"
+                style="fill: var(--muted-foreground)"
+              />
             </marker>
             <marker
               id="arrow-accent"
@@ -112,7 +129,7 @@
               refY="3"
               orient="auto"
             >
-              <polygon points="0 0, 8 3, 0 6" fill="#d97757" />
+              <polygon points="0 0, 8 3, 0 6" style="fill: var(--primary)" />
             </marker>
             <marker
               id="arrow-link"
@@ -122,11 +139,11 @@
               refY="3"
               orient="auto"
             >
-              <polygon points="0 0, 8 3, 0 6" fill="#6a55b8" />
+              <polygon points="0 0, 8 3, 0 6" style="fill: var(--foreground)" />
             </marker>
           </defs>
 
-          <rect width="100%" height="100%" fill="#faf9f5" />
+          <rect width="100%" height="100%" style="fill: var(--background)" />
 
           <!-- Zone: the server (everything behind the single published port) -->
           <rect
@@ -135,19 +152,26 @@
             width="712"
             height="312"
             rx="8"
-            fill="rgba(61,57,41,0.02)"
-            stroke="rgba(61,57,41,0.10)"
             stroke-width="0.8"
+            style="fill: var(--surface); stroke: var(--border)"
           />
-          <rect x="496" y="58" width="136" height="12" rx="2" fill="#faf9f5" />
+          <rect
+            x="496"
+            y="58"
+            width="136"
+            height="12"
+            rx="2"
+            style="fill: var(--background)"
+          />
           <text
             x="564"
             y="67"
-            fill="rgba(61,57,41,0.55)"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.14em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: color-mix(in oklch, var(--foreground) 55%, transparent)"
           >
             SERVIDOR · COMPOSE
           </text>
@@ -159,25 +183,25 @@
             y1="208"
             x2="232"
             y2="208"
-            stroke="#6a55b8"
             stroke-width="1.2"
             marker-end="url(#arrow-link)"
+            style="stroke: var(--foreground)"
           />
           <!-- Gateway -> Frontend (pages) -->
           <path
             d="M 376,196 H 432 Q 440,196 440,188 V 136 Q 440,128 448,128 H 520"
             fill="none"
-            stroke="#6e6d68"
             stroke-width="1.2"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
           <!-- Gateway -> Backend (/rpc, /api) -->
           <path
             d="M 376,220 H 448 Q 456,220 456,228 V 312 Q 456,320 464,320 H 520"
             fill="none"
-            stroke="#d97757"
             stroke-width="1.4"
             marker-end="url(#arrow-accent)"
+            style="stroke: var(--primary)"
           />
           <!-- Frontend -> Backend (SSR session lookup) -->
           <line
@@ -185,9 +209,9 @@
             y1="160"
             x2="576"
             y2="288"
-            stroke="#6e6d68"
             stroke-width="1.2"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
           <!-- Backend -> PostgreSQL -->
           <line
@@ -195,9 +219,9 @@
             y1="320"
             x2="768"
             y2="320"
-            stroke="#6e6d68"
             stroke-width="1.2"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
           <!-- Frontend -> Loki (page views, optional) -->
           <line
@@ -205,124 +229,186 @@
             y1="128"
             x2="768"
             y2="128"
-            stroke="#6e6d68"
             stroke-width="1"
             stroke-dasharray="4,3"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
           <!-- Backend -> Loki (API calls, optional) -->
           <path
             d="M 656,288 V 248 Q 656,240 664,240 H 824 Q 832,240 832,232 V 160"
             fill="none"
-            stroke="#6e6d68"
             stroke-width="1"
             stroke-dasharray="4,3"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
 
           <!-- Arrow labels (masks with a gap from their stroke) -->
-          <rect x="176" y="186" width="48" height="12" rx="2" fill="#faf9f5" />
+          <rect
+            x="176"
+            y="186"
+            width="48"
+            height="12"
+            rx="2"
+            style="fill: var(--background)"
+          />
           <text
             x="200"
             y="195"
-            fill="#6a55b8"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--foreground)"
           >
             HTTP
           </text>
 
-          <rect x="448" y="152" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="448"
+            y="152"
+            width="56"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="476"
             y="161"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             PÁGINAS
           </text>
 
-          <rect x="464" y="264" width="52" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="464"
+            y="264"
+            width="52"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="490"
             y="273"
-            fill="#d97757"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--primary)"
           >
             /RPC /API
           </text>
 
-          <rect x="584" y="204" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="584"
+            y="204"
+            width="56"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="612"
             y="213"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             SESIÓN
           </text>
 
-          <rect x="712" y="300" width="40" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="712"
+            y="300"
+            width="40"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="732"
             y="309"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             SQL
           </text>
 
-          <rect x="704" y="108" width="56" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="704"
+            y="108"
+            width="56"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="732"
             y="117"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             VISITAS
           </text>
 
-          <rect x="704" y="220" width="80" height="12" rx="2" fill="#f6f5f1" />
+          <rect
+            x="704"
+            y="220"
+            width="80"
+            height="12"
+            rx="2"
+            style="fill: var(--surface)"
+          />
           <text
             x="744"
             y="229"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.06em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             LLAMADAS API
           </text>
 
           <!-- Node: Browser (input) -->
-          <rect x="40" y="176" width="128" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="40"
             y="176"
             width="128"
             height="64"
             rx="6"
-            fill="rgba(110,109,104,0.10)"
-            stroke="#93928d"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="40"
+            y="176"
+            width="128"
+            height="64"
+            rx="6"
             stroke-width="1"
+            style="fill: color-mix(in oklch, var(--muted-foreground) 10%, transparent); stroke: var(--muted-foreground)"
           />
           <rect
             x="48"
@@ -331,53 +417,61 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(147,146,141,0.50)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--muted-foreground) 50%, transparent)"
           />
           <text
             x="62"
             y="193"
-            fill="#93928d"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             USR
           </text>
           <text
             x="104"
             y="212"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             Navegador
           </text>
           <text
             x="104"
             y="228"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             cookie de sesión
           </text>
 
           <!-- Node: Gateway (focal) -->
-          <rect x="232" y="176" width="144" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="232"
             y="176"
             width="144"
             height="64"
             rx="6"
-            fill="rgba(217,119,87,0.08)"
-            stroke="#d97757"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="232"
+            y="176"
+            width="144"
+            height="64"
+            rx="6"
             stroke-width="1"
+            style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
           />
           <rect
             x="240"
@@ -386,53 +480,61 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(217,119,87,0.50)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--primary) 50%, transparent)"
           />
           <text
             x="260"
             y="193"
-            fill="#d97757"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--primary)"
           >
             CADDY
           </text>
           <text
             x="304"
             y="212"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             Gateway
           </text>
           <text
             x="304"
             y="228"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             único puerto público
           </text>
 
           <!-- Node: Frontend -->
-          <rect x="520" y="96" width="176" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="520"
             y="96"
             width="176"
             height="64"
             rx="6"
-            fill="#ffffff"
-            stroke="#3d3929"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="520"
+            y="96"
+            width="176"
+            height="64"
+            rx="6"
             stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
           />
           <rect
             x="528"
@@ -441,53 +543,61 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(61,57,41,0.40)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--foreground) 40%, transparent)"
           />
           <text
             x="542"
             y="113"
-            fill="#3d3929"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--foreground)"
           >
             APP
           </text>
           <text
             x="608"
             y="132"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             Frontend
           </text>
           <text
             x="608"
             y="148"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             Astro SSR · :4321
           </text>
 
           <!-- Node: Backend -->
-          <rect x="520" y="288" width="176" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="520"
             y="288"
             width="176"
             height="64"
             rx="6"
-            fill="#ffffff"
-            stroke="#3d3929"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="520"
+            y="288"
+            width="176"
+            height="64"
+            rx="6"
             stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
           />
           <rect
             x="528"
@@ -496,54 +606,62 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(61,57,41,0.40)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--foreground) 40%, transparent)"
           />
           <text
             x="542"
             y="305"
-            fill="#3d3929"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--foreground)"
           >
             APP
           </text>
           <text
             x="608"
             y="324"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             Backend
           </text>
           <text
             x="608"
             y="340"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             Hono + oRPC · :3000
           </text>
 
           <!-- Node: Loki (optional) -->
-          <rect x="768" y="96" width="128" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="768"
             y="96"
             width="128"
             height="64"
             rx="6"
-            fill="rgba(61,57,41,0.02)"
-            stroke="rgba(61,57,41,0.30)"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="768"
+            y="96"
+            width="128"
+            height="64"
+            rx="6"
             stroke-width="1"
             stroke-dasharray="4,3"
+            style="fill: var(--surface); stroke: color-mix(in oklch, var(--foreground) 30%, transparent)"
           />
           <rect
             x="776"
@@ -552,53 +670,61 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(61,57,41,0.25)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--foreground) 25%, transparent)"
           />
           <text
             x="790"
             y="113"
-            fill="#93928d"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             LOG
           </text>
           <text
             x="832"
             y="132"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             Loki
           </text>
           <text
             x="832"
             y="148"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             opcional
           </text>
 
           <!-- Node: PostgreSQL (store) -->
-          <rect x="768" y="288" width="128" height="64" rx="6" fill="#faf9f5" />
           <rect
             x="768"
             y="288"
             width="128"
             height="64"
             rx="6"
-            fill="rgba(61,57,41,0.05)"
-            stroke="#6e6d68"
+            style="fill: var(--background)"
+          />
+          <rect
+            x="768"
+            y="288"
+            width="128"
+            height="64"
+            rx="6"
             stroke-width="1"
+            style="fill: color-mix(in oklch, var(--foreground) 5%, transparent); stroke: var(--muted-foreground)"
           />
           <rect
             x="776"
@@ -607,38 +733,40 @@
             height="12"
             rx="2"
             fill="none"
-            stroke="rgba(110,109,104,0.50)"
             stroke-width="0.8"
+            style="stroke: color-mix(in oklch, var(--muted-foreground) 50%, transparent)"
           />
           <text
             x="788"
             y="305"
-            fill="#6e6d68"
             font-size="7"
-            font-family="'Space Mono', monospace"
+            font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
-            letter-spacing="0.08em"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             DB
           </text>
           <text
             x="832"
             y="324"
-            fill="#3d3929"
             font-size="12"
-            font-weight="600"
+            font-weight="500"
             font-family="'Space Grotesk', sans-serif"
             text-anchor="middle"
+            letter-spacing="-0.025em"
+            style="fill: var(--foreground)"
           >
             PostgreSQL
           </text>
           <text
             x="832"
             y="340"
-            fill="#6e6d68"
             font-size="9"
             font-family="'Space Mono', monospace"
             text-anchor="middle"
+            style="fill: var(--muted-foreground)"
           >
             Drizzle
           </text>
@@ -649,16 +777,17 @@
             y1="404"
             x2="920"
             y2="404"
-            stroke="rgba(61,57,41,0.10)"
             stroke-width="0.8"
+            style="stroke: var(--border)"
           />
           <text
             x="40"
             y="420"
-            fill="#6e6d68"
             font-size="8"
-            font-family="'Space Mono', monospace"
-            letter-spacing="0.18em"
+            font-family="'Space Grotesk', sans-serif"
+            letter-spacing="0.12em"
+            font-weight="500"
+            style="fill: var(--muted-foreground)"
           >
             LEYENDA
           </text>
@@ -669,16 +798,15 @@
             width="14"
             height="10"
             rx="2"
-            fill="rgba(217,119,87,0.08)"
-            stroke="#d97757"
             stroke-width="1"
+            style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
           />
           <text
             x="60"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Punto de entrada
           </text>
@@ -689,16 +817,15 @@
             width="14"
             height="10"
             rx="2"
-            fill="#ffffff"
-            stroke="#3d3929"
             stroke-width="1"
+            style="fill: var(--card); stroke: var(--edge)"
           />
           <text
             x="192"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Aplicación
           </text>
@@ -709,16 +836,15 @@
             width="14"
             height="10"
             rx="2"
-            fill="rgba(61,57,41,0.05)"
-            stroke="#6e6d68"
             stroke-width="1"
+            style="fill: color-mix(in oklch, var(--foreground) 5%, transparent); stroke: var(--muted-foreground)"
           />
           <text
             x="296"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Almacén
           </text>
@@ -729,17 +855,16 @@
             width="14"
             height="10"
             rx="2"
-            fill="rgba(61,57,41,0.02)"
-            stroke="rgba(61,57,41,0.30)"
             stroke-width="1"
             stroke-dasharray="4,3"
+            style="fill: var(--surface); stroke: color-mix(in oklch, var(--foreground) 30%, transparent)"
           />
           <text
             x="388"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Opcional
           </text>
@@ -749,16 +874,16 @@
             y1="442"
             x2="496"
             y2="442"
-            stroke="#6a55b8"
             stroke-width="1.2"
             marker-end="url(#arrow-link)"
+            style="stroke: var(--foreground)"
           />
           <text
             x="504"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Petición del navegador
           </text>
@@ -768,16 +893,16 @@
             y1="442"
             x2="668"
             y2="442"
-            stroke="#d97757"
             stroke-width="1.4"
             marker-end="url(#arrow-accent)"
+            style="stroke: var(--primary)"
           />
           <text
             x="676"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Llamada a la API
           </text>
@@ -787,17 +912,17 @@
             y1="442"
             x2="816"
             y2="442"
-            stroke="#6e6d68"
             stroke-width="1"
             stroke-dasharray="4,3"
             marker-end="url(#arrow)"
+            style="stroke: var(--muted-foreground)"
           />
           <text
             x="824"
             y="444"
-            fill="#6e6d68"
             font-size="8.5"
             font-family="'Space Grotesk', sans-serif"
+            style="fill: var(--muted-foreground)"
           >
             Envío de logs
           </text>

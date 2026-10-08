@@ -26,9 +26,17 @@ contexto y menos jerga. Si alguna vez no coinciden, mandan las specs de
 ## Diagramas
 
 Los diagramas están en `diagrams/` como SVG, con las fuentes del proyecto
-incrustadas para que se vean igual en cualquier visor. Cada uno tiene al lado
-su `.html`, que es el original: se edita el HTML y se vuelve a exportar el SVG
-con la skill `diagram-design`.
+incrustadas para que se vean igual en cualquier visor. Usan el mismo sistema
+visual que el frontend: los colores son los tokens de
+`apps/frontend/src/styles/global.css` (fondo, texto, `card`, bordes y el
+naranja `primary` como único acento), las etiquetas siguen el rol `label` de
+`Text` y cambian a modo oscuro con el sistema.
+
+Cada SVG tiene al lado su `.html`, que es el original: se edita el HTML y se
+vuelve a generar el SVG. Los colores van como `var(--token)` en atributos
+`style`, nunca en hexadecimal, y el SVG exportado tiene que conservar el bloque
+de tokens (claro y oscuro) y las fuentes incrustadas. La exportación estándar
+de la skill `diagram-design` no lo hace, así que hay que revisar el resultado.
 
 ## Glosario rápido
 

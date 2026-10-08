@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <svg
+  id="api-estructura-root"
   viewBox="0 0 960 540"
   xmlns="http://www.w3.org/2000/svg"
   role="img"
   aria-labelledby="api-estructura-title api-estructura-desc"
-  id="api-estructura-root"
 >
   <title id="api-estructura-title">Estructura de packages/api</title>
   <desc id="api-estructura-desc">
@@ -28,352 +28,432 @@
         format("woff2");
     }
     #api-estructura-root {
-      --color-paper: #faf9f5;
-      --color-ink: #3d3929;
-      --color-muted: #6e6d68;
-      --color-accent: #d97757;
-      --font-sans: "Space Grotesk", system-ui, sans-serif;
-      --font-serif: "Instrument Serif", serif;
+      --background: oklch(0.9818 0.0054 95.0986);
+      --foreground: oklch(0.3438 0.0269 95.7226);
+      --card: oklch(0.9665 0.0067 97.3521);
+      --muted-foreground: oklch(0.5341 0.0078 97.4503);
+      --border: oklch(0.94 0.003 97.3627);
+      --primary: oklch(0.6724 0.1308 38.7559);
+      --surface: color-mix(in oklch, var(--card) 40%, var(--background));
+      --edge: color-mix(in oklch, var(--foreground) 15%, transparent);
+      --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
       --font-mono: "Space Mono", ui-monospace, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      #api-estructura-root {
+        --background: oklch(0.2679 0.0036 106.6427);
+        --foreground: oklch(0.9576 0.0027 106.4494);
+        --card: oklch(0.2928 0.0018 106.5092);
+        --muted-foreground: oklch(0.7713 0.0169 99.0657);
+        --border: oklch(0.31 0.004 106.8928);
+        --primary: oklch(0.6724 0.1308 38.7559);
+      }
     }
     #api-estructura-root {
       font-family: var(--font-sans);
-      color: var(--color-ink);
-    }
-    #api-estructura-root .diagram-container {
-      width: 100%;
-      overflow-x: auto;
-    }
-    #api-estructura-root .diagram-container {
-      overflow-x: visible;
+      color: var(--foreground);
     }
     </style>
   </defs>
-  <rect width="100%" height="100%" fill="#faf9f5" />
+  <rect width="100%" height="100%" style="fill: var(--background)" />
   <path
     d="M 392 112 L 392 144 L 168 144 L 168 176"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
-  <path d="M 392 112 L 392 176" fill="none" stroke="#6e6d68" stroke-width="1" />
+  <path
+    d="M 392 112 L 392 176"
+    fill="none"
+    stroke-width="1"
+    style="stroke: var(--muted-foreground)"
+  />
   <path
     d="M 392 112 L 392 144 L 616 144 L 616 176"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
-  <line x1="616" y1="224" x2="616" y2="288" stroke="#6e6d68" stroke-width="1" />
+  <line
+    x1="616"
+    y1="224"
+    x2="616"
+    y2="288"
+    stroke-width="1"
+    style="stroke: var(--muted-foreground)"
+  />
   <path
     d="M 616 336 L 616 368 L 388 368 L 388 400"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
   <path
     d="M 616 336 L 616 368 L 540 368 L 540 400"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
   <path
     d="M 616 336 L 616 368 L 692 368 L 692 400"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
   <path
     d="M 616 336 L 616 368 L 844 368 L 844 400"
     fill="none"
-    stroke="#6e6d68"
     stroke-width="1"
+    style="stroke: var(--muted-foreground)"
   />
-  <rect x="304" y="64" width="176" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="304"
     y="64"
     width="176"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="304"
+    y="64"
+    width="176"
+    height="48"
+    rx="6"
     stroke-width="1"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="392"
     y="85"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     src/
   </text>
   <text
     x="392"
     y="100"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     packages/api
   </text>
-  <rect x="80" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="80"
     y="176"
     width="176"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="80"
+    y="176"
+    width="176"
+    height="48"
+    rx="6"
     stroke-width="0.8"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="168"
     y="197"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     Base compartida
   </text>
   <text
     x="168"
     y="212"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     index · context · errors
   </text>
-  <rect x="304" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="304"
     y="176"
     width="176"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="304"
+    y="176"
+    width="176"
+    height="48"
+    rx="6"
     stroke-width="0.8"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="392"
     y="197"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     shared/ · lib/
   </text>
   <text
     x="392"
     y="212"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     helpers comunes
   </text>
-  <rect x="528" y="176" width="176" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="528"
     y="176"
     width="176"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="528"
+    y="176"
+    width="176"
+    height="48"
+    rx="6"
     stroke-width="1"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="616"
     y="197"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     v1/
   </text>
   <text
     x="616"
     y="212"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     router.ts monta features
   </text>
-  <rect x="528" y="288" width="176" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="528"
     y="288"
     width="176"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="528"
+    y="288"
+    width="176"
+    height="48"
+    rx="6"
     stroke-width="1"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="616"
     y="309"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     &lt;feature&gt;/
   </text>
   <text
     x="616"
     y="324"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     cron, comment, apiKey…
   </text>
-  <rect x="324" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="324"
     y="400"
     width="128"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="324"
+    y="400"
+    width="128"
+    height="48"
+    rx="6"
     stroke-width="0.8"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="388"
     y="421"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     input.ts
   </text>
   <text
     x="388"
     y="436"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     entrada (zod)
   </text>
-  <rect x="476" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="476"
     y="400"
     width="128"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="476"
+    y="400"
+    width="128"
+    height="48"
+    rx="6"
     stroke-width="0.8"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="540"
     y="421"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     output.ts
   </text>
   <text
     x="540"
     y="436"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     salida (zod)
   </text>
-  <rect x="628" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="628"
     y="400"
     width="128"
     height="48"
     rx="6"
-    fill="#d97757"
-    fill-opacity="0.08"
-    stroke="#d97757"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="628"
+    y="400"
+    width="128"
+    height="48"
+    rx="6"
     stroke-width="1"
+    style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
   />
   <text
     x="692"
     y="421"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     handler.ts
   </text>
   <text
     x="692"
     y="436"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     lógica · db · auth
   </text>
-  <rect x="780" y="400" width="128" height="48" rx="6" fill="#faf9f5" />
   <rect
     x="780"
     y="400"
     width="128"
     height="48"
     rx="6"
-    fill="#ffffff"
-    stroke="#3d3929"
+    style="fill: var(--background)"
+  />
+  <rect
+    x="780"
+    y="400"
+    width="128"
+    height="48"
+    rx="6"
     stroke-width="0.8"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="844"
     y="421"
-    fill="#3d3929"
     font-size="12"
-    font-weight="600"
+    font-weight="500"
     font-family="'Space Grotesk', sans-serif"
     text-anchor="middle"
+    letter-spacing="-0.025em"
+    style="fill: var(--foreground)"
   >
     router.ts
   </text>
   <text
     x="844"
     y="436"
-    fill="#6e6d68"
     font-size="9"
     font-family="'Space Mono', monospace"
     text-anchor="middle"
+    style="fill: var(--muted-foreground)"
   >
     solo cableado
   </text>
@@ -382,18 +462,18 @@
     y1="480"
     x2="920"
     y2="480"
-    stroke="#3d3929"
-    stroke-opacity="0.10"
     stroke-width="0.8"
+    style="stroke: var(--border)"
   />
   <text
     x="40"
     y="496"
-    fill="#6e6d68"
     font-size="8"
-    font-family="'Space Mono', monospace"
+    font-family="'Space Grotesk', sans-serif"
     text-anchor="start"
-    letter-spacing="0.18em"
+    letter-spacing="0.12em"
+    font-weight="500"
+    style="fill: var(--muted-foreground)"
   >
     LEYENDA
   </text>
@@ -403,17 +483,15 @@
     width="14"
     height="10"
     rx="2"
-    fill="#d97757"
-    fill-opacity="0.08"
-    stroke="#d97757"
     stroke-width="1"
+    style="fill: color-mix(in oklch, var(--primary) 8%, transparent); stroke: var(--primary)"
   />
   <text
     x="60"
     y="520"
-    fill="#6e6d68"
     font-size="8.5"
     font-family="'Space Grotesk', sans-serif"
+    style="fill: var(--muted-foreground)"
   >
     Donde vive la lógica
   </text>
@@ -423,16 +501,15 @@
     width="14"
     height="10"
     rx="2"
-    fill="#ffffff"
-    stroke="#3d3929"
     stroke-width="1"
+    style="fill: var(--card); stroke: var(--edge)"
   />
   <text
     x="216"
     y="520"
-    fill="#6e6d68"
     font-size="8.5"
     font-family="'Space Grotesk', sans-serif"
+    style="fill: var(--muted-foreground)"
   >
     Carpeta o fichero
   </text>
