@@ -59,7 +59,12 @@ The signed PDF SHALL contain a PAdES baseline B-B signature: a detached CAdES si
 
 ### Requirement: Signature appearance
 
-A signature SHALL be either invisible or visible. A visible signature SHALL be placed on a rectangle the user chose on one reference page, given as fractions of that page's visible area, and SHALL be shown either on that page only or at the same relative position on every page. The stamp SHALL read "Firmado digitalmente por" followed by the certificate holder's name, the signing date and time in the Europe/Madrid time zone, and the issuer, plus the reason and the location when given, with the text shrunk to fit the rectangle. A visible signature SHALL show where it was placed regardless of the page's rotation or crop box.
+A signature SHALL be either invisible or visible. A visible signature SHALL be placed on a rectangle the user chose on one reference page, given as fractions of that page's visible area, and SHALL be shown either on that page only or at the same relative position on every page. The stamp SHALL follow the layout of Adobe's default signature appearance, with no box or background: the certificate holder's name on the left half, centred line by line and as large as fits, splitting only tokens with digits (the NIF) when a word does not fit whole; and on the right half, in a smaller size, "Firmado por:" with the holder's name, "Fecha:" with the signing date and time in the Europe/Madrid time zone as `YYYY-MM-DD HH:MM:SS` followed by the zone abbreviation (`CET`/`CEST`), and the reason ("Motivo:") and location ("Lugar:") when given. Both columns SHALL shrink to fit the rectangle. A visible signature SHALL show where it was placed regardless of the page's rotation or crop box.
+
+#### Scenario: Stamp layout
+
+- **WHEN** the holder "MORENO LOPEZ BARAJAS ANTONIO - 77225780Z" signs visibly on 7 October 2026 at 18:43:43 Madrid time
+- **THEN** the stamp SHALL show that name large on the left and, on the right, "Firmado por:", the name, "Fecha:" and "2026-10-07 18:43:43 CEST"
 
 #### Scenario: Invisible signature
 

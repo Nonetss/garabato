@@ -197,7 +197,7 @@ Ported from the proof of concept, typed to the repo's code style:
   - Creates one field: invisible (one zero-rect widget), or one widget per page sharing an appearance stream.
   - Marks the touched objects and returns `previous bytes ‖ saveIncremental()`.
 - **`signer.ts`:** the `PadesSigner` (`@signpdf/utils` `Signer`), with signed attributes contentType, messageDigest and signing-certificate-v2, signed through WebCrypto. RSA and EC.
-- **`appearance.ts`:** stamp text and layout (wrap and shrink to fit, Helvetica WinAnsi, Europe/Madrid date). It also places the stamp on the page geometry:
+- **`appearance.ts`:** stamp text and layout after Adobe's default appearance, which the user asked to match: no box, the name as large as fits on the left half (only digit tokens such as the NIF may break), "Firmado por / Fecha" small on the right, Helvetica WinAnsi, `YYYY-MM-DD HH:MM:SS CET/CEST` in Europe/Madrid. It also places the stamp on the page geometry:
   - The user's rectangle is in fractions of the page as displayed, which is what pdf.js shows.
   - For each target page, take its crop box (falling back to the media box) and `/Rotate`.
   - Map the displayed rectangle to unrotated user space for the widget `/Rect`.

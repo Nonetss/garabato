@@ -13,7 +13,7 @@ Users can already keep their signing certificates in the platform (`certificate-
   - For a visible signature they draw its rectangle on a page and choose that page or every page.
   - They can add a reason and a location, and type the certificate password unless it is remembered.
   - The platform produces a PAdES baseline (B-B) signature, appended as an incremental update, so earlier signatures stay valid and the same document can be signed again.
-  - The visible stamp reads like AutoFirma's: signer, date and issuer.
+  - The visible stamp follows Adobe's default layout: the signer's name large on the left, "Firmado por" and the date small on the right.
 - **Signature records**:
   - Every signature is recorded: document, resulting version, certificate, signer, time, pages, position and visibility, the document hashes before and after signing, and the client IP when known.
   - The record is shown on the document page and, per certificate, on the certificates page.
