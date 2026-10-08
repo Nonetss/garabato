@@ -412,9 +412,9 @@ filter action bar and bottom sheet, the scroll-to-top button), the size of
 dialogs, sheets and popovers, and page-level padding.
 
 At least `SurfaceCardGrid`, `MetadataList`, `MetadataDefinitionList`, the
-`CollapsibleFilters` field grid, the `EntityList` row and metadata layout, the
-custom collection card grid, the saved resource list, admin session rows, the
-theme mode selector and the cron schedule builder SHALL follow this rule.
+`CollapsibleFilters` field grid, the `EntityList` row and metadata layout,
+admin session rows, the theme mode selector and the cron schedule builder SHALL
+follow this rule.
 
 #### Scenario: Sidebar open narrows a card grid
 

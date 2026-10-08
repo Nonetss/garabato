@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Lets registered entity types carry a user-chosen Lucide icon and color, through polymorphic storage, an entity icon API, a generated icon catalog, a fixed color palette and a reusable icon picker, with collections as the first consumer.
+Lets registered entity types carry a user-chosen Lucide icon and color, through polymorphic storage, an entity icon API, a generated icon catalog, a fixed color palette and a reusable icon picker, ready for any entity type that registers itself.
 
 ## Requirements
 
 ### Requirement: Polymorphic entity icon storage
 
-The database SHALL store entity icons in an `entity_icons` table with `id` (uuid primary key), `entity_type` (text, not null), `entity_id` (text, not null), `icon` (text, not null — a Lucide icon name in kebab-case), `color` (text, not null, default `'orange'` — a palette key), `created_by` (text, references the user, `ON DELETE SET NULL`), `created_at` and `updated_at`. A unique index on `(entity_type, entity_id)` SHALL guarantee at most one icon per entity. The table SHALL NOT carry a foreign key to any target table, and target tables (such as `collections`) SHALL NOT carry an icon column. `entity_id` SHALL be text so that both uuid-backed records and Better Auth string ids can be referenced.
+The database SHALL store entity icons in an `entity_icons` table with `id` (uuid primary key), `entity_type` (text, not null), `entity_id` (text, not null), `icon` (text, not null — a Lucide icon name in kebab-case), `color` (text, not null, default `'orange'` — a palette key), `created_by` (text, references the user, `ON DELETE SET NULL`), `created_at` and `updated_at`. A unique index on `(entity_type, entity_id)` SHALL guarantee at most one icon per entity. The table SHALL NOT carry a foreign key to any target table, and target tables SHALL NOT carry an icon column. `entity_id` SHALL be text so that both uuid-backed records and Better Auth string ids can be referenced.
 
 #### Scenario: One icon per entity
 
@@ -18,26 +18,26 @@ The database SHALL store entity icons in an `entity_icons` table with `id` (uuid
 #### Scenario: Target tables carry no icon column
 
 - **WHEN** the `@nonete/db` schema is inspected
-- **THEN** the `collections` table SHALL have no icon or color column, and icons SHALL live only in `entity_icons`
+- **THEN** no table of a registered entity type SHALL have an icon or color column, and icons SHALL live only in `entity_icons`
 
 ### Requirement: Icon-capable entity types are registered server-side
 
-`@nonete/api` SHALL keep a registry of the entity types that can carry an icon (`packages/api/src/v1/entity-icon/targets.ts`). Each entry SHALL define how to decide, for the calling user and a batch of entity ids of that type, which of those entities the caller may read and which the caller may modify. Every `entityIcon` procedure SHALL consult this registry. A request naming an `entityType` that is not registered SHALL fail with `BAD_REQUEST`. `collection` SHALL be registered, and only custom collections owned by the caller SHALL be readable or writable; the built-in favorites collection SHALL never carry an icon. Registering a new entity type SHALL require only a new registry entry, with no change to the table, the procedures or the frontend components.
+`@nonete/api` SHALL keep a registry of the entity types that can carry an icon (`packages/api/src/v1/entity-icon/targets.ts`). Each entry SHALL define how to decide, for the calling user and a batch of entity ids of that type, which of those entities the caller may read and which the caller may modify. Every `entityIcon` procedure SHALL consult this registry. A request naming an `entityType` that is not registered SHALL fail with `BAD_REQUEST`. The registry MAY be empty, in which case every `entityIcon` procedure SHALL fail with `BAD_REQUEST`. Registering a new entity type SHALL require only a new registry entry, with no change to the table, the procedures or the frontend components.
 
 #### Scenario: Unregistered entity type
 
 - **WHEN** any `entityIcon` procedure is called with an `entityType` that is not in the registry
 - **THEN** it SHALL fail with `BAD_REQUEST` and SHALL NOT read or write `entity_icons`
 
-#### Scenario: Owner sets a collection icon
+#### Scenario: Caller may modify the entity
 
-- **WHEN** the owner of a custom collection calls `entityIcon.set` for `{ entityType: "collection", entityId: <its id> }`
+- **WHEN** a signed-in user calls `entityIcon.set` for an entity of a registered type that the registry entry reports as writable by that user
 - **THEN** the icon SHALL be stored and returned
 
-#### Scenario: Another user targets a collection
+#### Scenario: Caller may not modify the entity
 
-- **WHEN** a signed-in user calls `entityIcon.set` or `entityIcon.clear` for a collection they do not own, for their favorites collection, or for one that does not exist
-- **THEN** the call SHALL fail with `NOT_FOUND` and a Spanish message, without revealing whether the collection exists
+- **WHEN** a signed-in user calls `entityIcon.set` or `entityIcon.clear` for an entity of a registered type that the registry entry does not report as writable by that user, including one that does not exist
+- **THEN** the call SHALL fail with `NOT_FOUND` and a Spanish message, without revealing whether the entity exists
 
 ### Requirement: Entity icon API
 
@@ -51,7 +51,7 @@ The API SHALL expose an `entityIcon` feature under `packages/api/src/v1/entity-i
 
 #### Scenario: Batch read for a list
 
-- **WHEN** `entityIcon.getMany` is called with ten collections of the caller, three of which have an icon
+- **WHEN** `entityIcon.getMany` is called with ten readable entities of a registered type, three of which have an icon
 - **THEN** it SHALL return exactly those three icons in a single response
 
 #### Scenario: Invalid icon or color
@@ -66,12 +66,12 @@ The API SHALL expose an `entityIcon` feature under `packages/api/src/v1/entity-i
 
 ### Requirement: Entity icons follow their entity's lifecycle
 
-Because `entity_icons` has no foreign key to its targets, the handler that deletes a registered entity SHALL delete that entity's icon row in the same transaction. For collections, deleting a collection SHALL delete its `entity_icons` row.
+Because `entity_icons` has no foreign key to its targets, the handler that deletes an entity of a registered type SHALL delete that entity's icon row in the same transaction.
 
-#### Scenario: Deleting a collection removes its icon
+#### Scenario: Deleting an entity removes its icon
 
-- **WHEN** a user deletes a custom collection that has an icon
-- **THEN** no `entity_icons` row with `entity_type = 'collection'` and that collection's id SHALL remain
+- **WHEN** a user deletes an entity of a registered type that has an icon
+- **THEN** no `entity_icons` row with that entity's `entity_type` and id SHALL remain
 
 ### Requirement: Generated Lucide icon catalog
 
@@ -162,22 +162,3 @@ After a successful `set` or `clear`, every mounted `EntityIcon` and `useEntityIc
 
 - **WHEN** an entity's stored icon name does not exist in the installed Lucide version
 - **THEN** `EntityIcon` SHALL render the fallback instead of failing
-
-### Requirement: Collections use entity icons
-
-Custom collections SHALL be the first consumer of entity icons:
-
-- The collection form dialog SHALL include an `IconPicker` (`variant="dialog"`, labelled "Icono de la colección") next to the name field, for both creating and editing a collection. It SHALL offer only the categories listed in `COLLECTION_ICON_CATEGORIES` and SHALL disable color choice, so collection icons are stored with the default color `orange`. Creating a collection with an icon SHALL store it after the collection is created; editing SHALL set or clear it only when it changed. If saving the icon fails, the collection SHALL stay saved and a Spanish error toast SHALL be shown. The dialog and the card's menu action SHALL be titled for editing ("Editar colección", "Editar"), not only renaming.
-- Collection cards SHALL show each collection's icon, loaded for the whole list with a single `useEntityIcons` call, falling back to the custom-collection icon.
-- The collection detail page SHALL show the collection's icon with the same fallback.
-- The built-in favorites collection SHALL NOT offer an icon picker.
-
-#### Scenario: Creating a collection with an icon
-
-- **WHEN** the user creates a collection choosing the `book-open` icon
-- **THEN** the new card SHALL show `book-open` in the primary (`orange`) color, and so SHALL the collection's detail page
-
-#### Scenario: Collection without an icon
-
-- **WHEN** a collection has no stored icon
-- **THEN** its card and detail page SHALL show the custom-collection icon in the primary color

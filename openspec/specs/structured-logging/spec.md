@@ -63,7 +63,7 @@ Errors raised while serving an oRPC procedure over `/rpc`, `/api` or the documen
 
 #### Scenario: Deliberate rejection
 
-- **WHEN** a procedure throws `errors.NOT_FOUND({ message: "Colección no encontrada" })`
+- **WHEN** a procedure throws `errors.NOT_FOUND({ message: "Comentario no encontrado" })`
 - **THEN** one log entry SHALL be emitted at `warn` with the error and the procedure path, and none at `error`
 
 #### Scenario: Upstream failure
@@ -87,7 +87,7 @@ Every HTTP request SHALL receive a server-generated request id, and every log en
 
 #### Scenario: Request and error lines share an id
 
-- **WHEN** a request to `/rpc/v1/collection/get` fails with a deliberate rejection
+- **WHEN** a request to `/rpc/v1/cron/get` fails with a deliberate rejection
 - **THEN** the "request completed" entry and the procedure error entry SHALL carry the same request id
 
 #### Scenario: Client-supplied id is ignored

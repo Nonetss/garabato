@@ -102,7 +102,7 @@ The system SHALL provide a protected `v1.private.getPrivateData` procedure that 
 
 ### Requirement: Feature-nested router
 
-The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `logs`, `cron`, `collection`, `comment` and `entityIcon`.
+The router SHALL group procedures by feature, nesting each feature's procedures under its own key (for example `v1.health.check`, `v1.apiKey.create`, `v1.private.getPrivateData`). Client calls SHALL address procedures as `<version>.<feature>.<method>`, never as a flat top-level name and never omitting the version. The `v1` router SHALL contain the features `health`, `private`, `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `logs`, `cron`, `comment` and `entityIcon`.
 
 #### Scenario: Client calls a nested procedure
 
@@ -228,12 +228,12 @@ The API handlers SHALL resist CSRF attacks based on the session cookie without r
 
 #### Scenario: Cross-site navigation to a REST GET
 
-- **WHEN** a browser navigates from another site to `GET /api/v1/collection/list` carrying the session cookie
+- **WHEN** a browser navigates from another site to `GET /api/v1/cron/list` carrying the session cookie
 - **THEN** the system SHALL respond `403 Forbidden` without invoking the procedure
 
 #### Scenario: Server-to-server REST call
 
-- **WHEN** a server-side client calls `GET /api/v1/collection/list` with a user's credentials and no `Sec-Fetch-*` headers
+- **WHEN** a server-side client calls `GET /api/v1/cron/list` with a user's credentials and no `Sec-Fetch-*` headers
 - **THEN** the procedure SHALL run with that user's context
 
 #### Scenario: Same-origin call from the frontend
@@ -247,8 +247,8 @@ The frontend's RPC link SHALL send a call with `QUERY` when it is a read: a call
 
 #### Scenario: Query hook
 
-- **WHEN** a component reads `orpc.v1.collection.list` through `useQuery(orpc.v1.collection.list.queryOptions(...))`
-- **THEN** the request SHALL be `QUERY /rpc/v1/collection/list`
+- **WHEN** a component reads `orpc.v1.cron.list` through `useQuery(orpc.v1.cron.list.queryOptions(...))`
+- **THEN** the request SHALL be `QUERY /rpc/v1/cron/list`
 
 #### Scenario: Direct read inside a custom query function
 
