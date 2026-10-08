@@ -57,7 +57,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 
 | Task | Read |
 |---|---|
-| New feature or procedure; file split (`input`/`output`/`handler`/`router`); builders, access and errors; shared helpers and pagination; checking whether a procedure or helper already exists; adding an API version | `references/api/layering.md` |
+| New feature or procedure; file split (`input`/`output`/`handler`/`router`); builders, access and errors; shared helpers and pagination; checking whether a procedure or helper already exists; receiving a file upload (`z.file()`); adding an API version | `references/api/layering.md` |
 | Choosing a procedure's HTTP `method` (`GET`/`QUERY`/`POST`/`PUT`/`PATCH`/`DELETE`) and `successStatus`, how `/rpc` sends reads as `QUERY`, or which `errors.<CODE>()` to throw (400 vs 403 vs 404 vs 409) | `references/api/http-semantics.md` |
 | A `search` procedure or a free-text filter on a `list`; matching text across several tables; GIN trigram indexes (`pg_trgm`) and when they pay off | `references/api/free-text-search.md` |
 

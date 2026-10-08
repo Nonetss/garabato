@@ -41,6 +41,14 @@ Some features also carry feature-specific modules beside those four (`cron/disco
 
 OpenAPI `summary`/`description`/`.describe()` texts are English.
 
+## File uploads
+
+A procedure that receives a file declares it in its zod input with `z.file().max(<bytes>)` (`certificate.import` is the reference). Over `/rpc` the frontend passes the `File` straight into `.call()` and oRPC sends the call as multipart; the OpenAPI document shows a `multipart/form-data` body with a binary field. Rules:
+
+- Always cap the size in the schema, well below the 1 MiB body limit of `hardeningPlugins()`.
+- Don't trust the MIME type (browsers send several or none for the same extension): parse the bytes and map a failed parse to `errors.BAD_REQUEST` with a Spanish message.
+- Read it in the handler with `new Uint8Array(await input.file.arrayBuffer())`. Never log the file or any secret that travels with it (a password).
+
 ## Tests
 
 Every new or changed handler method gets its tests in `packages/api/tests/v1/<feature>/handler.test.ts` in the same change: happy path, each error code it throws, and the rows it writes. A new `src/shared` helper gets `tests/shared/<helper>.test.ts`. Recipe and fake database: `references/testing.md`.
