@@ -1,15 +1,29 @@
+import type { ComponentProps } from "react"
 import { getIcon } from "@/lib/icon-registry"
-
-const Loader2Icon = getIcon("status", "loading")
-
 import { cn } from "@/lib/utils"
 
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+const LoadingIcon = getIcon("status", "loading")
+
+interface SpinnerProps extends ComponentProps<"svg"> {
+  /**
+   * Hide the spinner from assistive technology. Use it when the surrounding
+   * control or card already says it is busy ("Entrando…", a "Cargando…"
+   * title), so the state isn't announced twice.
+   */
+  decorative?: boolean
+}
+
+function Spinner({ className, decorative = false, ...props }: SpinnerProps) {
+  const classes = cn("size-4 animate-spin", className)
+
+  if (decorative) {
+    return <LoadingIcon aria-hidden="true" className={classes} {...props} />
+  }
   return (
-    <Loader2Icon
+    <LoadingIcon
       role="status"
-      aria-label="Loading"
-      className={cn("size-4 animate-spin", className)}
+      aria-label="Cargando"
+      className={classes}
       {...props}
     />
   )

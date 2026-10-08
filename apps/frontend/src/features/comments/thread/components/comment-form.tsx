@@ -1,10 +1,10 @@
 import { type KeyboardEvent, type SyntheticEvent, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { getIcon } from "@/lib/icon-registry"
 import { cn } from "@/lib/utils"
 
-const Loader2 = getIcon("status", "loading")
 const Send = getIcon("actions", "send")
 
 interface CommentFormProps {
@@ -87,7 +87,7 @@ export function CommentForm({
         ) : null}
         <Button type="submit" size="sm" disabled={!canSubmit}>
           {isPending ? (
-            <Loader2 className="animate-spin" data-icon="inline-start" />
+            <Spinner decorative data-icon="inline-start" />
           ) : (
             <Send data-icon="inline-start" />
           )}

@@ -1,7 +1,5 @@
 import type { RefObject } from "react"
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
+import { Spinner } from "@/components/ui/spinner"
 
 /**
  * The repeated "load more" sentinel for `useInfiniteScroll` lists: an
@@ -24,7 +22,7 @@ export function InfiniteScrollSentinel({
   return (
     <div ref={sentinelRef} className="flex items-center justify-center py-4">
       {isFetchingNextPage ? (
-        <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        <Spinner className="text-muted-foreground" />
       ) : null}
     </div>
   )

@@ -1,9 +1,6 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode } from "react"
 import { Text } from "@/components/shared/brand/typography"
+import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 
 interface SearchSuggestionsListProps<T> {
@@ -39,7 +36,7 @@ export function SearchSuggestionsList<T>({
     >
       {isFetching ? (
         <div className="flex items-center justify-center p-4">
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          <Spinner className="text-muted-foreground" />
         </div>
       ) : results.length === 0 ? (
         <Text as="p" variant="compact" tone="muted" className="p-4 text-center">

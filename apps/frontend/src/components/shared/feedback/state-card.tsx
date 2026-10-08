@@ -1,9 +1,6 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode } from "react"
 import { Text } from "@/components/shared/brand/typography"
+import { Spinner } from "@/components/ui/spinner"
 import { cn } from "@/lib/utils"
 
 /**
@@ -36,7 +33,7 @@ export function StateCard({
       )}
     >
       {spinner ? (
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Spinner decorative className="size-6 text-muted-foreground" />
       ) : icon ? (
         <div
           className={cn(

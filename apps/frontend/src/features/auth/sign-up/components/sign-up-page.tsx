@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import { AppLogo } from "@/components/shared/brand/app-logo"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
@@ -16,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
 import { useSignUp } from "@/features/auth/sign-up/hooks/use-sign-up"
 
 const ERROR_ID = "sign-up-error"
@@ -133,7 +130,7 @@ export function SignUpPage() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <Spinner decorative />
                 Creando cuenta…
               </>
             ) : (

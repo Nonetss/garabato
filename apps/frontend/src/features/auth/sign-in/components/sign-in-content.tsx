@@ -1,6 +1,5 @@
 import { getIcon } from "@/lib/icon-registry"
 
-const Loader2 = getIcon("status", "loading")
 const Fingerprint = getIcon("auth", "sso")
 
 import { AppLogo } from "@/components/shared/brand/app-logo"
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Marker, MarkerContent } from "@/components/ui/marker"
+import { Spinner } from "@/components/ui/spinner"
 import { useAuthConfig } from "@/features/auth/sign-in/hooks/use-auth-config"
 import { useSignIn } from "@/features/auth/sign-in/hooks/use-sign-in"
 import { cn } from "@/lib/utils"
@@ -118,7 +118,7 @@ export function SignInContent() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                <Spinner decorative />
                 Entrando…
               </>
             ) : (
@@ -148,7 +148,7 @@ export function SignInContent() {
             >
               {oidcLoading ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  <Spinner decorative />
                   Conectando…
                 </>
               ) : (

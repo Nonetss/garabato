@@ -1,7 +1,6 @@
 import { getIcon } from "@/lib/icon-registry"
 
 const Clock = getIcon("navigation", "crons")
-const Loader2 = getIcon("status", "loading")
 const Play = getIcon("actions", "run")
 const Lock = getIcon("security", "locked")
 
@@ -10,6 +9,7 @@ import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { CronDetailMetadata } from "@/features/crons/detail/components/cron-detail-metadata"
 import { CronRunPulse } from "@/features/crons/detail/components/cron-run-pulse"
 import {
@@ -121,7 +121,7 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
                 onClick={() => runNow.mutate()}
               >
                 {runNow.isPending ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <Spinner decorative className="size-3.5" />
                 ) : (
                   <Play className="size-3.5" />
                 )}

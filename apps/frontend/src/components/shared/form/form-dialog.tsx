@@ -1,7 +1,3 @@
-import { getIcon } from "@/lib/icon-registry"
-
-const Loader2 = getIcon("status", "loading")
-
 import type { ReactNode, SyntheticEvent } from "react"
 import { textVariants } from "@/components/shared/brand/typography"
 import {
@@ -17,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Spinner } from "@/components/ui/spinner"
 import type { UseDialogFormReturn } from "@/hooks/use-dialog-form"
 import { cn } from "@/lib/utils"
 
@@ -112,7 +109,7 @@ export function FormDialog<TValues extends object = never>({
               variant={submitVariant}
               disabled={isPending || submitDisabled}
             >
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+              {isPending ? <Spinner decorative /> : null}
               {submitLabel}
             </Button>
           </DialogFooter>
