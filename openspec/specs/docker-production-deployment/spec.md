@@ -63,7 +63,7 @@ The gateway image (`apps/gateway/Dockerfile`) SHALL be built from `caddy:2-alpin
 
 ### Requirement: Production compose from registry images
 
-`compose.prod.yml`, with compose project name `better`, SHALL run `frontend`, `backend` and `gateway` from the registry images `git.noneweb.online/nonete/better-frontend:main`, `git.noneweb.online/nonete/better-backend:main` and `git.noneweb.online/nonete/better-gateway:main`, plus a `db` service (`postgres:17`, database `better`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `better-<service>` and SHALL share a bridge network `better`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
+`compose.prod.yml`, with compose project name `better`, SHALL run `frontend`, `backend` and `gateway` from the registry images `ghcr.io/nonetss/stack-frontend:main`, `ghcr.io/nonetss/stack-backend:main` and `ghcr.io/nonetss/stack-gateway:main`, plus a `db` service (`postgres:17`, database `better`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `better-<service>` and SHALL share a bridge network `better`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
 
 #### Scenario: Starting a deployment
 
@@ -114,12 +114,12 @@ The root `.dockerignore` SHALL exclude every `.env` and `.env.*` file (except `.
 
 ### Requirement: CI builds only the changed images
 
-`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. Each image SHALL be pushed to the repository's registry as `<registry>/<owner>/<repo>-<app>` (for this repo `git.noneweb.online/nonete/better-<app>`) with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
+`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. The jobs SHALL run on GitHub-hosted `ubuntu-latest` runners. Each image SHALL be pushed to the GitHub Container Registry, authenticated with the workflow's `GITHUB_TOKEN` (`packages: write`), as `ghcr.io/<owner>/<repo>-<app>` in lowercase (for this repo `ghcr.io/nonetss/stack-<app>`) with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
 
 #### Scenario: Frontend-only change
 
 - **WHEN** a push to `main` changes only files under `apps/frontend/`
-- **THEN** CI SHALL build and push only the `better-frontend` image, tagged `latest`, `main` and `main-<short sha>`
+- **THEN** CI SHALL build and push only the `stack-frontend` image, tagged `latest`, `main` and `main-<short sha>`
 
 #### Scenario: Shared package change
 

@@ -2,7 +2,7 @@ name: better
 
 services:
   frontend:
-    image: git.noneweb.online/nonete/better-frontend:main
+    image: ghcr.io/nonetss/stack-frontend:main
     container_name: better-frontend
     init: true
     # Reached only through the gateway, which publishes the site
@@ -26,7 +26,7 @@ services:
       - better
 
   backend:
-    image: git.noneweb.online/nonete/better-backend:main
+    image: ghcr.io/nonetss/stack-backend:main
     container_name: better-backend
     init: true
     expose:
@@ -57,7 +57,7 @@ services:
   # site routes /rpc, /api, /scalar and /openapi.json to the backend and the
   # rest to the frontend.
   gateway:
-    image: git.noneweb.online/nonete/better-gateway:main
+    image: ghcr.io/nonetss/stack-gateway:main
     container_name: better-gateway
     ports:
       # Host port comes from .env (scripts/bootstrap.sh prompts for it); the

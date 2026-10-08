@@ -13,10 +13,16 @@ concurrency:
 
 env:
   IMAGE_TAG: ${{ github.ref_name }}
+  REGISTRY: ghcr.io
+
+# GITHUB_TOKEN pushes to ghcr.io, so no registry secret is needed.
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   changes:
-    runs-on: amd64
+    runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.filter.outputs.matrix }}
     steps:
@@ -68,7 +74,7 @@ jobs:
   build:
     needs: changes
     if: needs.changes.outputs.matrix != '[]'
-    runs-on: amd64
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -76,17 +82,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to Gitea Registry
-        env:
-          REGISTRY_PASS: ${{ secrets.MY_PASSWORD }}
-          REGISTRY_USER: ${{ secrets.DOCKER_USERNAME || github.actor }}
-        run: |
-          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | awk -F[/:] '{print $4}')
-          if [ -z "$REGISTRY_PASS" ]; then
-            echo "::error::Falta el secreto MY_PASSWORD (PAT con package:write)."
-            exit 1
-          fi
-          echo "$REGISTRY_PASS" | docker login "$REGISTRY_DOMAIN" -u "$REGISTRY_USER" --password-stdin
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # docker-container builder: the default docker driver can't export a
       # registry cache.
@@ -94,8 +95,7 @@ jobs:
 
       - name: Build and Push ${{ matrix.name }}
         run: |
-          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | awk -F[/:] '{print $4}')
-          IMAGE_ID=$(echo "$REGISTRY_DOMAIN/${{ github.repository }}${{ matrix.suffix }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_ID=$(echo "$REGISTRY/${{ github.repository }}${{ matrix.suffix }}" | tr '[:upper:]' '[:lower:]')
           SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
           echo "Building ${{ matrix.name }} image: $IMAGE_ID — tag: $IMAGE_TAG sha: $SHA"
