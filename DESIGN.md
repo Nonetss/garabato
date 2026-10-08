@@ -63,10 +63,10 @@ typography:
     letterSpacing: "0.12em"
     textCase: "uppercase"
 rounded:
-  sm: "calc(0.25rem - 4px)"    # 0px
-  md: "calc(0.25rem - 2px)"    # 2px
-  lg: "0.25rem"                # 4px (radius base) — near-square sheets
-  xl: "calc(0.25rem + 4px)"    # 8px
+  sm: "calc(0.375rem - 4px)"   # 2px
+  md: "calc(0.375rem - 2px)"   # 4px
+  lg: "0.375rem"               # 6px (radius base)
+  xl: "calc(0.375rem + 4px)"   # 10px
   container: "0.75rem"          # 12px — list containers, state cards
 spacing:
   px: "0.25rem"                # Tailwind 1 unit
@@ -628,7 +628,7 @@ The style applies to product surfaces (lists, detail, forms, settings). It does 
 
 ## Signing surfaces (Garabato)
 
-The colour tokens above are pinned by the user and do not change; the signing product speaks through type, near-square corners, the sheet and the rubric.
+The colour tokens above are pinned by the user and do not change; the signing product speaks through type, restrained corners, the sheet and the rubric.
 
 - **The sheet.** A PDF page (viewer, library thumbnail) or the home drop zone is a sheet: `bg-white` (`bg-background` for the drop zone), `rounded-sm`/`rounded-lg`, `shadow-sheet` (a soft offset paper shadow, the one sanctioned resting shadow besides back-to-top), resting on `bg-desk`. The home page and the document viewer pane sit on `bg-desk`.
 - **The rubric** (`components/shared/brand/rubric.tsx`): the logo's single stroke over its baseline as live SVG, the stroke in `stroke-brand` (the logo terracotta). `motion="write"` draws it once (the home drop zone), `motion="loop"` keeps writing during an upload, `static` marks a signed document's thumbnail corner. Reduced motion always shows the finished mark. It is the product's one authored motion moment.
