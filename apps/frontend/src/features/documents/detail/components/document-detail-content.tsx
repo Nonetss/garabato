@@ -20,13 +20,13 @@ import { VersionList } from "@/features/documents/detail/components/version-list
 import {
   type DocumentVersion,
   downloadDocumentVersion,
-  formatFileSize,
   saveFile,
   useDocument,
   useDocumentFile,
   usePdfDocument,
 } from "@/features/documents/shared"
 import { flagCodec, useQueryParam } from "@/hooks/use-query-param"
+import { formatFileSize } from "@/lib/format"
 import { notifyError } from "@/lib/toast"
 
 function download(documentId: string, versionNumber?: number) {

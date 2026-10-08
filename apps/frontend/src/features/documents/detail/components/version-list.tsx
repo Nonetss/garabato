@@ -6,11 +6,8 @@ import { Text } from "@/components/shared/brand/typography"
 import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
 import { Hint } from "@/components/shared/feedback/hint"
 import { Button } from "@/components/ui/button"
-import {
-  type DocumentVersion,
-  formatFileSize,
-} from "@/features/documents/shared"
-import { formatDateTime } from "@/lib/format"
+import type { DocumentVersion } from "@/features/documents/shared"
+import { formatDateTime, formatFileSize } from "@/lib/format"
 
 function versionLabel(version: DocumentVersion) {
   if (version.number === 1) return "v1 · original"

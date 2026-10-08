@@ -2,9 +2,8 @@ import type { EntityListDefinition } from "@/components/shared/resource/entity-l
 import {
   type DocumentSummary,
   documentLabels,
-  formatFileSize,
 } from "@/features/documents/shared"
-import { formatDateTime } from "@/lib/format"
+import { formatDateTime, formatFileSize } from "@/lib/format"
 import { iconRef } from "@/lib/icon-registry"
 
 function pagesLabel(count: number) {

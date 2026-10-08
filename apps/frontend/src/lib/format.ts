@@ -126,3 +126,17 @@ export function getDateBucketLabel(date: string | Date): string {
   if (days < 90) return "Últimos 3 meses"
   return "Más de 3 meses"
 }
+
+const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"]
+
+/** "1,2 MB" style sizes, base 1024. */
+export function formatFileSize(bytes: number): string {
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < FILE_SIZE_UNITS.length - 1) {
+    value /= 1024
+    unit++
+  }
+  const digits = unit === 0 ? 0 : 1
+  return `${value.toLocaleString("es-ES", { maximumFractionDigits: digits })} ${FILE_SIZE_UNITS[unit]}`
+}

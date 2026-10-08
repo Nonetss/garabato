@@ -13,6 +13,7 @@ import {
   formatDayLabel,
   formatDuration,
   formatDurationMs,
+  formatFileSize,
   formatRelativeDay,
   getDateBucketLabel,
 } from "@/lib/format"
@@ -95,5 +96,13 @@ describe("relative labels", () => {
       "Más de 3 meses"
     )
     expect(getDateBucketLabel("not a date")).toBe("Más de 3 meses")
+  })
+})
+
+describe("formatFileSize", () => {
+  test("keeps bytes whole and uses one decimal above them", () => {
+    expect(formatFileSize(512)).toBe("512 B")
+    expect(formatFileSize(1536)).toBe("1,5 KB")
+    expect(formatFileSize(20 * 1024 * 1024)).toBe("20 MB")
   })
 })

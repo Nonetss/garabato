@@ -1,5 +1,3 @@
-const UNITS = ["B", "KB", "MB", "GB"]
-
 /** Mirrors the API cap on uploaded PDFs. */
 export const MAX_PDF_BYTES = 20 * 1024 * 1024
 
@@ -12,18 +10,6 @@ export function pdfFileProblem(file: File): PdfFileProblem | null {
   if (!isPdf) return "not-pdf"
   if (file.size > MAX_PDF_BYTES) return "too-large"
   return null
-}
-
-/** "1,2 MB" style sizes, base 1024. */
-export function formatFileSize(bytes: number): string {
-  let value = bytes
-  let unit = 0
-  while (value >= 1024 && unit < UNITS.length - 1) {
-    value /= 1024
-    unit++
-  }
-  const digits = unit === 0 ? 0 : 1
-  return `${value.toLocaleString("es-ES", { maximumFractionDigits: digits })} ${UNITS[unit]}`
 }
 
 /** Hands a file to the browser as a download. */
