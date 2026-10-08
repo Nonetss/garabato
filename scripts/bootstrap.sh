@@ -147,6 +147,11 @@ gen_password() {
   openssl rand -hex 32
 }
 
+# AES-256 master key for the certificate vault: exactly 32 bytes in base64.
+gen_encryption_key() {
+  openssl rand -base64 32 | tr -d '\n'
+}
+
 # ── Inputs ───────────────────────────────────────────────────────────────────
 log "Configuration — answer the prompts."
 echo
@@ -222,7 +227,8 @@ fi
 log "Generating secrets with openssl..."
 POSTGRES_PASSWORD=$(gen_password)
 BETTER_AUTH_SECRET=$(gen_secret)
-ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET)"
+CERTIFICATE_ENCRYPTION_KEY=$(gen_encryption_key)
+ok "Secrets generated (POSTGRES_PASSWORD, BETTER_AUTH_SECRET, CERTIFICATE_ENCRYPTION_KEY)"
 
 # ── Write .env ───────────────────────────────────────────────────────────────
 # umask 077 so the file is created 600: creating it with the default umask
@@ -252,6 +258,10 @@ DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/stack
 
 BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 
+# Master key of the certificate vault. Back it up together with the database:
+# without it the stored certificates cannot be decrypted.
+CERTIFICATE_ENCRYPTION_KEY=$(env_quote "$CERTIFICATE_ENCRYPTION_KEY")
+
 # ── Seed admin ───────────────────────────────────────────────────────────────
 # Created on first backend boot (idempotent by email). Leave blank to skip.
 ADMIN_NAME=$(env_quote "$ADMIN_NAME")
@@ -262,6 +272,8 @@ EOF
 
 chmod 600 "$ENV_FILE"
 ok ".env written to $ENV_FILE (mode 600)"
+note "Back up CERTIFICATE_ENCRYPTION_KEY with your database backups: losing it"
+note "makes every stored certificate unrecoverable."
 
 # ── compose.prod.yml ─────────────────────────────────────────────────────────
 # Kept as compose.prod.yml (not renamed to compose.yml) so a clone of this repo

@@ -62,24 +62,27 @@ if ((existed && !force)); then
 fi
 
 BETTER_AUTH_SECRET="$(openssl rand -base64 48 | tr -d '\n')"
+# AES-256 master key for the certificate vault: exactly 32 bytes.
+CERTIFICATE_ENCRYPTION_KEY="$(openssl rand -base64 32 | tr -d '\n')"
 # Must be a valid address for zod's z.email() in packages/env: "admin@localhost"
 # has no TLD and fails validation, which crashes the backend on boot.
 ADMIN_EMAIL="admin@stack.local"
 ADMIN_NAME="Admin"
 ADMIN_PASSWORD="$(openssl rand -base64 24 | tr -d '\n')"
 
-echo "→ Generating Better Auth and admin secrets with openssl..."
+echo "→ Generating Better Auth, certificate vault and admin secrets with openssl..."
 
 # Copy .env.example, setting each listed variable on its `KEY=` or `# KEY=`
 # line. Values go through the environment so awk never interprets them.
 # umask 077 so the file is created 600: it holds real secrets.
 umask 077
 BETTER_AUTH_SECRET="$BETTER_AUTH_SECRET" \
+  CERTIFICATE_ENCRYPTION_KEY="$CERTIFICATE_ENCRYPTION_KEY" \
   ADMIN_EMAIL="$ADMIN_EMAIL" ADMIN_NAME="$ADMIN_NAME" \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \
   awk '
     BEGIN {
-      split("BETTER_AUTH_SECRET ADMIN_EMAIL ADMIN_NAME ADMIN_PASSWORD", keys, " ")
+      split("BETTER_AUTH_SECRET CERTIFICATE_ENCRYPTION_KEY ADMIN_EMAIL ADMIN_NAME ADMIN_PASSWORD", keys, " ")
       for (i in keys) wanted[keys[i]] = 1
     }
     {

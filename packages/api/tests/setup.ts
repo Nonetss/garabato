@@ -17,6 +17,9 @@ const placeholders = {
   BETTER_AUTH_SECRET: "unit-test-secret-at-least-32-characters-long",
   BETTER_AUTH_URL: "http://localhost:3000",
   CORS_ORIGIN: "http://localhost:4321",
+  // 32 bytes of 0x01: a fixed vault master key, so sealed values are
+  // reproducible across runs.
+  CERTIFICATE_ENCRYPTION_KEY: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
 }
 
 /**

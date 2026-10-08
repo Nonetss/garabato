@@ -16,6 +16,15 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
+    // Master key that wraps the per-certificate data keys (AES-256), as the
+    // base64 encoding of exactly 32 bytes. Losing it makes every stored
+    // certificate unrecoverable.
+    CERTIFICATE_ENCRYPTION_KEY: z
+      .base64()
+      .refine(
+        (value) => Buffer.from(value, "base64").length === 32,
+        "must decode to exactly 32 bytes"
+      ),
     // Node Environment
     NODE_ENV: z
       .enum(["development", "production", "test"])
