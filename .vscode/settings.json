@@ -15,5 +15,30 @@
   },
   "[astro]": {
     "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  },
+  "[dockercompose]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-containers"
+  },
+  "files.exclude": {
+    ".claude": true,
+    "**/node_modules": true,
+    "**/.astro": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    "**/.codex": true
+  },
+  "search.exclude": {
+    "**/.claude": true,
+    "**/.agents": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    "**/.codex": true
   }
 }
