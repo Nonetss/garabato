@@ -2,7 +2,7 @@ import { getIcon } from "@/lib/icon-registry"
 
 const ArrowRightIcon = getIcon("navigation", "forward")
 
-import { Text } from "@/components/shared/brand/typography"
+import { Text, textVariants } from "@/components/shared/brand/typography"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { AppLink } from "@/components/ui/app-link"
@@ -16,6 +16,7 @@ import {
 } from "@/features/certificates"
 import { getAppSurface } from "@/lib/app-surfaces"
 import { formatDate } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 function passwordNote(certificate: Certificate) {
   if (certificate.passwordRemembered) return "Firma sin pedir contraseña"
@@ -106,7 +107,10 @@ export function HomeCertificates() {
           action={
             <AppLink
               href={certificates.path}
-              className="text-muted-foreground text-xs transition-colors hover:text-foreground"
+              className={cn(
+                textVariants({ role: "compact", tone: "muted" }),
+                "transition-colors hover:text-foreground"
+              )}
             >
               Gestionar
             </AppLink>

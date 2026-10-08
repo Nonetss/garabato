@@ -44,9 +44,9 @@ export function OrganizationMembersSection({
       />
 
       {members.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" variant="meta" tone="muted">
           Todavía no hay miembros.
-        </p>
+        </Text>
       ) : (
         <SoftCardList as="ul">
           {members.map((member) => (

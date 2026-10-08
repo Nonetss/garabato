@@ -8,6 +8,7 @@ import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { PageHero } from "@/components/shared/layout/page-hero"
+import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -141,8 +142,8 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
 
         <aside className="space-y-6 overscroll-contain lg:overflow-y-auto lg:pr-1">
           {signing ? (
-            <section className="space-y-3 rounded-xl border bg-card/40 p-4">
-              <Text as="h2" variant="title">
+            <section className="space-y-4 rounded-xl border bg-card/40 p-4">
+              <Text as="h2" variant="headline">
                 Firmar documento
               </Text>
               <SignPanel
@@ -158,9 +159,10 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
             </section>
           ) : null}
           <section className="space-y-3">
-            <Text as="h2" variant="title">
-              Versiones
-            </Text>
+            <SectionHeading
+              title="Versiones"
+              count={document.versions.length}
+            />
             <VersionList
               versions={document.versions}
               onDownload={(version: DocumentVersion) =>
@@ -169,9 +171,7 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
             />
           </section>
           <section className="space-y-3">
-            <Text as="h2" variant="title">
-              Firmas
-            </Text>
+            <SectionHeading title="Firmas" count={document.signatures.length} />
             <SignatureHistory records={document.signatures} />
           </section>
         </aside>

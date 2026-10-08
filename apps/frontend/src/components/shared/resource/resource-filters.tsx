@@ -316,9 +316,9 @@ export function FacetOptionsList({
             )
           })}
           {visible.length === 0 ? (
-            <li className="px-1.5 py-2 text-muted-foreground text-sm">
+            <Text as="li" variant="meta" tone="muted" className="px-1.5 py-2">
               Sin opciones
-            </li>
+            </Text>
           ) : null}
         </ul>
       </TooltipProvider>

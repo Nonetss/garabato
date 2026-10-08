@@ -61,12 +61,12 @@ export function SurfaceCard({
           <Icon className="size-5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <Text as="h2" variant="title" className="truncate">
+          <Text as="h2" variant="headline" className="truncate">
             {item.label}
           </Text>
           <Text
             as="p"
-            variant="compact"
+            variant="meta"
             tone="muted"
             className="line-clamp-2 min-h-[3.25em] leading-relaxed"
           >

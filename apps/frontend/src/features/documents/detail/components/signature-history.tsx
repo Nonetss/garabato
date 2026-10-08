@@ -24,7 +24,7 @@ export function SignatureHistory({ records }: { records: SignatureRecord[] }) {
           <Text as="p" variant="title">
             {record.certificateHolder}
           </Text>
-          <Text as="p" variant="meta-sm" tone="muted" className="tabular-nums">
+          <Text as="p" variant="compact" tone="muted" className="tabular-nums">
             {formatDateTime(record.signedAt, {
               includeYear: true,
               includeSeconds: true,
@@ -32,7 +32,7 @@ export function SignatureHistory({ records }: { records: SignatureRecord[] }) {
             · v{record.versionNumber} · {placementLabel(record)}
           </Text>
           {record.reason ? (
-            <Text as="p" variant="meta-sm" tone="muted">
+            <Text as="p" variant="compact" tone="muted">
               Motivo: {record.reason}
             </Text>
           ) : null}

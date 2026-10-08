@@ -32,7 +32,7 @@ export function VersionList({ versions, onDownload }: VersionListProps) {
             </Text>
             <Text
               as="p"
-              variant="meta-sm"
+              variant="compact"
               tone="muted"
               className="tabular-nums"
             >

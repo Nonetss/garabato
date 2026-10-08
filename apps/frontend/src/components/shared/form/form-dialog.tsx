@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils"
  * section (a schedule builder, a permission matrix, an entity picker) — the
  * two can be mixed in the same dialog.
  *
- * Quiet-editorial chrome: `p-0`, header/footer hairlines, tracking-tight title.
+ * Quiet-editorial chrome: `p-0`, header/footer hairlines, headline-role title.
  */
 export function FormDialog<TValues extends object = never>({
   open,
@@ -74,7 +74,7 @@ export function FormDialog<TValues extends object = never>({
         )}
       >
         <DialogHeader className="gap-1.5 border-b px-6 py-5 text-left">
-          <DialogTitle className="tracking-tight">{title}</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           {description ? (
             <DialogDescription
               className={cn(

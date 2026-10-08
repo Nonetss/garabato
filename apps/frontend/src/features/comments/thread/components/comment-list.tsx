@@ -1,3 +1,4 @@
+import { Text } from "@/components/shared/brand/typography"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { Button } from "@/components/ui/button"
 import { CommentItem } from "@/features/comments/thread/components/comment-item"
@@ -47,9 +48,9 @@ export function CommentList({
 
   if (comments.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
+      <Text as="p" variant="meta" tone="muted" className="py-6 text-center">
         Todavía no hay comentarios. Sé el primero en escribir.
-      </p>
+      </Text>
     )
   }
 

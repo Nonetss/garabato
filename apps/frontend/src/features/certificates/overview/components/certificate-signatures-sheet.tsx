@@ -92,9 +92,7 @@ export function CertificateSignaturesSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="tracking-tight">
-            {certificate?.alias ?? "Certificado"}
-          </SheetTitle>
+          <SheetTitle>{certificate?.alias ?? "Certificado"}</SheetTitle>
           <SheetDescription className={textVariants({ role: "compact" })}>
             Firmas hechas con este certificado
           </SheetDescription>

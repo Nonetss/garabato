@@ -32,7 +32,7 @@ export function ApiKeyCreatedDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="gap-1.5 border-b px-6 py-5 text-left">
-          <DialogTitle className="tracking-tight">API key creada</DialogTitle>
+          <DialogTitle>API key creada</DialogTitle>
           <DialogDescription
             className={cn(textVariants({ role: "compact" }), "leading-relaxed")}
           >

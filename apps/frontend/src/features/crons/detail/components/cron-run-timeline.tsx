@@ -89,7 +89,7 @@ export function CronRunTimeline({
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <Text as="h2" variant="title">
+          <Text as="h2" variant="label" tone="muted">
             Historial
           </Text>
           {runs.length > 0 ? (

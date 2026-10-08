@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const Loader2 = getIcon("status", "loading")
 
 import type { ReactNode } from "react"
+import { Text } from "@/components/shared/brand/typography"
 import { cn } from "@/lib/utils"
 
 /**
@@ -49,19 +50,25 @@ export function StateCard({
       ) : null}
 
       <div className="relative">
-        <p
+        <Text
+          as="p"
+          variant="headline"
           className={cn(
-            "font-medium tracking-tight",
-            tone === "celebrate" ? "text-lg" : "text-base",
+            tone === "celebrate" && "text-lg",
             tone === "destructive" && "text-destructive"
           )}
         >
           {title}
-        </p>
+        </Text>
         {description ? (
-          <p className="mx-auto mt-1 max-w-sm text-muted-foreground text-sm leading-relaxed">
+          <Text
+            as="p"
+            variant="body"
+            tone="muted"
+            className="mx-auto mt-1 max-w-sm leading-relaxed"
+          >
             {description}
-          </p>
+          </Text>
         ) : null}
       </div>
       {action ? <div className="relative mt-1">{action}</div> : null}

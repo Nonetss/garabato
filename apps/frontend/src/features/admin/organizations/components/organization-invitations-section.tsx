@@ -48,9 +48,9 @@ export function OrganizationInvitationsSection({
       />
 
       {invitations.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" variant="meta" tone="muted">
           No hay invitaciones pendientes.
-        </p>
+        </Text>
       ) : (
         <SoftCardList as="ul">
           {invitations.map((invitation) => (

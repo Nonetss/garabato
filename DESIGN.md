@@ -22,42 +22,42 @@ colors:
   dark-destructive: "oklch(0.6368 0.2078 25.3313)"
 typography:
   sans:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
   mono:
-    fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, monospace"
+    fontFamily: "JetBrains Mono Variable, JetBrains Mono, JetBrains Mono Fallback, ui-monospace, monospace"
   display:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 600
     lineHeight: 1.15
     letterSpacing: "-0.025em"
   headline:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "1rem"
     fontWeight: 500
     lineHeight: 1.4
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 500
     letterSpacing: "-0.025em"
   body:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "0.875rem"
     lineHeight: 1.5
   meta:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "0.8125rem"
     lineHeight: 1.625
   stat:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 500
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   label:
-    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, Schibsted Grotesk Fallback, sans-serif"
     fontSize: "0.6875rem"
     fontWeight: 500
     letterSpacing: "0.12em"
@@ -101,7 +101,7 @@ components:
   form-dialog-header:
     borderColor: "{colors.neutral-border}"
     padding: "1.25rem 1.5rem"
-    typography: "{typography.display}"
+    typography: "{typography.headline}"
   field-label:
     typography: "{typography.label}"
     textColor: "oklch(0.5341 0.0078 97.4503)"              # muted-foreground, full opacity (4.92:1 light / 7.36:1 dark — /80 failed WCAG AA at 3.33:1)
@@ -202,7 +202,7 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 
 **Display / Sans:** Schibsted Grotesk Variable (`@fontsource-variable/schibsted-grotesk`), `font-sans`.
 **Body:** Schibsted Grotesk Variable — same family as display, sized down.
-**Mono:** JetBrains Mono Variable (`@fontsource-variable/jetbrains-mono`, `font-mono`), reserved for fingerprints, serials, IDs, durations, cron strings and any value that needs `tabular-nums`. Never the default for UI copy. Both faces ship one variable `wght` file, preloaded in `layouts/font-preload.astro`.
+**Mono:** JetBrains Mono Variable (`@fontsource-variable/jetbrains-mono`, `font-mono`), reserved for fingerprints, serials, IDs, durations, cron strings and any value that needs `tabular-nums`. Never the default for UI copy. Both faces ship one variable `wght` file, preloaded in `layouts/font-preload.astro`. Each stack carries a metric-matched local fallback (`Schibsted Grotesk Fallback` over Arial / Liberation Sans, `JetBrains Mono Fallback` over Menlo / Liberation Mono / Courier New, declared with `size-adjust` and ascent/descent overrides at the top of `global.css`) so the `font-display: swap` moment doesn't reflow lines. They are not a third face: they only stand in until the woff2 arrives. Mono text never renders JetBrains' code ligatures (`font-variant-ligatures: none` on `.font-mono`, `code`, `kbd`, `samp`, `pre`): data is read character by character.
 
 **Character.** A grotesk cut for printed paper (Schibsted) for prose, paired with a clear monospace for technical values. Garabato is a sheet and a pen: the type reads like a well-set form, the signature is the only hand-drawn thing. There is no third face — no serif display, no system fallback masquerading as a choice.
 
@@ -211,7 +211,7 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `global.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
 
 - **Display** (`font-semibold`, `1.5rem`, `tracking-tight`, `line-height: 1.15`): page title in `PageHero`, used on both overview and detail pages. Single line, never eyebrowed.
-- **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`).
+- **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`, a certificate sheet, the signing panel on a document), a profile name, a `StateCard` title, and every dialog and sheet title — `DialogTitle` and `SheetTitle` carry this recipe by default, so call sites pass no type classes.
 - **Title** (`font-medium`, `text-sm`, `tracking-tight`): the name of a list row, a picker result or a selected entity — the body-size counterpart to Headline.
 - **Body** (`text-sm`, `line-height: 1.5`): prose, form values, fact values inside `MetadataCell`.
 - **Meta** (`0.8125rem`, `leading-relaxed`): secondary copy — descriptions, hints, hero counters, inline errors.
@@ -227,6 +227,10 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 **The Tabular-Nums Rule.** Any column or list of values rendered with `font-mono` must include `tabular-nums` so digits line up. Default Tailwind doesn't apply it; add it on every mono block that aligns.
 
 **The Label-Not-Badge Rule.** Field labels, counts, and statuses are typeset as **micro-caps text**, not as `Badge` components. If a value can be expressed as `<FieldLabel/>` it must be.
+
+**The Section-Heading Rule.** One level below the page title, a section is named by `SectionHeading` (the `label` role, with an optional `(n)` count) — never by a `title`-role heading, which is the size and weight of the row names under it. A section that is itself a card (`rounded-xl border bg-card/40`) takes a `headline` title instead.
+
+**Wrapping and dark compensation.** Headings (`h1`–`h4`) balance their lines and prose (`p`, `li`, `dd`, `figcaption`) avoids a lone last word, from the base layer of `global.css`. In the dark theme `--tracking-normal` rises to `0.01em`; the whole `--tracking-*` ramp derives from it, so light-on-dark text gets the same hair of extra air everywhere.
 
 **The Role-Not-Utility Rule.** Text is set through a `Text` role, never by rebuilding `font-medium text-label uppercase tracking-[0.12em]` or `text-xs text-muted-foreground` at the call site. A new recurring type style becomes a new role (token in `global.css`, recipe in `textVariants`, name registered in `cn()`), not a copied class string.
 
@@ -395,7 +399,7 @@ spacing, and the loading/error/empty cascade.
 
 - **Shape:** flat, no border. `gap-4` vertical, `gap-2.5` between icon and title.
 - **Icon:** `size-5`, `text-primary`, **no** `rounded-lg bg-primary/15` box — the icon is the accent, not its backdrop.
-- **Title:** the `display` role (18px semibold, tight). Single line, no eyebrow line above.
+- **Title:** the `display` role (24px semibold, tight). Single line, no eyebrow line above.
 - **Description:** the muted `meta` role (13px, relaxed leading), max width by parent. Hero counters (`3 activos · 5 total`) use the same role with `tabular-nums` and the count itself in `text-foreground`.
 - **Meta slot (right-aligned on `sm+`):** one primary `Button` + calm counter copy (`3 activos · 5 total`) or a tiny state dot + micro-caps label (`Activo` / `Deshabilitado`). Never badges.
 - **Used everywhere:** the same `PageHero` renders the dynamic icon/title/description/status on both overview pages (inside `PageShell`) and detail pages (inside `Detail.astro`'s frame). There is no separate detail-only header component.
@@ -412,7 +416,7 @@ The typographic heading one level below `PageHero`, for a section inside a page,
 ### Detail Layout (`Detail.astro`)
 
 - **Shape:** an Astro layout, not a React component — it owns the `<main class="px-4 py-6 sm:px-6">` frame, centred at `max-w-6xl` by default or `lg:max-w-[80%]` with `maxWidth="80%"` (the same width as its overview), and a static, zero-JS back link so the mounted feature island only supplies the dynamic content via `PageHero`.
-- **Back link:** `text-muted-foreground text-xs uppercase tracking-[0.08em]`, hover → `text-foreground`; `size-3` arrow icon, real `<a href>` (no client directive needed).
+- **Back link:** the `status` recipe as utilities (`text-status uppercase tracking-(--tracking-eyebrow)`, `text-muted-foreground`), hover → `text-foreground`; `size-3` arrow icon, real `<a href>` (no client directive needed). The 404 page's "Volver al inicio" uses the same link under a `display` title.
 - **Island rule:** because `Detail.astro` already owns `<main>`/width/back-link, the mounted feature component wraps itself in a bare `QueryProvider`, never a second `PageShell`.
 
 ### List Row
@@ -500,7 +504,7 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 ### Form Dialog (`FormDialog`)
 
 - **Frame:** `DialogContent` with `p-0`, `gap-0`, `sm:max-w-lg`, scrollable up to `calc(100vh - 2rem)`.
-- **Header:** `border-b px-6 py-5`, `gap-1.5`, `DialogTitle tracking-tight`, `DialogDescription` in the `compact` role with relaxed leading.
+- **Header:** `border-b px-6 py-5`, `gap-1.5`, `DialogTitle` (the `headline` recipe, built into the primitive), `DialogDescription` in the `compact` role with relaxed leading.
 - **Body:** `space-y-4 px-6 py-5` with `FormField` children. Long sections separated with `border-t`.
 - **Footer:** `border-t px-6 py-4`, `Button variant="outline"` cancel + `Button` submit with optional pending spinner (`Loader2 size-4 animate-spin`).
 - **Destructive submit:** `submitVariant="destructive"` on the footer button, no other color shift in the dialog.
@@ -631,6 +635,6 @@ The colour tokens above are pinned by the user and do not change; the signing pr
 - **Home** (`/`): a signing desk, no stats and no pending/recent panels. The drop zone (`features/documents/overview/components/document-drop-zone.tsx`) owns the `h1` ("Suelta un PDF para firmarlo"); a dropped or picked PDF is validated (`pdfFileProblem`), uploaded and opened at `/documents/<id>?firmar=1` with signing open. The side column lists the certificates that will sign (status, expiry, whether the password is remembered) and links to the library.
 - **Library** (`/documents`): thumbnails by default (`DocumentGrid`, first page rendered lazily with pdf.js through `useDocumentPreviewFile`), `?vista=lista` switches to the `EntityList` rows. Name, facts (`3 páginas · 412 KB`) and a `StatusTag` sit under each sheet; actions live in `RowActionsMenu`.
 - **Certificates** (`/certificates`): the certificates lie on one `bg-desk` surface (`rounded-xl`) as credentials (`features/certificates/overview/components/certificate-grid.tsx`): one `bg-background` sheet with `shadow-sheet` each, 1 to 3 columns by container width. A sheet carries the alias (`headline`), the holder when it differs, NIF/NIE (`data`) and issuer as a `<dl>`, and the validity line: issue date to expiry, solid up to today and dashed after, with the status dot standing on today and the remaining days typeset beside the status (`Quedan 812 días`). The solid stretch rules itself in once (`validity-draw`, 0.9s expo-out, skipped under reduced motion), following the cards' `dash-enter` stagger. A hairline footer holds the password state and "Ver firmas"; rename, remember/forget password and delete live in `RowActionsMenu`. An expired credential sits at `opacity-60` until hovered.
-- **Document detail** (`/documents/[id]`): `Detail.astro fillViewport` pins the page to the viewport; from `lg` only the PDF pane (and the side panel when it overflows) scrolls, below `lg` the page root scrolls as one.
+- **Document detail** (`/documents/[id]`): `Detail.astro fillViewport` pins the page to the viewport; from `lg` only the PDF pane (and the side panel when it overflows) scrolls, below `lg` the page root scrolls as one. The side panel opens with the signing card (`headline` title) when signing, then "Versiones (n)" and "Firmas (n)" as `SectionHeading`s over `SoftCardList` rows: a `title` name over a `compact` muted line (date, size, page).
 - **Crons** stay routable at `/crons` but are out of the navbar, the home and the surface search.
 

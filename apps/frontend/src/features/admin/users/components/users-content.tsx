@@ -5,6 +5,7 @@ const UsersIcon = getIcon("admin", "users")
 const UserX = getIcon("identity", "userX")
 
 import { useCallback, useMemo, useState } from "react"
+import { Text } from "@/components/shared/brand/typography"
 import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { EntityList } from "@/components/shared/resource/entity-list"
@@ -180,8 +181,13 @@ export function UsersContent() {
               />
             </div>
 
-            <div className="flex shrink-0 items-center justify-between border-t px-4 py-3 text-muted-foreground text-sm">
-              <span>
+            <Text
+              as="div"
+              variant="meta"
+              tone="muted"
+              className="flex shrink-0 items-center justify-between border-t px-4 py-3"
+            >
+              <span className="tabular-nums">
                 {from}–{to} de {total}
               </span>
               <div className="flex gap-2">
@@ -202,7 +208,7 @@ export function UsersContent() {
                   Siguiente
                 </Button>
               </div>
-            </div>
+            </Text>
           </div>
         )}
       </ResourceOverview>

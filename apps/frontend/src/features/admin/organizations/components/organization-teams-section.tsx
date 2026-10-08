@@ -19,9 +19,9 @@ export function OrganizationTeamsSection({
     <section className="space-y-3">
       <SectionHeading title="Equipos" count={teams.length} />
       {teams.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" variant="meta" tone="muted">
           Esta organización no tiene equipos todavía.
-        </p>
+        </Text>
       ) : (
         <SoftCardList as="ul">
           {teams.map((team) => (

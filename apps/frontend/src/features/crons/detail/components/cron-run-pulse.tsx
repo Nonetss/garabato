@@ -89,7 +89,7 @@ export function CronRunPulse({ runs }: { runs: PulseRun[] }) {
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <div className="flex items-baseline gap-3">
-          <Text as="h2" variant="title">
+          <Text as="h2" variant="label" tone="muted">
             Pulso
           </Text>
           <Text as="p" variant="compact" tone="muted" className="tabular-nums">

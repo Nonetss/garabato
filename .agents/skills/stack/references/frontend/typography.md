@@ -19,7 +19,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 | Role | Use for |
 |---|---|
 | `display` | The page title (`PageHero`) |
-| `headline` | Tile and card titles (`SurfaceCard`) |
+| `headline` | Tile and card titles (`SurfaceCard`), `StateCard` titles, dialog and sheet titles (built into the primitives) |
 | `title` | Name of a list row, picker result or selected entity, at body size |
 | `body` | Default prose |
 | `meta` | Secondary copy: descriptions, hints, counts, inline errors (`tone="destructive"`) |
@@ -38,5 +38,5 @@ Tones: `default`, `muted`, `primary`, `destructive`. `as` picks the element (`sp
 - When `Text` can't be the element (a component such as `DialogDescription`, `DropdownMenuLabel`, `Input`, `SelectItem`, `AppLink`, or an element with a `ref`/event handler such as `button`, `summary`, `pre`), put the role on its `className` with `textVariants({ role, tone })`, or `cn(textVariants(...), "<layout>", conditionalTone)` when there is more.
 - `className` carries layout plus local tweaks on top of the role (`font-medium leading-tight` on a menu item title, `leading-normal` on a line-clamped description, `font-mono` on an eyebrow). A conditional tone (`isError ? "text-destructive" : "text-muted-foreground"`) goes after `textVariants(...)` in `cn()` so it wins.
 - Composed patterns already wrap `Text`; use them instead of rebuilding them: `FieldLabel` (form label tied to a control), `StatusTag` (state word with a dot), `SectionHeading` (micro-caps section title with optional `(n)` count and action), `MenuItemText` (label + two-line description in a rich menu row) and `MetadataCell` (label + value fact).
-- `components/ui` primitives keep their own classes, because `ui` can't import `components/shared`; call sites style them through `className={textVariants(...)}`. `.astro` files can't render React without an island, so they keep the utilities.
+- `components/ui` primitives keep their own classes, because `ui` can't import `components/shared`; call sites style them through `className={textVariants(...)}`. Exception: `DialogTitle` and `SheetTitle` already carry the `headline` recipe as token utilities, so every dialog and sheet title matches without call-site classes — don't add `tracking-tight` or a size to them. `.astro` files can't render React without an island, so they keep the utilities.
 - **Adding a role** touches three places in the same change: the `--font-size-*` (and, if needed, `--line-height-*`) token plus `--text-<role>` in `global.css`, the role in `textVariants`, and the name in `typeRoles` in `lib/utils.ts`. Update this table too. (Roles built only from stock utilities, such as `title`, `data` and `compact`, have no token and no `typeRoles` entry.)

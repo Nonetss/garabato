@@ -9,6 +9,31 @@
 @import "@fontsource-variable/jetbrains-mono";
 @import "./typeset.css";
 
+/* Metric-matched fallbacks. Both faces load with `font-display: swap`, so
+   until the woff2 arrives the text renders in a local face; these scale that
+   face to the web font's average advance width and pin its vertical metrics
+   so the swap doesn't reflow lines or shift the layout. Values come from the
+   latin woff2 files (Schibsted: avg advance 0.4766em, ascent 0.9766em,
+   descent 0.2578em; JetBrains Mono: 0.6em, 1.02em, 0.3em) against Arial /
+   Liberation Sans (0.4548em) and the 0.6em system monospaces. */
+@font-face {
+  font-family: "Schibsted Grotesk Fallback";
+  src: local("Arial"), local("Liberation Sans");
+  size-adjust: 104.79%;
+  ascent-override: 93.19%;
+  descent-override: 24.6%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Menlo"), local("Liberation Mono"), local("Courier New");
+  size-adjust: 100%;
+  ascent-override: 102%;
+  descent-override: 30%;
+  line-gap-override: 0%;
+}
+
 /* Explicit source: Tailwind's automatic content detection anchors to the
    monorepo git root and can miss `src/**` depending on which tool spawns
    Vite (confirmed missing under Ladle's own dev/build process, which
@@ -119,7 +144,7 @@
     color: var(--color-muted-foreground);
     font-size: var(--font-size-label);
     font-weight: 500;
-    letter-spacing: 0.12em;
+    letter-spacing: var(--tracking-caps);
     text-transform: uppercase;
     padding: 0.5rem 0.75rem;
   }
@@ -272,10 +297,13 @@
   --sidebar-accent-foreground: oklch(0.325 0 0);
   --sidebar-border: oklch(0.955 0.003 98);
   --sidebar-ring: oklch(0.7731 0 0);
-  --font-sans: "Schibsted Grotesk Variable", "Schibsted Grotesk", sans-serif;
+  --font-sans:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk",
+    "Schibsted Grotesk Fallback", sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    ui-monospace, monospace;
   /* Role-based type scale — names describe the job, values follow the
      hierarchy DESIGN.md commits to: PageHero title (Display), list /
      tile / dialog title (Headline), prose default (Body), secondary
@@ -346,6 +374,10 @@
 }
 
 .dark {
+  /* Light text on a dark surface reads tighter than the same setting in
+     ink; a hair of extra tracking compensates. The whole --tracking-* ramp
+     derives from this, so headings shift by the same amount. */
+  --tracking-normal: 0.01em;
   --background: oklch(0.2679 0.0036 106.6427);
   --foreground: oklch(0.9576 0.0027 106.4494);
   --card: oklch(0.2928 0.0018 106.5092);
@@ -389,10 +421,13 @@
   --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
   --sidebar-border: oklch(0.955 0.003 98);
   --sidebar-ring: oklch(0.7731 0 0);
-  --font-sans: "Schibsted Grotesk Variable", "Schibsted Grotesk", sans-serif;
+  --font-sans:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk",
+    "Schibsted Grotesk Fallback", sans-serif;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    ui-monospace, monospace;
   --radius: 0.25rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -462,9 +497,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: "Schibsted Grotesk Variable", "Schibsted Grotesk", sans-serif;
+  --font-sans:
+    "Schibsted Grotesk Variable", "Schibsted Grotesk",
+    "Schibsted Grotesk Fallback", sans-serif;
   --font-mono:
-    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+    "JetBrains Mono Variable", "JetBrains Mono", "JetBrains Mono Fallback",
+    ui-monospace, monospace;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
   /* Role-based font-size utilities — pair with the --font-size-* tokens in
@@ -572,6 +610,20 @@
   ::selection {
     background-color: var(--brand-orange);
     color: var(--primary-foreground);
+  }
+  /* Headings break into even lines instead of leaving one word behind;
+     prose avoids a lone last word. Truncated text is unaffected. */
+  :where(h1, h2, h3, h4) {
+    text-wrap: balance;
+  }
+  :where(p, li, dd, figcaption) {
+    text-wrap: pretty;
+  }
+  /* JetBrains Mono turns `->`, `!=`, `::`, `0x` and the like into
+     ligatures. Mono here only sets data (ids, keys, cron strings,
+     fingerprints), which must read character by character. */
+  :where(.font-mono, code, kbd, samp, pre) {
+    font-variant-ligatures: none;
   }
 }
 

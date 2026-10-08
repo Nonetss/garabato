@@ -66,9 +66,7 @@ export function TeamMembersSheet({
     <Sheet open={!!team} onOpenChange={(open) => !open && onOpenChange(false)}>
       <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="tracking-tight">
-            {team?.name ?? "Equipo"}
-          </SheetTitle>
+          <SheetTitle>{team?.name ?? "Equipo"}</SheetTitle>
           <SheetDescription className={textVariants({ role: "compact" })}>
             Miembros del equipo
           </SheetDescription>
@@ -91,9 +89,14 @@ export function TeamMembersSheet({
               </SelectTrigger>
               <SelectContent>
                 {candidates.length === 0 ? (
-                  <div className="px-2 py-1.5 text-muted-foreground text-sm">
+                  <Text
+                    as="div"
+                    variant="meta"
+                    tone="muted"
+                    className="px-2 py-1.5"
+                  >
                     No hay miembros disponibles
-                  </div>
+                  </Text>
                 ) : (
                   candidates.map((m) => (
                     <SelectItem key={m.userId} value={m.userId}>
@@ -123,9 +126,9 @@ export function TeamMembersSheet({
           {isPending ? (
             <StateCard spinner title="Cargando miembros..." />
           ) : members.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
+            <Text as="p" variant="meta" tone="muted">
               Este equipo no tiene miembros todavía.
-            </p>
+            </Text>
           ) : (
             <div className="space-y-3">
               <SectionHeading title="Miembros" count={members.length} />

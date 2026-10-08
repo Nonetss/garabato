@@ -36,10 +36,10 @@ export function OrganizationRolesSection({
       />
 
       {roles.length === 0 ? (
-        <p className="text-muted-foreground text-sm">
+        <Text as="p" variant="meta" tone="muted">
           Esta organización no tiene roles personalizados. Usa Propietario,
           Administrador o Miembro, o crea uno nuevo.
-        </p>
+        </Text>
       ) : (
         <SoftCardList as="ul">
           {roles.map((role) => (

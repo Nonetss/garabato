@@ -48,10 +48,12 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
       <div className="flex items-center gap-4">
         <UserAvatar displayName={displayName} email={user.email} size="lg" />
         <div className="min-w-0">
-          <p className="truncate font-medium text-lg tracking-tight">
+          <Text as="p" variant="headline" className="truncate">
             {displayName}
-          </p>
-          <p className="truncate text-muted-foreground text-sm">{user.email}</p>
+          </Text>
+          <Text as="p" variant="meta" tone="muted" className="truncate">
+            {user.email}
+          </Text>
           <Text
             as="p"
             variant="status"
