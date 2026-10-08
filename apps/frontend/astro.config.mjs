@@ -70,15 +70,7 @@ export default defineConfig({
   vite: {
     envDir: repoRoot,
     optimizeDeps: {
-      include: [
-        "@base-ui/react/**",
-        // Injected by <ClientRouter />'s script, which Vite's import scanner
-        // doesn't see: discovered late, they force a dev page reload.
-        "astro/virtual-modules/transitions-events.js",
-        "astro/virtual-modules/transitions-router.js",
-        "astro/virtual-modules/transitions-swap-functions.js",
-        "astro/virtual-modules/transitions-types.js",
-      ],
+      include: ["@base-ui/react/**"],
     },
     ssr: {
       // Runtime image ships no node_modules, so every dependency must be
