@@ -59,6 +59,27 @@ export const useDocumentUpload = () =>
     invalidate: [documentsListKey],
   })
 
+export const useDocumentRename = () =>
+  useResourceMutation<
+    { id: string; name: string },
+    DocumentSummary,
+    DocumentSummary[]
+  >({
+    mutationFn: (input) => orpc.v1.document.rename.call(input),
+    listKey: documentsListKey,
+    applyOptimistic: (current, input) =>
+      current?.map((document) => {
+        if (document.id !== input.id) return document
+        return { ...document, name: input.name }
+      }),
+    // Detail pages and signature records show the name too.
+    extraInvalidate: [orpc.v1.document.get.key(), signaturesKey],
+    messages: {
+      success: "Documento renombrado",
+      error: "No se pudo renombrar el documento",
+    },
+  })
+
 export const useDocumentDelete = () =>
   useResourceMutation<
     { id: string },

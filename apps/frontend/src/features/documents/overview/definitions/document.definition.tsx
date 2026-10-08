@@ -18,11 +18,12 @@ export function documentFacts(document: DocumentSummary) {
 
 export interface DocumentsRowContext {
   onDownload: (document: DocumentSummary) => void
+  onRename: (document: DocumentSummary) => void
   onDelete: (document: DocumentSummary) => void
 }
 
 /** The documents overview's `EntityList` row: name, signing status, size and
- *  signature metadata, and the download/delete actions. */
+ *  signature metadata, and the download/rename/delete actions. */
 export const documentDefinition: EntityListDefinition<
   DocumentSummary,
   DocumentsRowContext
@@ -71,6 +72,12 @@ export const documentDefinition: EntityListDefinition<
       label: documentLabels.download,
       icon: iconRef("actions", "download"),
       onSelect: (document, ctx) => ctx.onDownload(document),
+    },
+    {
+      key: "rename",
+      label: documentLabels.rename,
+      icon: iconRef("actions", "edit"),
+      onSelect: (document, ctx) => ctx.onRename(document),
     },
     {
       key: "delete",

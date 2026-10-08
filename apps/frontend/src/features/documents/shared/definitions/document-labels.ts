@@ -18,6 +18,11 @@ export const documentLabels = {
   library: "Ver todos los documentos",
   open: "Abrir",
   download: "Descargar",
+  rename: "Renombrar",
+  renameTitle: "Renombrar documento",
+  name: "Nombre",
+  nameHint: "Se guarda con la extensión .pdf.",
+  save: "Guardar",
   delete: "Eliminar",
   deleteTitle: "Eliminar documento",
   deleteDescription: (name: string) =>

@@ -1,6 +1,7 @@
 import { getIcon } from "@/lib/icon-registry"
 
 const DownloadIcon = getIcon("actions", "download")
+const EditIcon = getIcon("actions", "edit")
 const DeleteIcon = getIcon("actions", "delete")
 
 import { Text } from "@/components/shared/brand/typography"
@@ -70,6 +71,10 @@ function DocumentCard({
           <DropdownMenuItem onClick={() => context.onDownload(document)}>
             <DownloadIcon className="size-4" />
             {documentLabels.download}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => context.onRename(document)}>
+            <EditIcon className="size-4" />
+            {documentLabels.rename}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

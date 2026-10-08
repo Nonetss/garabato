@@ -14,6 +14,7 @@ import { ResourceOverview } from "@/components/shared/resource/resource-overview
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { DocumentGrid } from "@/features/documents/overview/components/document-grid"
+import { RenameDocumentDialog } from "@/features/documents/overview/components/rename-document-dialog"
 import { UploadDocumentDialog } from "@/features/documents/overview/components/upload-document-dialog"
 import {
   type DocumentsRowContext,
@@ -29,6 +30,7 @@ import {
 } from "@/features/documents/shared"
 import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
+import { useTargetDialog } from "@/hooks/use-target-dialog"
 import { notifyError } from "@/lib/toast"
 
 type DocumentsView = "grid" | "list"
@@ -60,6 +62,7 @@ export function DocumentsContent() {
     viewCodec
   )
 
+  const renameDialog = useTargetDialog<DocumentSummary>()
   const deleteDialog = useTargetConfirmDialog<DocumentSummary>({
     title: documentLabels.deleteTitle,
     description: (document) => documentLabels.deleteDescription(document.name),
@@ -79,6 +82,7 @@ export function DocumentsContent() {
           notifyError("No se pudo descargar el documento", error.message)
         )
     },
+    onRename: renameDialog.open,
     onDelete: deleteDialog.open,
   }
 
@@ -148,6 +152,10 @@ export function DocumentsContent() {
       </ResourceOverview>
 
       <UploadDocumentDialog open={uploadOpen} onOpenChange={setUploadOpen} />
+      <RenameDocumentDialog
+        document={renameDialog.target}
+        {...renameDialog.dialogProps}
+      />
       <ConfirmDialog {...deleteDialog.confirmDialogProps} />
     </>
   )

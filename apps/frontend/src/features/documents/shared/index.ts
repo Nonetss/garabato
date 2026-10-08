@@ -5,6 +5,7 @@ export {
   useDocumentDelete,
   useDocumentFile,
   useDocumentPreviewFile,
+  useDocumentRename,
   useDocumentSign,
   useDocuments,
   useDocumentUpload,
