@@ -1,28 +1,27 @@
 ---
-// Both faces are declared in `global.css` via `@fontsource*`, so the browser
-// can only discover them after the ~160 KB stylesheet has downloaded and
-// parsed — two serialised round-trips before the first glyph. Preloading the
-// latin subsets (the only ones a Spanish UI renders) starts them in parallel
-// with the CSS and cuts the `font-display: swap` flash. Space Mono ships as
-// static weights (no variable axis), so only the 400 face — the one actually
-// used above the fold — is worth the preload; 700 loads on demand.
+// Both faces are declared in `global.css` via `@fontsource-variable`, so the
+// browser can only discover them after the ~160 KB stylesheet has downloaded
+// and parsed — two serialised round-trips before the first glyph. Preloading
+// the latin subsets (the only ones a Spanish UI renders) starts them in
+// parallel with the CSS and cuts the `font-display: swap` flash. Both ship a
+// single variable `wght` file, so one preload per face covers every weight.
 //
 // `?url` resolves to the hashed build asset, so these stay in sync with
 // whatever Vite emits.
-import spaceMonoLatin from "@fontsource/space-mono/files/space-mono-latin-400-normal.woff2?url"
-import spaceGroteskLatin from "@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2?url"
+import jetbrainsMonoLatin from "@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2?url"
+import schibstedGroteskLatin from "@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2?url"
 ---
 
 <link
   rel="preload"
-  href={spaceGroteskLatin}
+  href={schibstedGroteskLatin}
   as="font"
   type="font/woff2"
   crossorigin
 >
 <link
   rel="preload"
-  href={spaceMonoLatin}
+  href={jetbrainsMonoLatin}
   as="font"
   type="font/woff2"
   crossorigin
