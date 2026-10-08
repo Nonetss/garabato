@@ -210,7 +210,7 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `global.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
 
 - **Display** (`font-semibold`, `text-lg`, `tracking-tight`, `line-height: 1.2`): page title in `PageHero`, used on both overview and detail pages. Single line, never eyebrowed.
-- **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`, collection cards).
+- **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`).
 - **Title** (`font-medium`, `text-sm`, `tracking-tight`): the name of a list row, a picker result or a selected entity — the body-size counterpart to Headline.
 - **Body** (`text-sm`, `line-height: 1.5`): prose, form values, fact values inside `MetadataCell`.
 - **Meta** (`0.8125rem`, `leading-relaxed`): secondary copy — descriptions, hints, hero counters, inline errors.
@@ -459,7 +459,7 @@ The bubble that names an icon-only control, in place of the browser's native `ti
 - **Shape:** the `components/ui/tooltip` popup — `bg-foreground text-background`, `rounded-md`, `px-3 py-1.5 text-xs`, with a 6px arrow pointing at the control. It inverts against the page in both themes (ink bubble on paper, paper bubble on dark), so it reads as a floating layer without a shadow.
 - **Timing:** opens after 300ms on hover or keyboard focus; a quick zoom-and-fade from the control's side. Never on touch.
 - **Placement:** `top` by default; `bottom` for navbar/header actions; `left` for controls on the right edge.
-- **Where:** icon-only row actions, kebab menus, compact favorite/collection/comments toggles, copy, back-to-top, navbar actions and the sidebar toggle; also a status tag's explanation (e.g. a ban reason). Not on labelled buttons, obvious inline `×` clear buttons, or touch-only controls.
+- **Where:** icon-only row actions, kebab menus, compact comments toggles, copy, back-to-top, navbar actions and the sidebar toggle; also a status tag's explanation (e.g. a ban reason). Not on labelled buttons, obvious inline `×` clear buttons, or touch-only controls.
 - **Rule:** the control keeps its `aria-label`; the bubble is the visual name, not the accessible one.
 
 ### Active Filter Chips (`FilterChips`)

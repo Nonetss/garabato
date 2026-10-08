@@ -13,7 +13,7 @@ Monorepo `better`: Astro + Hono + oRPC + Better Auth + Drizzle/PostgreSQL on Bun
 
 ## Base philosophy
 
-This repo was started from a **template**, so it ships with a lot of features (Better Auth with the `admin()`, API-key and organization plugins, oRPC contract layer, cron scheduler, collections, comments, entity icons, activity log, Docker + Caddy + compose, OpenSpec workflow, multiple workspaces, etc.) that the product's actual requirements may or may not need.
+This repo was started from a **template**, so it ships with a lot of features (Better Auth with the `admin()`, API-key and organization plugins, oRPC contract layer, cron scheduler, comments, entity icons, activity log, Docker + Caddy + compose, OpenSpec workflow, multiple workspaces, etc.) that the product's actual requirements may or may not need.
 
 - Don't assume that any feature present in the base is **required** for the current task. If a request seems to call for one of them, ask the user before wiring it in.
 - Don't infer complexity from the repo's size. A small, simple ask can still be a small, simple change.
@@ -48,7 +48,7 @@ Only commit when the user asks. Messages follow Conventional Commits: `type(scop
 ### Language conventions
 
 - Code is written in English: identifiers, comments, docstrings, log messages, OpenAPI `summary`/`description`/`.describe()` texts and internal error messages.
-- User-facing copy stays in Spanish: frontend UI text and the API error messages that the UI shows to users (e.g. `errors.NOT_FOUND({ message: "Colección no encontrada" })`).
+- User-facing copy stays in Spanish: frontend UI text and the API error messages that the UI shows to users (e.g. `errors.NOT_FOUND({ message: "Comentario no encontrado" })`).
 - Documentation keeps the language it is written in (`PRODUCT.md` is in Spanish, `README.md` in English).
 
 ### Migrations — agent hands off

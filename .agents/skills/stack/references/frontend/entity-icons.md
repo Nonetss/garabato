@@ -1,6 +1,6 @@
 # Entity icons (user-chosen Lucide icon + color)
 
-A polymorphic building block, like comments: any entity can carry one Lucide icon and one palette color, chosen by the user. Collections are the first consumer.
+A polymorphic building block, like comments: any entity can carry one Lucide icon and one palette color, chosen by the user. No entity type is registered yet: `entityIconTargets` is empty, so every call is `BAD_REQUEST` until the first consumer opts in.
 
 ## Pieces
 
@@ -18,7 +18,7 @@ A polymorphic building block, like comments: any entity can carry one Lucide ico
 2. In that entity's delete handler, call `deleteEntityIcons({ entityType, entityIds }, tx)` from `#v1/entity-icon/handler`.
 3. In the UI, render `<EntityIconPicker entity={{ entityType, entityId }} />` or an `IconPicker` inside the entity's form, and `EntityIcon` wherever the entity is shown (batch lists with `useEntityIcons`).
 
-No schema or migration change is needed. Keep per-screen category choices next to the consumer (collections: `features/collections/shared/model/icon.ts`).
+No schema or migration change is needed. Keep per-screen category choices next to the consumer, in the slice's `model/`.
 
 ## Catalog and palette
 

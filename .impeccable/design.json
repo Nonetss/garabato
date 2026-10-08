@@ -155,7 +155,7 @@
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Tile and card titles (SurfaceCard, collection cards); the `headline` role of Text."
+        "purpose": "Tile and card titles (SurfaceCard); the `headline` role of Text."
       },
       "title": {
         "displayName": "Title",

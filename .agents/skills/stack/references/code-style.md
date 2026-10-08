@@ -15,7 +15,7 @@ The user does not accept code that forces types or packs logic into chained oper
 
 ## Allowed
 
-- One `??` with a **literal** default: `collection.name ?? "Colección sin nombre"`, `value ?? ""`, `x ?? undefined`.
+- One `??` with a **literal** default: `user.name ?? ""`, `value ?? ""`, `x ?? undefined`.
 - One simple ternary as the value of an assignment: `const mode = enabled ? "on" : "off"`.
 - Optional chaining used for reading (`user?.role === "admin"`), as long as it doesn't feed a `??` chain.
 - Import aliases (`import { appRouter as v1Router }`) are not casts.

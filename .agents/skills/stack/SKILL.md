@@ -24,7 +24,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
 
 - `packages/api`, `auth`, `cron`, `db`, `env` and `logger` are consumed as **raw TS source** (no build step; their `build` script is `true`).
 - `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); a new public route goes in its Caddyfile, never as a `ports` entry on another service.
-- Foundation features (admin/API-key/organization plugins, cron, collections, comments, entity icons, activity log…) exist because they came with the foundation, not because the current task needs them.
+- Foundation features (admin/API-key/organization plugins, cron, comments, entity icons, activity log…) exist because they came with the foundation, not because the current task needs them.
 
 ## Where to look
 

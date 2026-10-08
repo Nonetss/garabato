@@ -19,7 +19,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 | Role | Use for |
 |---|---|
 | `display` | The page title (`PageHero`) |
-| `headline` | Tile and card titles (`SurfaceCard`, collection cards) |
+| `headline` | Tile and card titles (`SurfaceCard`) |
 | `title` | Name of a list row, picker result or selected entity, at body size |
 | `body` | Default prose |
 | `meta` | Secondary copy: descriptions, hints, counts, inline errors (`tone="destructive"`) |

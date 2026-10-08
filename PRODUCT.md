@@ -8,15 +8,15 @@ web
 
 ## Users
 
-better es un proyecto nuevo arrancado sobre la base de la plantilla personal del usuario (`stack`). Por ahora el único visitante es el propio usuario operando su scaffold: revisando crons, gestionando organizaciones / usuarios / API keys, colecciones y comentarios, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
+better es un proyecto nuevo arrancado sobre la base de la plantilla personal del usuario (`stack`). Por ahora el único visitante es el propio usuario operando su scaffold: revisando crons, gestionando organizaciones / usuarios / API keys y comentarios, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
 
 ## Product Purpose
 
-better arranca con el stack ya cableado (Astro + Hono/oRPC + Better Auth + Drizzle/Postgres + OpenSpec + Docker) para que el trabajo de producto empiece con auth, RPC tipado, cron scheduling, colecciones, comentarios y documentación de capacidades ya resueltos. Comparte paquetes (`@nonete/*`), convenciones y sistema visual con `stack`, de modo que el código se pueda mover entre ambos repos sin reescribirlo.
+better arranca con el stack ya cableado (Astro + Hono/oRPC + Better Auth + Drizzle/Postgres + OpenSpec + Docker) para que el trabajo de producto empiece con auth, RPC tipado, cron scheduling, comentarios y documentación de capacidades ya resueltos. Comparte paquetes (`@nonete/*`), convenciones y sistema visual con `stack`, de modo que el código se pueda mover entre ambos repos sin reescribirlo.
 
 ## Operating Context
 
-better se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (404, inicio, admin, collections, config, crons, login, me, signup), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
+better se opera como **consola técnica** corriendo en local o en un servidor propio vía Docker Compose. Quien la usa vive en la CLI (`bun run dev`, `bun run dev:local`, `bun run db:generate`, `bun run docker:up`, `openspec validate --strict`) y en el navegador en `localhost:4321` (dev) o en el puerto del gateway (producción). Los artefactos vivos son: páginas Astro en `apps/frontend/src/pages` (404, inicio, admin, config, crons, login, me, signup), la documentación de capacidades en `openspec/specs/` y la guía de estilo visual en `DESIGN.md` (raíz). `BETTER_AUTH_SECRET` y el admin inicial se generan con `scripts/setup-dev.sh`.
 
 ## Capabilities and Constraints
 
@@ -27,7 +27,7 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 - **API keys** como método de autenticación machine-to-machine (`@better-auth/api-key`).
 - **Cron scheduling y management** (`/crons`, `/crons/[id]`) con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles.
 - **RPC tipado** vía oRPC en `packages/api`, versionado (`src/<version>/`) por feature.
-- **Colecciones y comentarios** sobre cualquier recurso; **iconos de entidad** personalizables.
+- **Comentarios** sobre cualquier recurso; **iconos de entidad** personalizables.
 - **Registro de actividad** (`/admin/logs`) sobre Loki.
 - **Documentación HTTP** en `/scalar` y `/openapi.json`, protegida por sesión admin.
 - **Tema claro/oscuro/sistema** y **PWA** instalable.

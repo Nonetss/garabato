@@ -2,7 +2,7 @@
 
 A Turborepo monorepo: an Astro frontend and a Hono/oRPC backend (TypeScript,
 Bun) behind a Caddy gateway. It starts from the user's template
-([stack](https://git.noneweb.online/nonete/stack)) and keeps its packages
+(`stack`) and keeps its packages
 (`@nonete/*`), conventions and visual system, without the template's Python
 services, gRPC or agent chat.
 
@@ -18,7 +18,7 @@ PostgreSQL, with structured logs to Loki.
 - **Better Auth** — email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
 - **Drizzle + PostgreSQL** — schema per domain; committed migrations applied automatically when the backend starts
 - **Cron scheduler** — persistent jobs that run cron-eligible API procedures, managed at `/crons`
-- **Collections, comments and entity icons** — favorites/custom collections, threaded comments and custom icons over any resource
+- **Comments and entity icons** — threaded comments and custom icons over any resource
 - **Activity log** — pino logs shipped to Loki and browsable at `/admin/logs`
 - **PWA** — installable, with a web manifest and a service worker
 - **Bun + Turborepo** — package manager and monorepo task runner
@@ -134,7 +134,7 @@ prompts for the public URL and admin credentials, generates `.env`, downloads
 `compose.prod.yml` if missing, and can start the stack:
 
 ```bash
-curl -fsSL https://git.noneweb.online/nonete/better/raw/branch/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
 ```
 
 Session cookies are `Secure`, so outside `localhost` the stack must be served
@@ -168,7 +168,7 @@ There are no git hooks.
 
 ## Documentation
 
-Every capability (auth, admin, crons, collections, logging, Docker, …) has a
+Every capability (auth, admin, crons, logging, Docker, …) has a
 spec under `openspec/specs/`; finished changes are kept in
 `openspec/changes/archive/`. Read those for the authoritative description of
 expected behavior before changing code in an area you're unfamiliar with;

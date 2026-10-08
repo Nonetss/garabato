@@ -13,7 +13,7 @@ If the feature request is empty, ask the user what to build before doing anythin
 
 Steps:
 
-1. **Name it.** Derive a short kebab-case slug from the request (e.g. `collection-sharing`, max ~40 chars) and a branch name `<type>/<slug>` using the Conventional Commits type that fits (`feat`, `fix`, `refactor`, `chore`, `docs`). Announce both.
+1. **Name it.** Derive a short kebab-case slug from the request (e.g. `comment-reactions`, max ~40 chars) and a branch name `<type>/<slug>` using the Conventional Commits type that fits (`feat`, `fix`, `refactor`, `chore`, `docs`). Announce both.
 
 2. **Pre-checks in the main checkout (read-only).**
    - `git rev-parse --show-toplevel` → the repo root; `git branch --show-current` → the base branch.

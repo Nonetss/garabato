@@ -4,7 +4,7 @@ Every procedure declares its HTTP contract in `.meta(openapi({ method, successSt
 
 ## The model: RPC paths, semantic verbs
 
-No procedure declares a `path`. OpenAPI paths come from the router keys (`/api/v1/collection/updateItem`), and identifiers travel in the body (writes and `QUERY`) or the query string (`GET`/`DELETE`), never in the path. The API is RPC-style with HTTP verbs, not resource-oriented REST, so the procedure name carries the intent and the method states its **safety and idempotency**.
+No procedure declares a `path`. OpenAPI paths come from the router keys (`/api/v1/cron/setEnabled`), and identifiers travel in the body (writes and `QUERY`) or the query string (`GET`/`DELETE`), never in the path. The API is RPC-style with HTTP verbs, not resource-oriented REST, so the procedure name carries the intent and the method states its **safety and idempotency**.
 
 The declared method and status shape the OpenAPI surface (`/api/v1/...`, `/openapi.json`, Scalar), and changing them breaks external `/api` clients. On `/api`, a `GET` carries its input in the query string; `SmartCoercionHandlerPlugin` turns those strings into the types the input schema declares (`z.number()`, `z.boolean()`, arrays), so declare real types and never `z.coerce.*` for this. A `QUERY` carries its input as a JSON body, like `POST`, and needs OpenAPI 3.2 (already what `apps/backend/src/routers/docs.ts` generates).
 
@@ -18,17 +18,17 @@ Decide by what the handler does, not by its name:
 
 | The handler… | Method | Examples in this repo |
 |---|---|---|
-| Only reads, and its input fits a query string (scalars, optional filters, arrays of scalars) | `GET` | `collection.list`, `organization.search`, `logs.query` |
-| Only reads, and its input does not fit a query string (arrays of objects, batches of entity refs) | `QUERY` | `collection.favoriteStatuses`, `comment.counts`, `entityIcon.getMany` |
-| Creates a new resource whose id the server assigns | `POST` + `successStatus: 201` | `collection.create`, `comment.create`, `organization.createTeam`, `cron.create` |
+| Only reads, and its input fits a query string (scalars, optional filters, arrays of scalars) | `GET` | `cron.list`, `organization.search`, `logs.query` |
+| Only reads, and its input does not fit a query string (arrays of objects, batches of entity refs) | `QUERY` | `comment.counts`, `entityIcon.getMany` |
+| Creates a new resource whose id the server assigns | `POST` + `successStatus: 201` | `comment.create`, `organization.createTeam`, `cron.create` |
 | Runs an action that is neither CRUD nor idempotent | `POST` | `cron.runNow` |
-| Sets the whole state of a target the caller identifies: full replacement, or an "ensure it exists" upsert keyed by a natural key | `PUT` | `entityIcon.set`, `collection.updateItem`, `collection.addItem`, `collection.addFavorite` |
-| Changes some fields and leaves the rest untouched | `PATCH` | `collection.update`, `cron.update`, `cron.setEnabled`, `comment.update`, `organization.updateMemberRole` |
-| Removes something, including soft deletes, cancellations and membership removals | `DELETE` | `cron.remove` (soft), `organization.cancelInvitation`, `collection.removeFavorite` |
+| Sets the whole state of a target the caller identifies: full replacement, or an "ensure it exists" upsert keyed by a natural key | `PUT` | `entityIcon.set` |
+| Changes some fields and leaves the rest untouched | `PATCH` | `cron.update`, `cron.setEnabled`, `comment.update`, `organization.updateMemberRole` |
+| Removes something, including soft deletes, cancellations and membership removals | `DELETE` | `cron.remove` (soft), `organization.cancelInvitation` |
 
 Rules behind the table:
 
-- **`GET` and `QUERY` are safe.** They never write, trigger a job or call a downstream service that writes. Lazy get-or-create of the caller's own defaults belongs in the write path (`addFavorite` creates the favorites collection, `listFavorites` doesn't).
+- **`GET` and `QUERY` are safe.** They never write, trigger a job or call a downstream service that writes. Lazy get-or-create of the caller's own defaults belongs in the write path, never in a read.
 - **`GET` vs `QUERY`.** `GET` is the default for reads: it works from an address bar, from `curl` without a body and from Scalar's "try it". Use `QUERY` only when the input does not fit a query string. Arrays of objects are the case today: bracket notation turns 100 entity refs into a URL of about 9 KB. A batch still caps its array in the zod schema (`.min(1).max(100)`, like `comment.counts`). Never switch a read to `POST` to fit its input. A CDN or WAF placed in front of a deployment must let `QUERY` through, as Caddy, Bun and Vite's proxy already do.
 - **`PUT` vs `POST`.** If calling twice leaves the same state and returns the same row, it is `PUT`. Insert-with-`onConflictDoNothing()`/`onConflictDoUpdate()` on a natural key is a `PUT`. Return a `created` flag in the output when the caller needs to tell the outcomes apart.
 - **`PUT` vs `PATCH`.** `PUT` replaces what it targets, so an omitted optional value is cleared (`updateItem` sets `metadata ?? null`). `PATCH` never resets what it does not receive. An optional field the caller omits keeps its value. Use `...(input.x !== undefined && { x: input.x })` in the `set()`, and use `null` to clear explicitly.
@@ -53,8 +53,8 @@ Throw the `errors.<CODE>()` whose status names the **cause**. User-facing messag
 | `BAD_REQUEST` 400 | The input itself is invalid or inconsistent beyond what zod checks | malformed pagination cursor, unknown custom role name, a reply whose parent belongs to another entity, an entity type that does not support icons, an invalid cron expression |
 | `UNAUTHORIZED` 401 | No authenticated caller | the builders, `if (!context.user)` guards |
 | `FORBIDDEN` 403 | Authenticated, but **this caller** lacks the role, permission or ownership. Another caller could do it | non-admin on an `adminProcedure`, editing someone else's visible comment, no active organization |
-| `NOT_FOUND` 404 | The target does not exist **or is private to someone else** | another user's collection (filter by owner in the `where`, then `assertFound`) |
-| `CONFLICT` 409 | Valid input, allowed caller, but the target's **state or kind** rules it out for every caller | duplicate slug, role or membership; a code-declared cron job; the built-in favorites collection |
+| `NOT_FOUND` 404 | The target does not exist **or is private to someone else** | another user's private record (filter by owner in the `where`, then `assertFound`) |
+| `CONFLICT` 409 | Valid input, allowed caller, but the target's **state or kind** rules it out for every caller | duplicate slug, role or membership; a code-declared cron job |
 | `INTERNAL_SERVER_ERROR` 500 | An invariant the server broke | an `insert().returning()` with no row |
 | `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | A downstream service failed / is not configured | Loki unreachable or answering an error in `logs.query` (502) |
 
