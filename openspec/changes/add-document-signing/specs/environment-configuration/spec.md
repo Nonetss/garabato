@@ -1,0 +1,83 @@
+## MODIFIED Requirements
+
+### Requirement: Validated server environment
+
+`@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object: `DATABASE_URL` (required), `BETTER_AUTH_SECRET` (required, at least 32 characters), `BETTER_AUTH_URL` (required URL), `CORS_ORIGIN` (required URL), `CERTIFICATE_ENCRYPTION_KEY` (required, the base64 encoding of exactly 32 bytes), `S3_ENDPOINT` (required URL of the S3-compatible object store), `S3_BUCKET` (required), `S3_ACCESS_KEY_ID` (required), `S3_SECRET_ACCESS_KEY` (required, at least 8 characters), `S3_REGION` (default `us-east-1`), `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`), and the optional `LOKI_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL`. Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`.
+
+#### Scenario: Missing required variable
+
+- **WHEN** the backend starts without `BETTER_AUTH_SECRET` and without `SKIP_ENV_VALIDATION`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Malformed certificate encryption key
+
+- **WHEN** the backend starts with a `CERTIFICATE_ENCRYPTION_KEY` that is not valid base64 or does not decode to exactly 32 bytes, and without `SKIP_ENV_VALIDATION`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Missing object storage
+
+- **WHEN** the backend starts without `S3_ENDPOINT` or `S3_BUCKET`, and without `SKIP_ENV_VALIDATION`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Defaults apply
+
+- **WHEN** neither `NODE_ENV`, `LOG_LEVEL` nor `S3_REGION` is set
+- **THEN** `env.NODE_ENV` SHALL be `development`, `env.LOG_LEVEL` SHALL be `info` and `env.S3_REGION` SHALL be `us-east-1`
+
+#### Scenario: Build without secrets
+
+- **WHEN** a production image is built with `SKIP_ENV_VALIDATION=1` and no runtime variables
+- **THEN** the build SHALL NOT fail on environment validation
+
+### Requirement: One example documents every variable
+
+The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern. Each entry SHALL say whether it is required and what it defaults to. Optional variables SHALL be commented out, except `LOKI_URL`, set to the dev stack's Loki (`http://localhost:3100`), and the S3 variables, set to the loopback MinIO of native dev (`S3_ENDPOINT=http://localhost:9000`, a bucket name and placeholder credentials). No `apps/*/.env.example` SHALL exist. The documented variables SHALL be `NODE_ENV`, `LOG_LEVEL`, `SKIP_ENV_VALIDATION`, `DATABASE_URL` (a placeholder for the external dev PostgreSQL, e.g. `postgresql://USER:PASSWORD@dev-db.example.com:5432/stack`), `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `CORS_ORIGIN`, `CERTIFICATE_ENCRYPTION_KEY` (with a placeholder and the command that generates a real one), `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `COMPOSE_PROFILES` (commented out, explaining the `minio` profile of `compose.prod.yml`), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `BACKEND_URL`, `LOKI_URL`, `PUBLIC_SERVER_URL`, `GATEWAY_HTTP_PORT`, `BACKEND_HTTP_UPSTREAM`, `FRONTEND_HTTP_UPSTREAM`, `POSTGRES_PASSWORD` and `FRONTEND_PORT`.
+
+#### Scenario: Example covers the code
+
+- **WHEN** a variable is read by `packages/env/src/server.ts`, `packages/env/src/web.ts`, the `astro:env` schema, the Caddyfile, a compose file or a script
+- **THEN** the root `.env.example` SHALL list it
+
+#### Scenario: Fresh checkout
+
+- **WHEN** a developer copies `.env.example` to `.env` and fills in the required values
+- **THEN** `bun run dev:local` SHALL have every value it needs from that one file
+
+### Requirement: Compose files read the root env file
+
+Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`, and `S3_ENDPOINT` where the compose file always runs its own MinIO), values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`) and `NODE_ENV`, always using the unified names. A bundled MinIO SHALL receive its root credentials from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (as the container variables `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), so the backend and the store share one name per credential.
+
+#### Scenario: Production overrides use unified names
+
+- **WHEN** `compose.prod.yml` starts the stack from a `.env` written by `scripts/bootstrap.sh`
+- **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env`, the same origin as `BETTER_AUTH_URL`, and `NODE_ENV=production`
+- **AND** the frontend SHALL receive its internal backend address as `BACKEND_URL`
+
+#### Scenario: Bundled store credentials
+
+- **WHEN** a compose file starts its MinIO
+- **THEN** MinIO's root user and password SHALL be the `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` the backend uses, and no `MINIO_ROOT_*` variable SHALL be read from `.env`
+
+### Requirement: Scripts generate the unified file
+
+`scripts/setup-dev.sh` SHALL write only the root `.env`, copying `.env.example` and replacing its placeholder secrets with values generated by `openssl` (`BETTER_AUTH_SECRET`, `CERTIFICATE_ENCRYPTION_KEY` as 32 random bytes in base64, and `S3_SECRET_ACCESS_KEY` for the loopback MinIO) and enabling the admin seed (`ADMIN_EMAIL`, `ADMIN_NAME`, a generated `ADMIN_PASSWORD`). It SHALL preserve an existing `.env` unless run with `--force`, SHALL create the file with mode `600`, and SHALL warn (never delete) about leftover `apps/*/.env` files that are no longer read. `scripts/bootstrap.sh` SHALL write a root `.env` using only the unified names, including a generated `CERTIFICATE_ENCRYPTION_KEY` and the object storage settings.
+
+#### Scenario: Dev setup
+
+- **WHEN** `scripts/setup-dev.sh` runs on a fresh checkout
+- **THEN** it SHALL create the root `.env` with generated secrets, including a `CERTIFICATE_ENCRYPTION_KEY` that decodes to 32 bytes and an `S3_SECRET_ACCESS_KEY`, and SHALL NOT create any `apps/*/.env`
+
+#### Scenario: Existing file preserved
+
+- **WHEN** `scripts/setup-dev.sh` runs and a root `.env` already exists, without `--force`
+- **THEN** the existing file SHALL be left unchanged
+
+#### Scenario: Stale per-app files
+
+- **WHEN** `scripts/setup-dev.sh` runs and `apps/web/.env` exists
+- **THEN** it SHALL print a warning naming that file and SHALL NOT delete it
+
+#### Scenario: Production bootstrap
+
+- **WHEN** `scripts/bootstrap.sh` generates a deployment `.env`
+- **THEN** the public URL SHALL be written as `CORS_ORIGIN`, a generated `CERTIFICATE_ENCRYPTION_KEY` and the S3 settings SHALL be included, and no retired name SHALL appear in it
