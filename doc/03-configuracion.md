@@ -36,7 +36,7 @@ algo que ya existe.
 | --- | --- |
 | `NODE_ENV` | Entorno de ejecución. En `production`, los logs salen como JSON. |
 | `DATABASE_URL` | La única configuración de base de datos que leen las apps. En desarrollo apunta a una base de datos fuera del proyecto, en otro servidor. |
-| `BETTER_AUTH_URL` | La URL base de Better Auth (el backend). Solo la lee el backend. |
+| `BETTER_AUTH_URL` | La URL base de Better Auth. Solo la lee el backend, pero tiene que ser el origen público que usa el navegador (el mismo valor que `CORS_ORIGIN`), no la dirección del backend: con ella se construyen las URL de retorno de OAuth/OIDC (`<BETTER_AUTH_URL>/api/auth/callback/oidc`). En desarrollo, `http://localhost:4321`. |
 | `BETTER_AUTH_SECRET` | Firma sesiones y cookies. Al menos 32 caracteres (`openssl rand -base64 48`). |
 | `CORS_ORIGIN` | El origen público que usa el navegador. Se usa para CORS y como origen de confianza de Better Auth. |
 | `BACKEND_URL` | Cómo llega el frontend al backend: consultas de sesión en SSR y el proxy de `astro dev`. |

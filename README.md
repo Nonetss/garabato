@@ -192,7 +192,7 @@ that matter most:
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | PostgreSQL connection |
-| `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` | Better Auth base URL and signing secret |
+| `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` | Better Auth base URL (the public origin, like `CORS_ORIGIN`) and signing secret |
 | `CORS_ORIGIN` | The public origin the browser uses |
 | `BACKEND_URL` | Where the frontend reaches the backend |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The admin seeded on startup |

@@ -45,7 +45,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack
-      BETTER_AUTH_URL: http://backend:3000
+      # Better Auth's base URL is the public origin: OAuth callbacks are built
+      # from it, so it must be what the browser reaches through the gateway.
+      BETTER_AUTH_URL: http://localhost:${FRONTEND_PORT:-4444}
       CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-4444}
       LOKI_URL: http://loki:3100
     depends_on:

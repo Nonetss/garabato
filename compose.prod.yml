@@ -34,7 +34,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL}
-      BETTER_AUTH_URL: http://backend:3000
+      # Better Auth's base URL is the public URL: OAuth callbacks are built
+      # from it. It reuses CORS_ORIGIN from .env so both always match.
+      BETTER_AUTH_URL: ${CORS_ORIGIN}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       # CORS_ORIGIN (the public URL) comes from .env. `environment`
       # overrides `env_file`.

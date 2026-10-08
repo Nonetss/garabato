@@ -67,7 +67,7 @@ The repo SHALL ship a single `.env.example` at the root that lists every variabl
 
 Each configuration concept SHALL have exactly one variable name, used by every reader, compose file, script and document:
 
-- `BACKEND_URL` — where a service reaches the backend over HTTP (frontend SSR session lookups and the frontend dev proxy). The backend's `BETTER_AUTH_URL` remains Better Auth's own base URL and SHALL NOT be used by other services to locate the backend.
+- `BACKEND_URL` — where a service reaches the backend over HTTP (frontend SSR session lookups and the frontend dev proxy). The backend's `BETTER_AUTH_URL` is Better Auth's base URL, SHALL be the public origin the browser uses (the same value as `CORS_ORIGIN`, so OAuth/OIDC redirect URIs reach the browser through the gateway) and SHALL NOT be used by other services to locate the backend.
 - `CORS_ORIGIN` — the public origin the browser uses, including in the production `.env`.
 - `NODE_ENV` — the runtime environment (`development`, `production`, `test`).
 
@@ -85,12 +85,12 @@ The names `SERVER_URL`, `ENVIRONMENT` and `BACKEND_PROXY_TARGET` SHALL NOT be re
 
 ### Requirement: Compose files read the root env file
 
-Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `BETTER_AUTH_URL`, `LOKI_URL`), values fixed by the compose file itself (such as the `CORS_ORIGIN` of the port it publishes) and `NODE_ENV`, always using the unified names.
+Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`), values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`) and `NODE_ENV`, always using the unified names.
 
 #### Scenario: Production overrides use unified names
 
 - **WHEN** `compose.prod.yml` starts the stack from a `.env` written by `scripts/bootstrap.sh`
-- **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env` and `NODE_ENV=production`
+- **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env`, the same origin as `BETTER_AUTH_URL`, and `NODE_ENV=production`
 - **AND** the frontend SHALL receive its internal backend address as `BACKEND_URL`
 
 ### Requirement: Scripts generate the unified file

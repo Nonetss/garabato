@@ -15,13 +15,13 @@
 
 - **One name per meaning.** Never introduce a second name for an existing concept:
   - `BACKEND_URL`: how the frontend reaches the backend (SSR session lookups and the dev server's proxy).
-  - `BETTER_AUTH_URL`: only Better Auth's own base URL, read by the backend.
+  - `BETTER_AUTH_URL`: Better Auth's base URL, read only by the backend. It is the public origin the browser uses (the same value as `CORS_ORIGIN`), never the backend's own address: OAuth/OIDC redirect URIs are built from it (`<BETTER_AUTH_URL>/api/auth/callback/<provider>`). Native dev: `http://localhost:4321`.
   - `CORS_ORIGIN`: the public origin the browser uses (CORS and Better Auth's trusted origin), also in a production `.env`.
   - `DATABASE_URL`: the only database setting the apps read.
   - `NODE_ENV`: the runtime environment.
 - **Container addresses** are overridden in the compose files' `environment`, never in `.env`:
-  - `compose.yml`: frontend `BACKEND_URL=http://backend:3000`, `LOKI_URL=http://loki:3100`, `NODE_ENV=production`; backend `DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack`, `BETTER_AUTH_URL=http://backend:3000`, `CORS_ORIGIN=http://localhost:${FRONTEND_PORT:-4444}`, `LOKI_URL`, `NODE_ENV`.
-  - `compose.prod.yml`: the same service addresses; `DATABASE_URL`, `BETTER_AUTH_SECRET` and `CORS_ORIGIN` come from the deployment's `.env`.
+  - `compose.yml`: frontend `BACKEND_URL=http://backend:3000`, `LOKI_URL=http://loki:3100`, `NODE_ENV=production`; backend `DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/stack`, `BETTER_AUTH_URL` and `CORS_ORIGIN` both `http://localhost:${FRONTEND_PORT:-4444}`, `LOKI_URL`, `NODE_ENV`.
+  - `compose.prod.yml`: the same service addresses; `DATABASE_URL`, `BETTER_AUTH_SECRET` and `CORS_ORIGIN` come from the deployment's `.env`, and `BETTER_AUTH_URL` is set to `${CORS_ORIGIN}`.
   - `compose.dev.yml` runs the apps on the host network and overrides nothing for them, so the root `.env` works unchanged in native dev and in the Docker dev stack. It runs no database: `DATABASE_URL` points at the dev PostgreSQL outside the project, on another server (`.env.example` holds a placeholder host). Its `loki` service publishes `3100`, the default `LOKI_URL` (`http://localhost:3100`).
 - **A production `.env` is a different file.** `scripts/bootstrap.sh` writes it in the deployment directory, next to `compose.prod.yml` (which it downloads if missing), with single-quoted values: `FRONTEND_PORT`, `CORS_ORIGIN` (the public URL), `POSTGRES_PASSWORD`, `DATABASE_URL` (pointing at the compose `db` service), `BETTER_AUTH_SECRET` and the `ADMIN_*` seed. It refuses to run when a `.env` already exists, so never run it in this checkout; to try production locally use a separate directory, or `bun run docker:up` (`compose.yml`) here.
 - **`BETTER_AUTH_SECRET`** must be ≥ 32 chars (`openssl rand -base64 48`).
