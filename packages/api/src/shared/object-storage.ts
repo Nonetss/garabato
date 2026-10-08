@@ -35,12 +35,17 @@ function codeOf(error: unknown) {
 }
 
 /** Maps a client failure to the API error the caller should see. */
+// The store's own error stays as `cause`: the request log then shows why
+// (InvalidAccessKeyId, NoSuchBucket...) while the user sees a plain message.
 export function storageError(error: unknown) {
   const code = codeOf(error)
   if (code === undefined || UNREACHABLE_CODE.test(code)) {
-    return errors.SERVICE_UNAVAILABLE({ message: UNAVAILABLE_MESSAGE })
+    return errors.SERVICE_UNAVAILABLE({
+      message: UNAVAILABLE_MESSAGE,
+      cause: error,
+    })
   }
-  return errors.BAD_GATEWAY({ message: STORE_ERROR_MESSAGE })
+  return errors.BAD_GATEWAY({ message: STORE_ERROR_MESSAGE, cause: error })
 }
 
 async function guarded<T>(operation: () => Promise<T>): Promise<T> {

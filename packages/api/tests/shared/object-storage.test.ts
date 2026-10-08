@@ -65,6 +65,19 @@ describe("createObjectStorage", () => {
     }
   )
 
+  test("keeps the store's error as the cause for the logs", async () => {
+    const original = s3Error("InvalidAccessKeyId")
+    const storage = createObjectStorage(failingClient(original))
+
+    const error = await storage.putObject("a", Uint8Array.of(1)).then(
+      () => undefined,
+      (thrown: unknown) => thrown
+    )
+
+    expect(error).toBeInstanceOf(Error)
+    if (error instanceof Error) expect(error.cause).toBe(original)
+  })
+
   test("treats an error without a code as unreachable", async () => {
     const storage = createObjectStorage(failingClient(new Error("boom")))
 
