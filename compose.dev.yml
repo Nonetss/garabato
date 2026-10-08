@@ -7,6 +7,10 @@
 #   bun run loki:start # only Loki on 127.0.0.1:3100, for native dev
 #   bun run minio:start # only MinIO on 127.0.0.1:9000 (console :9001), for native dev
 #
+# Documents go to the S3_ENDPOINT in .env (your own MinIO or any S3 store).
+# To use the bundled MinIO in this stack instead, set COMPOSE_PROFILES=minio
+# and S3_ENDPOINT=http://minio:9000 in .env.
+#
 # Like production, the gateway is the only service that publishes a port:
 # https://localhost:4321 (local CA, HTTP/2). The apps, Loki and MinIO stay on the
 # stack's private network and reach each other by service name; the
@@ -140,13 +144,14 @@ services:
         required: false
     environment:
       LOKI_URL: http://loki:3100
-      S3_ENDPOINT: http://minio:9000
     expose:
       - "3000"
-    # Uploads need the bucket, which minio-init creates.
+    # With the `minio` profile, uploads need the bucket minio-init creates;
+    # without it there is nothing to wait for (external store).
     depends_on:
       minio-init:
         condition: service_completed_successfully
+        required: false
     develop:
       watch:
         - action: sync
@@ -230,17 +235,21 @@ services:
     ports:
       - "127.0.0.1:3100:3100"
 
-  # Document store for the dev stack, on the private network only (the
-  # backend's S3_ENDPOINT override).
+  # Optional document store for the dev stack (profile `minio`), on the
+  # private network only: with it, .env sets S3_ENDPOINT=http://minio:9000.
   minio:
     <<: *minio
     container_name: stack-dev-minio
+    profiles:
+      - minio
     expose:
       - "9000"
       - "9001"
 
   minio-init:
     <<: *minio-init
+    profiles:
+      - minio
     environment:
       <<: *minio-init-env
       MINIO_HOST: minio

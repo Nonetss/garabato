@@ -45,7 +45,7 @@ The repo SHALL ship a single `.env.example` at the root that lists every variabl
 
 ### Requirement: Compose files read the root env file
 
-Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`, and `S3_ENDPOINT` where the compose file always runs its own MinIO), values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`) and `NODE_ENV`, always using the unified names. A bundled MinIO SHALL receive its root credentials from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (as the container variables `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), so the backend and the store share one name per credential.
+Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `LOKI_URL`, and `S3_ENDPOINT` in `compose.yml`, the only file that always runs its own MinIO), values fixed by the compose file itself (such as the `CORS_ORIGIN` and `BETTER_AUTH_URL` of the port it publishes, or `BETTER_AUTH_URL` taken from `CORS_ORIGIN`) and `NODE_ENV`, always using the unified names. A bundled MinIO SHALL receive its root credentials from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (as the container variables `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD`), so the backend and the store share one name per credential.
 
 #### Scenario: Production overrides use unified names
 

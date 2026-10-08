@@ -2,7 +2,7 @@
 
 ### Requirement: Hot-reloading Docker dev stack
 
-The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway`, `loki` and `minio` (plus the one-shot `minio-init`) on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend`, `loki` and `minio` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`, the apps SHALL reach Loki as `loki:3100`, the backend SHALL reach the object store as `minio:9000`, and the backend SHALL reach the database through `DATABASE_URL`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
+The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `loki`, plus `minio` and the one-shot `minio-init` under the `minio` profile, on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend`, `loki` and `minio` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`, the apps SHALL reach Loki as `loki:3100`, the backend SHALL reach the object store at the `S3_ENDPOINT` of `.env` (`http://minio:9000` for the bundled one), and the backend SHALL reach the database through `DATABASE_URL`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
 
 #### Scenario: Starting the dev stack
 
@@ -21,7 +21,7 @@ The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`,
 
 ### Requirement: Dev stack uses the native dev configuration
 
-Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend, `LOKI_URL=http://loki:3100` for both apps and `S3_ENDPOINT=http://minio:9000` for the backend. Every other value, including `DATABASE_URL`, `BETTER_AUTH_URL`, `CORS_ORIGIN`, `S3_BUCKET` and the S3 credentials, SHALL come from `.env` unchanged.
+Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `LOKI_URL=http://loki:3100` for both apps. Every other value, including `DATABASE_URL`, `BETTER_AUTH_URL`, `CORS_ORIGIN` and every `S3_*` setting, SHALL come from `.env` unchanged, so the dev stack stores documents wherever `.env` points.
 
 #### Scenario: Shared data with native dev
 
@@ -41,11 +41,16 @@ Native dev (`bun run dev:local` plus `bun run gateway`, optionally `bun run loki
 
 ### Requirement: Local object storage
 
-`compose.dev.yml` SHALL define a `minio` service running the `pgsty/silo` image (`server /data --console-address ":9001"`), with its root credentials taken from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` and its data in a named volume, reachable only on the stack's private network, plus a one-shot `minio-init` service that creates the `S3_BUCKET` bucket when it does not exist and then exits. The backend SHALL wait for `minio-init` to complete. For native dev, `compose.dev.yml` SHALL define `minio-native` and `minio-native-init` with the same definitions under the `native` profile, `minio-native` published only on `127.0.0.1:9000` (the `S3_ENDPOINT` of `.env.example`) and `127.0.0.1:9001` (its console). `bun run dev` SHALL NOT start them. The root scripts `minio:start` and `minio:stop` SHALL start (detached) and stop only `minio-native` and its init service.
+`compose.dev.yml` SHALL define, under the `minio` profile, a `minio` service running the `pgsty/silo` image (`server /data --console-address ":9001"`), with its root credentials taken from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` and its data in a named volume, reachable only on the stack's private network, plus a one-shot `minio-init` service that creates the `S3_BUCKET` bucket when it does not exist and then exits. With that profile active (`COMPOSE_PROFILES=minio` and `S3_ENDPOINT=http://minio:9000` in `.env`) the backend SHALL wait for `minio-init` to complete; without it the backend SHALL use the store set in `.env` and wait for nothing. For native dev, `compose.dev.yml` SHALL define `minio-native` and `minio-native-init` with the same definitions under the `native` profile, `minio-native` published only on `127.0.0.1:9000` (the `S3_ENDPOINT` of `.env.example`) and `127.0.0.1:9001` (its console). `bun run dev` SHALL NOT start them. The root scripts `minio:start` and `minio:stop` SHALL start (detached) and stop only `minio-native` and its init service.
 
-#### Scenario: Uploads in the dev stack
+#### Scenario: Uploads to an external store in the dev stack
 
-- **WHEN** a developer runs `bun run dev` and uploads a PDF
+- **WHEN** `.env` sets `S3_ENDPOINT` to the developer's own S3-compatible store, without the `minio` profile, and the developer runs `bun run dev` and uploads a PDF
+- **THEN** no MinIO container SHALL start and the backend SHALL store the document in that store
+
+#### Scenario: Uploads to the bundled store in the dev stack
+
+- **WHEN** `.env` sets `COMPOSE_PROFILES=minio` and `S3_ENDPOINT=http://minio:9000` and the developer runs `bun run dev` and uploads a PDF
 - **THEN** the backend SHALL store it in the dev MinIO's bucket, created at startup, over the private network
 
 #### Scenario: Standalone MinIO for native dev

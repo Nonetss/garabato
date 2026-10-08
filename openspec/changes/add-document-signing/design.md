@@ -80,11 +80,11 @@ It uses the same image when it ships `mc`, otherwise the matching `mc` client im
 |---|---|---|---|
 | `compose.prod.yml` | `minio` and `minio-init` under `profiles: ["minio"]`. `bootstrap.sh` writes `COMPOSE_PROFILES=minio` for the bundled option, which compose reads from `.env` | From `.env` (`http://minio:9000` when bundled), not overridden, since it may be external | Console on `127.0.0.1:9001`, API unpublished |
 | `compose.yml` | Always runs `minio` and `minio-init` | Overridden to `http://minio:9000` | Same as `compose.prod.yml` |
-| `compose.dev.yml` | `minio` and `minio-init` always. `minio-native` and `minio-native-init` under the existing `native` profile, as `loki-native` does | Overridden to `http://minio:9000` for the dev backend | Dev stack MinIO private. `minio-native` on `127.0.0.1:9000/9001`, for `bun run dev:local` with `S3_ENDPOINT=http://localhost:9000` |
+| `compose.dev.yml` | `minio` and `minio-init` under the `minio` profile. `minio-native` and `minio-native-init` under the existing `native` profile, as `loki-native` does | From `.env`, not overridden, so the dev stack honours an external store; `http://minio:9000` when the profile is on | Dev stack MinIO private. `minio-native` on `127.0.0.1:9000/9001`, for `bun run dev:local` with `S3_ENDPOINT=http://localhost:9000` |
 
 **Startup:**
 - The backend does not `depends_on` MinIO in production files, so an external store works without the profile.
-- In `compose.dev.yml` the backend waits for `minio-init` to complete, to avoid first-upload races in dev.
+- In `compose.dev.yml` the backend waits for `minio-init` (`required: false`), so with the `minio` profile there is no first-upload race and without it nothing blocks. Revised after the user pointed the dev stack at their own MinIO: always overriding `S3_ENDPOINT` there silently sent documents to the bundled one.
 - MinIO's healthcheck uses its liveness endpoint, through whatever client the image ships (checked during implementation).
 
 **Root scripts:** `minio:start` and `minio:stop` mirror `loki:start` and `loki:stop`.

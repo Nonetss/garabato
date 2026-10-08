@@ -257,13 +257,15 @@ bun run dev:down   # remove the dev containers
 
 `compose.dev.yml` runs the frontend (`astro dev` on `:4320`) and the backend
 (`bun --hot`) from `apps/*/Dockerfile.dev`, the gateway with
-`apps/gateway/Caddyfile.dev`, `loki` (so `/admin/logs` works in development)
-and `minio` (the document store, with a one-shot `minio-init` that creates the
-bucket). As in production, **only the gateway publishes a port**
+`apps/gateway/Caddyfile.dev` and `loki` (so `/admin/logs` works in
+development). Documents go to the `S3_ENDPOINT` of `.env`; with
+`COMPOSE_PROFILES=minio` (and `S3_ENDPOINT=http://minio:9000`) the stack also
+runs its own `minio`, with a one-shot `minio-init` that creates the bucket. As
+in production, **only the gateway publishes a port**
 (`https://localhost:4321`). The apps, Loki and MinIO stay on the stack's
 private network and reach each other by service name: compose overrides
-`BACKEND_URL`, `LOKI_URL` and `S3_ENDPOINT`, and everything else comes from the
-root `.env` unchanged.
+`BACKEND_URL` and `LOKI_URL`, and everything else comes from the root `.env`
+unchanged.
 There is no database service: the backend uses the external dev PostgreSQL in
 `DATABASE_URL`. `docker compose watch` copies your edits into the containers:
 
