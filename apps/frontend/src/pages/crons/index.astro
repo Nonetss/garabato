@@ -1,0 +1,9 @@
+---
+import { CronsPage } from "@/features/crons"
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.crons.title} scrollToTop>
+  <CronsPage client:only="react" />
+</Layout>

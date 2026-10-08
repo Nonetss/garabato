@@ -1,0 +1,9 @@
+---
+import { ConfigAppearancePage } from "@/features/config/appearance"
+import Layout from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces["config-appearance"].title} section="/config">
+  <ConfigAppearancePage client:only="react" />
+</Layout>

@@ -1,0 +1,13 @@
+---
+import { CollectionsPage } from "@/features/collections/overview"
+import Layout from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout
+  title={appSurfaces["collection-detail"].title}
+  section="/collections"
+  scrollToTop
+>
+  <CollectionsPage client:only="react" />
+</Layout>

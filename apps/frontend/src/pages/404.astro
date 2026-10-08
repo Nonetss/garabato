@@ -1,0 +1,29 @@
+---
+import { getIcon } from "@/lib/icon-registry"
+
+const ArrowLeft = getIcon("navigation", "back")
+
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces["not-found"].title}>
+  <main
+    class="mx-auto flex min-h-main w-full max-w-3xl flex-col justify-center px-4 py-24 sm:px-6"
+  >
+    <p class="font-mono text-xs tracking-wider text-primary uppercase">
+      Error 404
+    </p>
+    <h1 class="mt-3">Esta página no existe</h1>
+    <p class="mt-4 max-w-xl text-lg text-muted-foreground">
+      El enlace que has seguido está roto o el contenido se ha movido.
+    </p>
+    <a
+      href="/"
+      class="mt-8 inline-flex items-center gap-1.5 font-mono text-xs tracking-wide text-muted-foreground uppercase transition-colors hover:text-primary"
+    >
+      <ArrowLeft className="size-4" aria-hidden="true" />
+      Volver al inicio
+    </a>
+  </main>
+</Layout>

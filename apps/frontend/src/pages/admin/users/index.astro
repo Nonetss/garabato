@@ -1,0 +1,9 @@
+---
+import { UsersPage } from "@/features/admin/users"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-users"].title} scrollToTop>
+  <UsersPage client:only="react" />
+</Admin>

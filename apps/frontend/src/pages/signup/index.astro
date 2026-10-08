@@ -1,0 +1,13 @@
+---
+import { SignUpPage } from "@/features/auth"
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.signup.title} hideFooter>
+  <main
+    class="bg-dot-grid flex flex-1 items-center justify-center overflow-hidden px-4 py-10"
+  >
+    <SignUpPage client:only="react" />
+  </main>
+</Layout>

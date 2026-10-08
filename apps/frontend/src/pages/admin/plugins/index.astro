@@ -1,0 +1,9 @@
+---
+import { PluginsPage } from "@/features/admin/plugins"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-plugins"].title}>
+  <PluginsPage client:only="react" />
+</Admin>

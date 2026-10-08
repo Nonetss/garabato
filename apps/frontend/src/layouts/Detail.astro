@@ -1,0 +1,52 @@
+---
+import Layout from "@/layouts/Layout.astro"
+import { getIcon } from "@/lib/icon-registry"
+
+const ArrowLeft = getIcon("navigation", "back")
+
+interface Props {
+  /** Browser tab title. */
+  title: string
+  /** Route to return to, e.g. `/crons`. */
+  backHref: string
+  /** Label next to the back arrow, e.g. `Crons`. */
+  backLabel: string
+  /**
+   * Same options as `PageShell`'s: `80%` matches an overview that uses
+   * `PageShell maxWidth="80%"` (full width below `lg`, capped at 80% from it).
+   */
+  maxWidth?: "6xl" | "80%"
+  /** Shows the floating "back to top" button; see `Layout.astro`. */
+  scrollToTop?: boolean
+}
+
+const MAX_WIDTH = {
+  "6xl": "max-w-6xl",
+  "80%": "lg:max-w-[80%]",
+} as const
+
+const {
+  title,
+  backHref,
+  backLabel,
+  maxWidth = "80%",
+  scrollToTop = false,
+} = Astro.props
+---
+
+<Layout title={title} scrollToTop={scrollToTop}>
+  <main class="px-4 py-6 sm:px-6">
+    <div class:list={["mx-auto w-full", MAX_WIDTH[maxWidth]]}>
+      <a
+        href={backHref}
+        class="-ml-1 flex w-fit items-center gap-1 text-muted-foreground text-xs uppercase tracking-[0.08em] transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        {backLabel}
+      </a>
+      <div class="mt-3">
+        <slot />
+      </div>
+    </div>
+  </main>
+</Layout>

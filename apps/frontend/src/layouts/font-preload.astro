@@ -1,0 +1,29 @@
+---
+// Both faces are declared in `global.css` via `@fontsource*`, so the browser
+// can only discover them after the ~160 KB stylesheet has downloaded and
+// parsed — two serialised round-trips before the first glyph. Preloading the
+// latin subsets (the only ones a Spanish UI renders) starts them in parallel
+// with the CSS and cuts the `font-display: swap` flash. Space Mono ships as
+// static weights (no variable axis), so only the 400 face — the one actually
+// used above the fold — is worth the preload; 700 loads on demand.
+//
+// `?url` resolves to the hashed build asset, so these stay in sync with
+// whatever Vite emits.
+import spaceMonoLatin from "@fontsource/space-mono/files/space-mono-latin-400-normal.woff2?url"
+import spaceGroteskLatin from "@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2?url"
+---
+
+<link
+  rel="preload"
+  href={spaceGroteskLatin}
+  as="font"
+  type="font/woff2"
+  crossorigin
+>
+<link
+  rel="preload"
+  href={spaceMonoLatin}
+  as="font"
+  type="font/woff2"
+  crossorigin
+>

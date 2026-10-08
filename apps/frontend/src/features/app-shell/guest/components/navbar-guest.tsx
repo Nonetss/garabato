@@ -1,0 +1,39 @@
+import { AppLogo } from "@/components/shared/brand/app-logo"
+import { ThemeToggle } from "@/components/shared/navigation/theme-toggle"
+import { AppLink } from "@/components/ui/app-link"
+import { useScrolled } from "@/hooks/use-scrolled"
+import { cn } from "@/lib/utils"
+
+interface NavbarGuestProps {
+  nameApp: string
+}
+
+export function NavbarGuest({ nameApp }: NavbarGuestProps) {
+  const scrolled = useScrolled()
+
+  return (
+    <header
+      className={cn(
+        "fixed top-0 z-40 w-full border-b bg-background/80 backdrop-blur transition-shadow duration-300 supports-backdrop-filter:bg-background/60",
+        scrolled ? "border-border shadow-sm" : "border-border/40"
+      )}
+    >
+      <nav className="flex h-navbar w-full items-center justify-between gap-3 px-4 md:gap-4 md:px-6">
+        <AppLink
+          href="/"
+          className="group flex shrink-0 items-center gap-2 font-semibold text-foreground text-sm tracking-tight"
+        >
+          <AppLogo
+            alt={nameApp}
+            className="transition-transform duration-300 group-hover:scale-110"
+          />
+          {nameApp}
+        </AppLink>
+
+        <div className="flex shrink-0 items-center">
+          <ThemeToggle />
+        </div>
+      </nav>
+    </header>
+  )
+}

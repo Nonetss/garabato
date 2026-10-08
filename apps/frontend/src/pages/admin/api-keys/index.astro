@@ -1,0 +1,9 @@
+---
+import { ApiKeysPage } from "@/features/admin/api-keys"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-api-keys"].title}>
+  <ApiKeysPage client:only="react" />
+</Admin>

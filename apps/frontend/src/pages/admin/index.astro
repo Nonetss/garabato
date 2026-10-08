@@ -1,0 +1,9 @@
+---
+import { AdminOverviewPage } from "@/features/admin/overview"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces.admin.title}>
+  <AdminOverviewPage client:only="react" />
+</Admin>

@@ -1,0 +1,135 @@
+---
+import "@/styles/global.css"
+import { ClientRouter, fade } from "astro:transitions"
+import { ScrollToTopButton } from "@/components/shared/layout/scroll-to-top-button"
+import { Toaster } from "@/components/ui/sonner"
+import { NavbarAuthenticated } from "@/features/app-shell/authenticated"
+import { NavbarGuest, SiteFooter } from "@/features/app-shell/guest"
+import FontPreload from "@/layouts/font-preload.astro"
+import { isAdminUser } from "@/lib/auth"
+
+interface Props {
+  title: string
+  guestNavbar?: boolean
+  hideFooter?: boolean
+  /**
+   * Let the slot fill the viewport (including under the fixed navbar)
+   * so an inner scroller can paint through `backdrop-blur`. Pair with
+   * `hideFooter`. Without this, the slot is padded below the navbar.
+   */
+  overlayNavbar?: boolean
+  /** Fade the layout slot. `WithSidebar` opts out and fades only the page. */
+  animateContent?: boolean
+  /**
+   * Shows the floating "back to top" button (mounted once below) once the
+   * page scrolls past its threshold, by stamping `data-scroll-to-top` on the
+   * swapped content so the marker follows client-side navigation.
+   */
+  scrollToTop?: boolean
+}
+
+const {
+  title,
+  guestNavbar = false,
+  hideFooter = false,
+  overlayNavbar = false,
+  animateContent = true,
+  scrollToTop = false,
+} = Astro.props
+const scrollUnderNavbar = hideFooter && overlayNavbar
+
+const { user, session } = Astro.locals
+const hasSession = !!user && !!session
+
+const isAdmin = isAdminUser(user)
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    >
+    <title>{title}</title>
+    <FontPreload />
+    <ClientRouter />
+    <script is:inline>
+    function applyTheme(doc) {
+      const stored = localStorage.getItem("theme")
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches
+      const theme =
+        stored === "light" || stored === "dark"
+          ? stored
+          : prefersDark
+            ? "dark"
+            : "light"
+      doc.documentElement.classList.toggle("dark", theme === "dark")
+    }
+    applyTheme(document)
+    document.addEventListener("astro:before-swap", (event) =>
+      applyTheme(event.newDocument)
+    )
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", () => applyTheme(document))
+    </script>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#262624">
+    <script is:inline>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js")
+      })
+    }
+    </script>
+  </head>
+  <body
+    class:list={[
+      "flex flex-col",
+      hideFooter ? "h-dvh overflow-hidden" : "min-h-screen",
+    ]}
+  >
+    {guestNavbar || !hasSession ? (
+        <NavbarGuest
+          client:only="react"
+          transition:persist="navbar-guest"
+          nameApp="BETTER"
+        />
+      ) : (
+        <NavbarAuthenticated
+          client:only="react"
+          transition:persist="navbar-auth"
+          user={user}
+          nameApp="BETTER"
+          isAdmin={isAdmin}
+        />
+      )}
+    <div
+      class:list={[
+        "flex flex-1 flex-col",
+        // Fill the viewport (the navbar padding included) so the footer
+        // always sits below the fold, even on short pages.
+        hideFooter ? "min-h-0 overflow-hidden" : "min-h-svh",
+        scrollUnderNavbar
+          ? "*:flex *:h-full *:min-h-0 *:flex-col"
+          : "pt-(--navbar-height)",
+      ]}
+      transition:animate={animateContent
+        ? fade({ duration: "0.2s" })
+        : "none"}
+      data-scroll-to-top={scrollToTop ? "" : undefined}
+    >
+      <slot />
+    </div>
+    {!hideFooter ? <SiteFooter /> : null}
+    <Toaster client:only="react" />
+    <div class="scroll-to-top-root" transition:persist="scroll-to-top">
+      <ScrollToTopButton client:only="react" />
+    </div>
+  </body>
+</html>

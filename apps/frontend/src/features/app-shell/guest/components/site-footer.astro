@@ -1,0 +1,72 @@
+---
+/**
+ * Footer shared by the whole app. Small, no gradients, with a subtle brand
+ * reminder and the author credit.
+ * Rendered on the server (no hydration).
+ */
+import Logo from "@/assets/logo.svg"
+
+const year = new Date().getFullYear()
+const githubUrl = "https://github.com/Nonetss"
+---
+
+<footer class="mt-auto min-h-footer border-t bg-card/40">
+  <div
+    class="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-4 px-4 py-6 text-center text-sm text-muted-foreground sm:grid-cols-3 sm:items-center sm:px-6 sm:text-left"
+  >
+    <div
+      class="flex items-center justify-center gap-3 justify-self-center sm:justify-self-start sm:justify-start"
+    >
+      <Logo
+        aria-label="BETTER"
+        role="img"
+        class="size-[22px] shrink-0 dark:brightness-0 dark:invert"
+      />
+      <div class="leading-tight">
+        <p class="font-medium text-foreground">BETTER</p>
+        <a
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-xs transition-colors hover:text-primary hover:underline"
+          >github.com/Nonetss</a
+        >
+      </div>
+    </div>
+
+    <p
+      class="text-muted-foreground/80 flex flex-wrap items-center justify-center gap-1 text-center text-xs sm:justify-self-center"
+    >
+      <a
+        href={githubUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="font-normal text-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
+        >BETTER</a
+      >
+      <span class="text-muted-foreground/60"> © </span>
+      <span aria-hidden="true" class="text-muted-foreground/60">
+        {year}
+        <span aria-hidden="true" class="text-border"> · </span>
+        BETTER</span
+      >
+    </p>
+
+    <div>
+      <p
+        class="text-label text-muted-foreground/70 justify-self-center sm:justify-self-end sm:text-right"
+      >
+        Desarrollado por
+      </p>
+      <p
+        class="text-label text-muted-foreground/70 justify-self-center sm:justify-self-end sm:text-right"
+      >
+        <a
+          href="mailto:amorenolopezbarajas@pm.me"
+          class="transition-colors hover:text-foreground"
+          >Antonio Moreno López Barajas</a
+        >
+      </p>
+    </div>
+  </div>
+</footer>

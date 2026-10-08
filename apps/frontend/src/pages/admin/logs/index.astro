@@ -1,0 +1,9 @@
+---
+import { LogsPage } from "@/features/admin/logs"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-logs"].title} scrollToTop>
+  <LogsPage client:only="react" />
+</Admin>

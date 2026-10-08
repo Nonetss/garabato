@@ -1,0 +1,9 @@
+---
+import { SectionNavOverview } from "@/components/shared/layout/section-nav-overview"
+import Layout from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.config.title} section="/config">
+  <SectionNavOverview section="/config" client:only="react" />
+</Layout>

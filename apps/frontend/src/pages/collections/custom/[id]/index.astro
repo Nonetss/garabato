@@ -1,0 +1,16 @@
+---
+import { CollectionDetailPage } from "@/features/collections/detail"
+import Layout from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+
+const { id } = Astro.params as { id: string }
+---
+
+<Layout
+  title={appSurfaces["collection-detail-info"].title}
+  section="/collections"
+  persistScroll={false}
+  scrollToTop
+>
+  <CollectionDetailPage collectionId={id} client:only="react" />
+</Layout>

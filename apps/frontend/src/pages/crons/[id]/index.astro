@@ -1,0 +1,17 @@
+---
+import { CronDetailPage } from "@/features/crons"
+import Detail from "@/layouts/Detail.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+
+const { id } = Astro.params as { id: string }
+---
+
+<Detail
+  title={appSurfaces["cron-detail"].title}
+  backHref={appSurfaces.crons.path}
+  backLabel={appSurfaces.crons.label}
+  maxWidth="80%"
+  scrollToTop
+>
+  <CronDetailPage jobId={id} client:only="react" />
+</Detail>

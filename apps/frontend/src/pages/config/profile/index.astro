@@ -1,0 +1,9 @@
+---
+import { ConfigProfilePage } from "@/features/config/profile"
+import Layout from "@/layouts/WithSidebar.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces["config-profile"].title} section="/config">
+  <ConfigProfilePage client:only="react" />
+</Layout>

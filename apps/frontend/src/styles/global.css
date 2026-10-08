@@ -1,0 +1,809 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+/* Sonner ships its structural CSS (toaster positioning, stacking, sizing) and
+   injects it into <head> at runtime. Astro's <ClientRouter /> swaps the <head>
+   on every navigation, wiping that injected tag and leaving toasts unstyled.
+   Importing it here bakes it into the bundled stylesheet so it always persists. */
+@import "sonner/dist/styles.css";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource/space-mono/latin-400.css";
+@import "@fontsource/space-mono/latin-700.css";
+@import "./typeset.css";
+
+/* Explicit source: Tailwind's automatic content detection anchors to the
+   monorepo git root and can miss `src/**` depending on which tool spawns
+   Vite (confirmed missing under Ladle's own dev/build process, which
+   produced zero component utility classes without this). Purely additive
+   — doesn't disable automatic detection, just guarantees this tree is
+   scanned regardless of caller. */
+@source "..";
+
+/* Patches for the vendored engine above — kept separate so re-downloading
+   typeset.css can't silently drop them. */
+@layer components {
+  /* Display math: KaTeX's mathml output is
+     `<span class="katex"><math display="block">`, and rehype-katex
+     splices that in place of remark-math's `.math-display` wrapper.
+     The span stays `inline`, so text-align on the <math> has no
+     full-width line box to center in — make the span the block, then
+     shrink-wrap the formula so margin:auto / text-align both work
+     (Chromium MathML ignores text-align on a stretched block math). */
+  .typeset :where(.katex:has(> math[display="block"])) {
+    display: block;
+    text-align: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-block-start: calc(var(--typeset-flow) * 1.6);
+  }
+
+  .typeset :where(math[display="block"]) {
+    display: block math;
+    width: max-content;
+    max-width: 100%;
+    margin-inline: auto;
+    text-align: center;
+    font-size: 1.2em;
+    overflow: visible;
+  }
+
+  /* Upstream links use `color: inherit` + underline only. Every other
+     internal link in this app (AppLink) reads in the brand accent, so an
+     inherited-color link inside chat markdown is the one link in the
+     product that doesn't look clickable at a glance. */
+  .typeset :where(a) {
+    color: var(--color-primary);
+    font-weight: 500;
+    text-decoration-color: color-mix(
+      in oklch,
+      var(--color-primary) 40%,
+      transparent
+    );
+    text-underline-offset: 4px;
+    transition:
+      font-weight 0.15s ease,
+      text-decoration-color 0.15s ease;
+  }
+
+  .typeset :where(a):hover {
+    font-weight: 700;
+    text-decoration-color: var(--color-primary);
+  }
+}
+
+/* Typeset presets — project-specific, live here (not in typeset.css) so the
+   base engine can be re-downloaded/replaced wholesale without losing them.
+   This project has no separate display face / --font-heading: DESIGN.md
+   commits to exactly two faces (Space Grotesk for body+headings, Space
+   Mono for code), so both presets point --typeset-font-heading at
+   --font-sans instead of introducing a third typeface. */
+@layer components {
+  .typeset-docs {
+    --typeset-font-body: var(--font-sans);
+    --typeset-font-heading: var(--font-sans);
+    --typeset-font-mono: var(--font-mono);
+    --typeset-size: 15px;
+    --typeset-leading: 1.75;
+    --typeset-flow: 1.25em;
+  }
+
+  /* Chat bubbles are narrow and stream in token-by-token, so this preset
+     runs tighter than the docs default and caps code-block height so one
+     long block can't push the rest of the message off screen. */
+  .typeset-chat {
+    --typeset-font-body: var(--font-sans);
+    --typeset-font-heading: var(--font-sans);
+    --typeset-font-mono: var(--font-mono);
+    /* Matches the user bubble's text-sm (0.875rem) so both sides of the
+       conversation read at the same size. */
+    --typeset-size: 0.875rem;
+    --typeset-leading: 1.625;
+    --typeset-flow: 0.5em;
+  }
+
+  .typeset-chat :where(pre) {
+    max-height: 18rem;
+  }
+
+  /* Chat tables speak the same list language as the rest of the product:
+     rounded-xl + hairline + bg-card/40 (on the wrapper) and FieldLabel
+     micro-caps on the header. Compact padding and 0.85em body so the
+     block doesn't read as a full page list inside a bubble. The
+     container owns the outer edge, so drop the engine's table bottom
+     border and the flush first-column padding. */
+  .typeset-chat :where(table) {
+    font-size: 0.85em;
+    width: 100%;
+    border-block-end: 0;
+  }
+
+  .typeset-chat :where(thead th) {
+    color: var(--color-muted-foreground);
+    font-size: var(--font-size-label);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .typeset-chat :where(:is(tbody, tfoot) :is(td, th)) {
+    padding: 0.4rem 0.75rem;
+  }
+
+  .typeset-chat :where(th:first-child, td:first-child) {
+    padding-inline-start: 0.75rem;
+  }
+
+  /* Upstream `.typeset-scroll table` is `width: max-content` so wide
+     tables always scroll. Chat tables should span the bubble, and only
+     scroll sideways below desktop (lg / 64rem) — phone and tablet.
+     On desktop, wrap headers so the table stays 100% without a bar. */
+  .typeset-chat :where(.typeset-scroll table) {
+    width: max(100%, max-content);
+    max-width: none;
+  }
+
+  @media (min-width: 64rem) {
+    .typeset-chat :where(.typeset-scroll table) {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .typeset-chat :where(thead th) {
+      white-space: normal;
+    }
+  }
+}
+
+/* Syntax highlighting — token colours for @tanstack/highlight, which marks
+   tokens with `th-<kind>` classes and leaves every colour to the app. Shared
+   by the chat's fenced code blocks and JsonView. Its stock theme CSS is not
+   used: the typeset engine already styles `pre`, so only the tokens are
+   coloured here. Unlisted kinds (operators, punctuation) keep the text
+   colour. */
+:root {
+  --th-keyword: oklch(0.491 0.27 292.581);
+  --th-function: oklch(0.514 0.222 16.935);
+  --th-property: var(--primary);
+  --th-type: oklch(0.511 0.096 186.391);
+  --th-string: oklch(0.508 0.118 165.612);
+  --th-number: oklch(0.5 0.134 242.749);
+  --th-literal: oklch(0.555 0.163 48.998);
+  --th-comment: var(--muted-foreground);
+}
+
+.dark {
+  --th-keyword: oklch(0.702 0.183 293.541);
+  --th-function: oklch(0.712 0.194 13.428);
+  --th-type: oklch(0.777 0.152 181.912);
+  --th-string: oklch(0.765 0.177 163.223);
+  --th-number: oklch(0.746 0.16 232.661);
+  --th-literal: oklch(0.828 0.189 84.429);
+}
+
+@layer components {
+  :where(.th-keyword, .th-command, .th-tag, .th-selector) {
+    color: var(--th-keyword);
+  }
+
+  :where(.th-function) {
+    color: var(--th-function);
+  }
+
+  :where(.th-property, .th-attr, .th-heading, .th-link, .th-variable) {
+    color: var(--th-property);
+  }
+
+  :where(.th-type) {
+    color: var(--th-type);
+  }
+
+  :where(.th-string, .th-inserted, .th-code-inline) {
+    color: var(--th-string);
+  }
+
+  :where(.th-number) {
+    color: var(--th-number);
+  }
+
+  :where(.th-literal) {
+    color: var(--th-literal);
+  }
+
+  :where(.th-deleted) {
+    color: var(--th-function);
+  }
+
+  :where(.th-comment, .th-meta) {
+    color: var(--th-comment);
+  }
+
+  :where(.th-comment) {
+    font-style: italic;
+  }
+}
+
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --brand-orange: oklch(0.6724 0.1308 38.7559);
+  --background: oklch(0.9818 0.0054 95.0986);
+  --foreground: oklch(0.3438 0.0269 95.7226);
+  --card: oklch(0.9665 0.0067 97.3521);
+  --card-foreground: oklch(0.1908 0.002 106.5859);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2671 0.0196 98.939);
+  --primary: var(--brand-orange);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9245 0.0138 92.9892);
+  --secondary-foreground: oklch(0.4334 0.0177 98.6048);
+  --muted: oklch(0.9341 0.0153 90.239);
+  --muted-foreground: oklch(0.5341 0.0078 97.4503);
+  --accent: oklch(0.9245 0.0138 92.9892);
+  --accent-foreground: oklch(0.2671 0.0196 98.939);
+  --destructive: oklch(0.1908 0.002 106.5859);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.94 0.003 97.3627);
+  --input: oklch(0.92 0.004 98.3528);
+  --ring: var(--brand-orange);
+  --chart-1: var(--brand-orange);
+  --chart-2: oklch(0.6898 0.1581 290.4107);
+  --chart-3: oklch(0.8816 0.0276 93.128);
+  --chart-4: oklch(0.8822 0.0403 298.1792);
+  --chart-5: oklch(0.62 0.16 55);
+  /* Entity icon palette: flat, user-selectable icon colors (stored by key). */
+  --icon-orange: var(--primary);
+  --icon-amber: oklch(0.68 0.15 75);
+  --icon-green: oklch(0.6 0.13 145);
+  --icon-teal: oklch(0.6 0.1 190);
+  --icon-blue: oklch(0.58 0.14 250);
+  --icon-violet: oklch(0.58 0.16 295);
+  --icon-rose: oklch(0.6 0.17 10);
+  --icon-neutral: var(--muted-foreground);
+  --sidebar: oklch(0.9663 0.008 98.8792);
+  --sidebar-foreground: oklch(0.359 0.0051 106.6524);
+  --sidebar-primary: var(--brand-orange);
+  --sidebar-primary-foreground: oklch(0.9881 0 0);
+  --sidebar-accent: oklch(0.9245 0.0138 92.9892);
+  --sidebar-accent-foreground: oklch(0.325 0 0);
+  --sidebar-border: oklch(0.955 0.003 98);
+  --sidebar-ring: oklch(0.7731 0 0);
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+  /* Role-based type scale — names describe the job, values follow the
+     hierarchy DESIGN.md commits to: PageHero title (Display), list /
+     tile / dialog title (Headline), prose default (Body), secondary
+     copy and hints (Meta), micro-caps field label (Label), admin
+     overview stat number (Stat), row / picker item name at body size
+     (the `title` role of `Text`), inline tile metadata (Meta-sm) and
+     micro-caps state tag (Status). The general --tracking-tight …
+     --tracking-widest ramp covers headings and prose; micro-caps uses
+     its own absolute tracks because 0.12em and 0.08em don't fit the
+     +0.025em ramp. `meta-sm` and `label` share the 11px legibility
+     floor; `label` adds uppercase + --tracking-caps, `meta-sm` keeps
+     sentence case. The full recipe of each role (weight, tracking,
+     case) lives in the `Text` component (brand/typography.tsx). */
+  --font-size-display: 1.125rem;
+  --font-size-headline: 1rem;
+  --font-size-body: 0.875rem;
+  --font-size-meta: 0.8125rem;
+  --font-size-meta-sm: 0.6875rem;
+  --font-size-label: 0.6875rem;
+  --font-size-stat: 1.5rem;
+  --font-size-status: 0.75rem;
+  --line-height-display: 1.2;
+  --line-height-headline: 1.4;
+  --line-height-body: 1.5;
+  --line-height-meta-sm: 1.4;
+  --line-height-status: 1.35;
+  --line-height-stat: 1.1;
+  --tracking-caps: 0.12em;
+  --tracking-eyebrow: 0.08em;
+  --radius: 0.375rem;
+  --shadow-x: 0;
+  --shadow-y: 1px;
+  --shadow-blur: 3px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.1;
+  --shadow-color: oklch(0 0 0);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+  --shadow-offset-x: 0;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0em;
+  /* Layout chrome — keep navbar/footer components in sync with these values. */
+  --navbar-height: 3.6rem; /* matches former h-14 */
+  --footer-height: 13rem; /* mobile: stacked footer grid */
+  --layout-chrome-height: calc(var(--navbar-height) + var(--footer-height));
+  /* Mobile list filter bar (`ListActionBar`). 0 when the bar is hidden or
+     not mounted; 4.25rem (pt-3 + h-11 + pb-3) while it is on screen. */
+  --list-action-bar-offset: 0px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --footer-height: 7.6rem; /* sm+: single-row footer */
+    --layout-chrome-height: calc(var(--navbar-height) + var(--footer-height));
+  }
+}
+
+.dark {
+  --background: oklch(0.2679 0.0036 106.6427);
+  --foreground: oklch(0.9576 0.0027 106.4494);
+  --card: oklch(0.2928 0.0018 106.5092);
+  --card-foreground: oklch(0.9818 0.0054 95.0986);
+  --popover: oklch(0.3085 0.0035 106.6039);
+  --popover-foreground: oklch(0.9211 0.004 106.4781);
+  --primary: var(--brand-orange);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9818 0.0054 95.0986);
+  --secondary-foreground: oklch(0.3085 0.0035 106.6039);
+  --muted: oklch(0.2213 0.0038 106.707);
+  --muted-foreground: oklch(0.7713 0.0169 99.0657);
+  --accent: oklch(0.213 0.0078 95.4245);
+  --accent-foreground: oklch(0.9663 0.008 98.8792);
+  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.31 0.004 106.8928);
+  --input: oklch(0.34 0.005 100.2195);
+  --ring: var(--brand-orange);
+  --chart-1: var(--brand-orange);
+  --chart-2: oklch(0.6898 0.1581 290.4107);
+  --chart-3: oklch(0.213 0.0078 95.4245);
+  --chart-4: oklch(0.3074 0.0516 289.323);
+  --chart-5: oklch(0.5608 0.1348 42.0584);
+  --icon-orange: var(--primary);
+  --icon-amber: oklch(0.8 0.14 80);
+  --icon-green: oklch(0.76 0.14 150);
+  --icon-teal: oklch(0.76 0.1 190);
+  --icon-blue: oklch(0.74 0.12 250);
+  --icon-violet: oklch(0.74 0.13 295);
+  --icon-rose: oklch(0.74 0.14 10);
+  --icon-neutral: var(--muted-foreground);
+  --sidebar: oklch(0.2357 0.0024 67.7077);
+  --sidebar-foreground: oklch(0.8074 0.0142 93.0137);
+  --sidebar-primary: var(--brand-orange);
+  --sidebar-primary-foreground: oklch(0.9881 0 0);
+  --sidebar-accent: oklch(0.168 0.002 106.6177);
+  --sidebar-accent-foreground: oklch(0.8074 0.0142 93.0137);
+  --sidebar-border: oklch(0.955 0.003 98);
+  --sidebar-ring: oklch(0.7731 0 0);
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+  --radius: 0.375rem;
+  --shadow-x: 0;
+  --shadow-y: 1px;
+  --shadow-blur: 3px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.1;
+  --shadow-color: oklch(0 0 0);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --shadow-offset-x: 0;
+  --shadow-offset-y: 1px;
+  --letter-spacing: 0em;
+  --spacing: 0.25rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-icon-orange: var(--icon-orange);
+  --color-icon-amber: var(--icon-amber);
+  --color-icon-green: var(--icon-green);
+  --color-icon-teal: var(--icon-teal);
+  --color-icon-blue: var(--icon-blue);
+  --color-icon-violet: var(--icon-violet);
+  --color-icon-rose: var(--icon-rose);
+  --color-icon-neutral: var(--icon-neutral);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", sans-serif;
+  --font-mono: "Space Mono", ui-monospace, monospace;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  /* Role-based font-size utilities — pair with the --font-size-* tokens in
+     :root so consumers can write `text-label` / `text-meta` instead of
+     duplicating the value as `text-[0.6875rem]`. Single source of truth.
+     Roles added to this list are registered as font sizes in `cn()`
+     (lib/utils.ts) so tailwind-merge doesn't drop them as text colours. */
+  --text-display: var(--font-size-display);
+  --text-headline: var(--font-size-headline);
+  --text-body: var(--font-size-body);
+  --text-meta: var(--font-size-meta);
+  --text-meta-sm: var(--font-size-meta-sm);
+  --text-meta-sm--line-height: var(--line-height-meta-sm);
+  --text-label: var(--font-size-label);
+  --text-stat: var(--font-size-stat);
+  --text-status: var(--font-size-status);
+  --text-status--line-height: var(--line-height-status);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+  --radius: 0.375rem;
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+  --tracking-normal: var(--tracking-normal);
+  --spacing: var(--spacing);
+  --letter-spacing: var(--letter-spacing);
+  --shadow-offset-y: var(--shadow-offset-y);
+  --shadow-offset-x: var(--shadow-offset-x);
+  --shadow-spread: var(--shadow-spread);
+  --shadow-blur: var(--shadow-blur);
+  --shadow-opacity: var(--shadow-opacity);
+  --color-shadow-color: var(--shadow-color);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  --height-navbar: var(--navbar-height);
+  --height-footer: var(--footer-height);
+  --height-layout-chrome: var(--layout-chrome-height);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  /* Avoid sticky-header horizontal jumps when Radix dialogs lock scroll
+     and temporarily remove the scrollbar. */
+  html {
+    scrollbar-gutter: stable;
+  }
+  /* Transparent track site-wide — Linux Chromium paints a solid grey
+     background on ::-webkit-scrollbar itself, not only on the track. */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Pin prose defaults to DESIGN.md's body commit (0.875rem / 1.5) so any
+       unstyled element or cascade-from-body content reads at the intended
+       size and leading instead of the browser default (16px / ~1.15). */
+    font-size: var(--font-size-body);
+    line-height: var(--line-height-body);
+    position: relative;
+    isolation: isolate;
+    letter-spacing: var(--tracking-normal);
+  }
+  /* Layout chrome islands (navbar, toaster) mount as direct body children;
+     without block + full width the header shrink-wraps to max-w content.
+     The navbar is `fixed` (out of flow); z-40 keeps it above page scroll. */
+  body > astro-island {
+    display: block;
+    width: 100%;
+    position: relative;
+    z-index: 40;
+  }
+  ::selection {
+    background-color: var(--brand-orange);
+    color: var(--primary-foreground);
+  }
+}
+
+/* Tight viewport box for the back-to-top control. Must beat
+   `body > astro-island { width: 100%; position: relative }` so the island
+   cannot stretch into a full-width strip covering the bottom of the page. */
+.scroll-to-top-root,
+.scroll-to-top-root astro-island {
+  position: fixed;
+  top: auto;
+  left: auto;
+  right: max(1rem, env(safe-area-inset-right, 0px));
+  bottom: calc(
+    1rem +
+    env(safe-area-inset-bottom, 0px) +
+    var(--list-action-bar-offset)
+  );
+  z-index: 40;
+  width: auto;
+  max-width: fit-content;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: none;
+  pointer-events: none;
+}
+
+.scroll-to-top-root :is(button, [data-slot="scroll-to-top"]) {
+  pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+  .scroll-to-top-root,
+  .scroll-to-top-root astro-island {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+}
+
+/* Theme toggle circular reveal (see use-theme-mode.ts). Gated on
+   `.theme-transitioning` so Astro ClientRouter navigations keep the default
+   root cross-fade and persist chrome (navbar/sidebar) stays visible. The
+   unscoped `z-index: 9999` on `::view-transition-new(root)` would otherwise
+   cover persist groups with the incoming snapshot (empty `client:only`
+   islands) and look like a full-page blink. */
+html.theme-transitioning::view-transition-old(root),
+html.theme-transitioning::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html.theme-transitioning::view-transition-old(root) {
+  z-index: 1;
+}
+
+html.theme-transitioning::view-transition-new(root) {
+  z-index: 9999;
+}
+
+/* Persist chrome must not morph/fade during page navigation. */
+::view-transition-old(sidebar-chrome),
+::view-transition-new(sidebar-chrome),
+::view-transition-old(sidebar-header),
+::view-transition-new(sidebar-header),
+::view-transition-old(navbar-auth),
+::view-transition-new(navbar-auth),
+::view-transition-old(navbar-guest),
+::view-transition-new(navbar-guest) {
+  animation: none;
+}
+
+@layer utilities {
+  /* Fills the space between navbar and footer without hardcoding their exact
+     heights: relies on the flex-col body + flex-1 content wrapper in Layout,
+     so the footer's real height is honored and no extra scroll leaks in. */
+  .min-h-main {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+/* Referenced by MessageScrollerViewport (apps/frontend/src/components/ui/
+   message-scroller.tsx) but never defined anywhere — without these the
+   viewport falls back to the platform's default (thick, always-reserved-
+   width) scrollbar, which reads as a scrollbar that's permanently "there"
+   even for short conversations. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-foreground);
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Flat dot-grid texture for guest auth screens (login/signup) — the card
+   otherwise floats on a blank body with no brand presence. A masked solid
+   fill (not a color gradient) keeps it inside the "flat colors, no
+   gradients" rule and stays theme-aware for free via the --border token. */
+@utility bg-dot-grid {
+  position: relative;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--border);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='black'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    pointer-events: none;
+  }
+}
+
+/* Fade effect at the bottom of a scrolling container, used in chat message
+   lists to give visual cue that there's more content below. Only shown when
+   @shadcn/react's message-scroller marks the element as actually scrollable
+   toward "end" (its data-scrollable attribute is a space-separated token
+   list, e.g. "start end") — otherwise it would permanently dim whatever text
+   happens to sit at the bottom of the viewport, even at the true end.
+
+   Apply this to a non-scrolling wrapper around the scroll container, never to
+   the scroll container itself: the ::after is absolutely positioned, and an
+   absolutely positioned box inside a scrolling element scrolls along with its
+   content rather than staying pinned, so the fade drifts up and cuts across
+   the middle of the content. */
+@utility scroll-fade-b {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2rem;
+    background: linear-gradient(to bottom, transparent, var(--background));
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-out;
+  }
+  &[data-scrollable~="end"]::after {
+    opacity: 1;
+  }
+}
+
+@keyframes dash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dash-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Staggered list/grid entrance: pass a per-item delay via the --dash-delay
+   custom property (e.g. `style={{ "--dash-delay": `${i * 45}ms` }}`). */
+@utility dash-enter {
+  animation: dash-enter 0.3s ease-out both;
+  animation-delay: var(--dash-delay, 0ms);
+}
+
+/* Pop-in for icons/badges nested inside a `dash-enter` container. */
+@utility dash-pop {
+  animation: dash-pop 0.25s ease-out both;
+  animation-delay: var(--dash-delay, 0ms);
+}
+
+/* Both utilities only use their keyframe to animate from a transient
+   from-state into the element's own default (opacity: 1, transform: none),
+   so disabling the animation outright lands exactly on that default with no
+   flash of the hidden/offset from-state. */
+@media (prefers-reduced-motion: reduce) {
+  .dash-enter,
+  .dash-pop {
+    animation: none;
+  }
+}
+
+/* Icon-only buttons (icon-xs 24px, icon-sm 32px, icon 36px, icon-lg 40px —
+   see components/ui/button.tsx) stay visually dense on desktop by design
+   (quiet-editorial density, mouse-precise pointer), but all sit under the
+   44x44px touch target floor. Rather than growing every icon button
+   globally — which would blow up the calm density the system is built on —
+   expand only the *hit area* to 44x44, centered on the visible box, and
+   only under a coarse (touch) pointer. Fine-pointer users (trackpad, mouse)
+   see and get exactly the sizes DESIGN.md specifies.
+   Kept in `@layer base` so positioning utilities on the button itself
+   (`fixed`, `absolute`, `sticky`) still win: unlayered CSS beats every
+   Tailwind layer, and a bare `position: relative` here would pull floating
+   icon buttons (ScrollToTopButton, MessageScrollerButton) back into flow. */
+@layer base {
+  @media (pointer: coarse) {
+    /* data-size alone (not data-slot="button") — SidebarTrigger re-passes its
+       own data-slot="sidebar-trigger" through ...props, which wins over
+       Button's data-slot="button" default and would otherwise slip past a
+       data-slot-qualified selector. data-size is untouched in that case. */
+    [data-size="icon-xs"],
+    [data-size="icon-sm"],
+    [data-size="icon"],
+    [data-size="icon-lg"] {
+      position: relative;
+    }
+    [data-size="icon-xs"]::after,
+    [data-size="icon-sm"]::after,
+    [data-size="icon"]::after,
+    [data-size="icon-lg"]::after {
+      content: "";
+      position: absolute;
+      inset: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+    }
+  }
+}

@@ -1,0 +1,68 @@
+---
+import { fade } from "astro:transitions"
+import {
+  WithSidebarChrome,
+  WithSidebarHeader,
+} from "@/features/app-shell/sidebar"
+import Layout from "@/layouts/Layout.astro"
+
+interface Props {
+  title: string
+  /** Section href in `siteNavItems` (e.g. "/crons"). Must declare `subItems`. */
+  section: string
+  /**
+   * Persist the inset scroller offset across View Transitions. The header
+   * island is `transition:persist`, so this flag is stamped on `main` for
+   * the header to read from the URL-swapped DOM rather than as a frozen
+   * island prop. Off still snaps to the top so leftover offset from the
+   * previous route does not leak in.
+   */
+  persistScroll?: boolean
+  /** Shows a floating "back to top" button once the page scrolls past its threshold. */
+  scrollToTop?: boolean
+}
+
+const { title, persistScroll = true, scrollToTop = false } = Astro.props
+
+// Mirrors what SidebarProvider writes on toggle, so the sidebar opens in the
+// state the user left it instead of flashing open before collapsing.
+const sidebarOpen = Astro.cookies.get("sidebar_state")?.value !== "false"
+---
+
+<!--
+  Chrome (sidebar + inset spacer) is persist islands so it survives
+  ClientRouter swaps. The page slot is a sibling with its own fade —
+  wrapping it inside the client:only shell made every navigation remount
+  an empty island (sidebar, header and content all flashed).
+  `section` is still required by callers; the chrome reads the active
+  section from the URL so persist does not freeze the first page's props.
+  `flex-row!` beats Layout's overlayNavbar `*:flex-col` so chrome and
+  inset sit side by side.
+-->
+<Layout title={title} hideFooter overlayNavbar animateContent={false}>
+  <div class="flex h-full min-h-0 w-full max-w-full flex-1 flex-row!">
+    <div
+      class="flex h-full min-h-0 shrink-0"
+      transition:persist="sidebar-chrome"
+    >
+      <WithSidebarChrome client:only="react" defaultOpen={sidebarOpen} />
+    </div>
+    <main
+      class="flex min-h-0 min-w-0 w-auto max-w-full flex-1 flex-col overflow-y-auto"
+      data-app-scroller=""
+      data-scroll-to-top={scrollToTop ? "" : undefined}
+      data-persist-scroll={persistScroll ? undefined : "false"}
+    >
+      <div transition:persist="sidebar-header">
+        <WithSidebarHeader client:only="react" />
+      </div>
+      <div
+        class="min-w-0 flex-1 p-3 sm:p-4"
+        transition:animate={fade({ duration: "0.2s" })}
+        transition:name="sidebar-page"
+      >
+        <slot />
+      </div>
+    </main>
+  </div>
+</Layout>

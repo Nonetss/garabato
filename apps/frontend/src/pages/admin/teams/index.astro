@@ -1,0 +1,9 @@
+---
+import { TeamsPage } from "@/features/admin/teams"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-teams"].title} scrollToTop>
+  <TeamsPage client:only="react" />
+</Admin>

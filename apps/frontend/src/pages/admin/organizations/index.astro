@@ -1,0 +1,9 @@
+---
+import { OrganizationsPage } from "@/features/admin/organizations"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-organizations"].title} scrollToTop>
+  <OrganizationsPage client:only="react" />
+</Admin>

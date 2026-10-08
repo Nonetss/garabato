@@ -1,0 +1,9 @@
+---
+import { SessionsPage } from "@/features/admin/sessions"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-sessions"].title}>
+  <SessionsPage client:only="react" />
+</Admin>
