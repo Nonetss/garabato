@@ -144,27 +144,45 @@ const DATE_FORMAT = new Intl.DateTimeFormat("es-ES", {
   hour: "2-digit",
   minute: "2-digit",
   second: "2-digit",
+  hourCycle: "h23",
   timeZone: "Europe/Madrid",
+  timeZoneName: "short",
 })
+
+/** `2026-10-07 18:43:43 CEST`, as Adobe stamps it, in Europe/Madrid. */
+export function formatSigningTime(date: Date): string {
+  const parts = new Map(
+    DATE_FORMAT.formatToParts(date).map((part) => [part.type, part.value])
+  )
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.get(type) ?? ""
+  return `${part("year")}-${part("month")}-${part("day")} ${part("hour")}:${part("minute")}:${part("second")} ${part("timeZoneName")}`
+}
 
 export type StampText = {
   signerName: string
-  issuerName: string
   signingTime: Date
   reason?: string
   location?: string
 }
 
-/** The stamp copy, AutoFirma style. */
-export function stampLines(text: StampText): string[] {
-  const lines = [
-    `Firmado digitalmente por ${text.signerName}`,
-    `Fecha: ${DATE_FORMAT.format(text.signingTime)}`,
-    `Emisor: ${text.issuerName}`,
+/** What the stamp shows: the name, big, on the left; the details, small,
+ *  on the right. Each detail is a paragraph that may wrap. */
+export type StampContent = {
+  name: string
+  details: string[]
+}
+
+/** The stamp copy, laid out like Adobe's default signature appearance. */
+export function stampContent(text: StampText): StampContent {
+  const details = [
+    "Firmado por:",
+    text.signerName,
+    "Fecha:",
+    formatSigningTime(text.signingTime),
   ]
-  if (text.reason) lines.push(`Motivo: ${text.reason}`)
-  if (text.location) lines.push(`Lugar: ${text.location}`)
-  return lines
+  if (text.reason) details.push("Motivo:", text.reason)
+  if (text.location) details.push("Lugar:", text.location)
+  return { name: text.signerName, details }
 }
 
 // Standard fonts only encode WinAnsi; anything else becomes "?" rather than
@@ -182,64 +200,160 @@ function encodable(font: PDFFont, text: string) {
   return result
 }
 
-function wrap(text: string, font: PDFFont, size: number, width: number) {
+// Splits a word wider than the column into pieces that fit, the way the
+// NIF in "77225780" / "Z" breaks in Adobe's stamp.
+function breakWord(word: string, font: PDFFont, size: number, width: number) {
+  const pieces: string[] = []
+  let current = ""
+  for (const char of word) {
+    const candidate = current + char
+    if (current && font.widthOfTextAtSize(candidate, size) > width) {
+      pieces.push(current)
+      current = char
+    } else {
+      current = candidate
+    }
+  }
+  if (current) pieces.push(current)
+  return pieces
+}
+
+/** Which words may be split across lines when they do not fit whole. */
+export type BreakRule = (word: string) => boolean
+
+/** Any word may break: the details column. */
+export const breakAnything: BreakRule = () => true
+
+/** Only tokens with digits (the NIF) break, like Adobe's stamp; name words
+ *  stay whole and the font shrinks instead. */
+export const breakOnlyNumbers: BreakRule = (word) => /\d/.test(word)
+
+/**
+ * Greedy word wrap. A word wider than the column breaks into pieces when
+ * `canBreak` allows it; otherwise it stays whole on its own (overflowing)
+ * line, which `fitBlock` then rejects.
+ */
+export function wrapText(
+  text: string,
+  font: PDFFont,
+  size: number,
+  width: number,
+  canBreak: BreakRule = breakAnything
+): string[] {
   const lines: string[] = []
   let current = ""
-  for (const word of text.split(" ")) {
+  for (const word of text.split(/\s+/).filter(Boolean)) {
     const candidate = current ? `${current} ${word}` : word
-    if (!current || font.widthOfTextAtSize(candidate, size) <= width) {
+    if (font.widthOfTextAtSize(candidate, size) <= width) {
       current = candidate
-    } else {
-      lines.push(current)
-      current = word
+      continue
     }
+    if (current) lines.push(current)
+    if (!canBreak(word)) {
+      current = word
+      continue
+    }
+    const pieces = breakWord(word, font, size, width)
+    current = pieces.pop() ?? ""
+    lines.push(...pieces)
   }
   if (current) lines.push(current)
   return lines
 }
 
-// Shrinks the font until every wrapped line fits inside the stamp.
-function layout(lines: string[], font: PDFFont, width: number, height: number) {
-  for (let size = 10; size > 4; size -= 0.5) {
-    const wrapped = lines.flatMap((line) => wrap(line, font, size, width))
-    if (wrapped.length * size * 1.2 <= height) return { size, wrapped }
+const LINE_HEIGHT = 1.15
+const MAX_NAME_SIZE = 40
+const MAX_DETAILS_SIZE = 12
+const MIN_SIZE = 3
+
+type Block = { size: number; lines: string[] }
+
+// The largest font size, in half points, whose wrapped paragraphs fit the
+// box; a stamp too small for anything readable falls back to MIN_SIZE.
+export function fitBlock(
+  paragraphs: string[],
+  font: PDFFont,
+  box: { width: number; height: number },
+  maxSize: number,
+  canBreak: BreakRule = breakAnything
+): Block {
+  const wrapAll = (size: number, rule: BreakRule) =>
+    paragraphs.flatMap((text) => wrapText(text, font, size, box.width, rule))
+  for (let size = maxSize; size > MIN_SIZE; size -= 0.5) {
+    const lines = wrapAll(size, canBreak)
+    const fitsHeight = lines.length * size * LINE_HEIGHT <= box.height
+    const fitsWidth = lines.every(
+      (line) => font.widthOfTextAtSize(line, size) <= box.width
+    )
+    if (fitsHeight && fitsWidth) return { size, lines }
   }
-  return {
-    size: 4,
-    wrapped: lines.flatMap((line) => wrap(line, font, 4, width)),
-  }
+  // Too small for whole words: break anything at the smallest size.
+  return { size: MIN_SIZE, lines: wrapAll(MIN_SIZE, breakAnything) }
 }
 
-const PADDING = 4
+// Text operators for a block vertically centred in its column; each line
+// left-aligned, or centred when `centred` is set.
+function blockOps(
+  font: PDFFont,
+  block: Block,
+  column: { x: number; width: number; height: number },
+  centred: boolean
+) {
+  const leading = block.size * LINE_HEIGHT
+  const blockHeight = block.lines.length * leading
+  // Baseline of the first line: centre the block, then drop one ascent.
+  const top = (column.height + blockHeight) / 2
+  return block.lines.map((line, index) => {
+    const lineWidth = font.widthOfTextAtSize(line, block.size)
+    const indent = centred ? (column.width - lineWidth) / 2 : 0
+    const x = column.x + Math.max(0, indent)
+    const y = top - leading * index - block.size
+    return `BT /F1 ${block.size} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td ${font.encodeText(line).toString()} Tj ET`
+  })
+}
+
+const PADDING = 2
+const GUTTER = 8
 
 /**
- * The stamp's appearance: a light box with the text, drawn in the displayed
- * orientation and turned by `/Matrix` to match the page rotation.
+ * The stamp's appearance, after Adobe's default: no box, the signer's name
+ * as large as it fits on the left half, centred line by line, and the
+ * "Firmado por / Fecha" details small on the right half. It is drawn in the
+ * displayed orientation and turned by `/Matrix` to match the page rotation.
  */
 export function appearanceStream(
   doc: PDFDocument,
   font: PDFFont,
   placement: WidgetPlacement,
-  lines: string[]
+  content: StampContent
 ): PDFRef {
   const { width, height } = placement
-  const safeLines = lines.map((line) => encodable(font, line))
-  const { size, wrapped } = layout(
-    safeLines,
+  const inner = height - PADDING * 2
+  const columnWidth = (width - PADDING * 2 - GUTTER) / 2
+  const box = { width: columnWidth, height: inner }
+  const name = fitBlock(
+    [encodable(font, content.name)],
     font,
-    width - PADDING * 2,
-    height - PADDING * 2
+    box,
+    MAX_NAME_SIZE,
+    breakOnlyNumbers
+  )
+  const details = fitBlock(
+    content.details.map((text) => encodable(font, text)),
+    font,
+    box,
+    MAX_DETAILS_SIZE
   )
   const ops = [
-    "q 0.94 0.96 1 rg",
-    `0 0 ${width} ${height} re f`,
-    "0.25 0.35 0.65 RG 0.8 w",
-    `0.4 0.4 ${width - 0.8} ${height - 0.8} re S Q`,
-    "BT 0.1 0.1 0.15 rg",
-    `/F1 ${size} Tf ${size * 1.2} TL`,
-    `${PADDING} ${height - PADDING - size} Td`,
-    ...wrapped.map((line) => `${font.encodeText(line).toString()} Tj T*`),
-    "ET",
+    "q 0 0 0 rg",
+    ...blockOps(font, name, { x: PADDING, width: columnWidth, height }, true),
+    ...blockOps(
+      font,
+      details,
+      { x: PADDING + columnWidth + GUTTER, width: columnWidth, height },
+      false
+    ),
+    "Q",
   ]
   const stream = doc.context.flateStream(ops.join("\n"), {
     Type: "XObject",

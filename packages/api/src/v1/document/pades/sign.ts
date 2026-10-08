@@ -1,6 +1,6 @@
 import signpdf from "@signpdf/signpdf"
 import {
-  stampLines,
+  stampContent,
   type VisibleAppearance,
 } from "#v1/document/pades/appearance"
 import { addPlaceholder } from "#v1/document/pades/placeholder"
@@ -9,7 +9,6 @@ import { PadesSigner, type SignerIdentity } from "#v1/document/pades/signer"
 export type SignPdfOptions = {
   identity: SignerIdentity
   signerName: string
-  issuerName: string
   signingTime: Date
   reason?: string
   location?: string
@@ -28,7 +27,7 @@ export async function signPdf(pdf: Uint8Array, options: SignPdfOptions) {
     location: options.location,
     signingTime: options.signingTime,
     appearance: options.appearance,
-    lines: stampLines(options),
+    content: stampContent(options),
   })
   const signed = await signpdf.sign(
     placeholder.bytes,

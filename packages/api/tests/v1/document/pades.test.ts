@@ -29,7 +29,6 @@ async function options(
   return {
     identity,
     signerName: identity.metadata.commonName,
-    issuerName: identity.metadata.issuerCommonName,
     signingTime: new Date("2026-10-08T10:00:00.000Z"),
     reason: "Conformidad",
     location: "Madrid",

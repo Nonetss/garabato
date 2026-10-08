@@ -18,6 +18,7 @@ import {
 import {
   appearanceStream,
   placeWidgets,
+  type StampContent,
   type VisibleAppearance,
 } from "#v1/document/pades/appearance"
 
@@ -34,7 +35,7 @@ export type PlaceholderOptions = {
   signingTime: Date
   /** Omit for an invisible signature. */
   appearance?: VisibleAppearance
-  lines: string[]
+  content: StampContent
 }
 
 export class EncryptedPdfError extends Error {}
@@ -129,7 +130,7 @@ export async function addPlaceholder(
           P: page.ref,
           MK: { R: placement.rotation },
           AP: {
-            N: appearanceStream(doc, font, placement, options.lines),
+            N: appearanceStream(doc, font, placement, options.content),
           },
         })
       )

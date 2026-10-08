@@ -336,7 +336,6 @@ async function signVersion(
     return await signPdf(pdf, {
       identity,
       signerName: identity.metadata.commonName,
-      issuerName: identity.metadata.issuerCommonName,
       signingTime,
       reason: input.reason,
       location: input.location,
