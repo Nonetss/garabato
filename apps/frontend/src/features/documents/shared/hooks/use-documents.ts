@@ -15,6 +15,42 @@ const documentKey = (id: string) =>
 const downloadKey = (id: string) =>
   orpc.v1.document.download.key({ input: { id } })
 const signaturesKey = orpc.v1.document.signatures.key()
+// Folder and tag counts follow the documents they hold.
+const foldersKey = orpc.v1.documentFolder.list.queryKey()
+const tagsKey = orpc.v1.documentTag.list.queryKey()
+
+/** Must match `.max(100)` on the backend's batch `ids`. */
+const BATCH_SIZE = 100
+
+type BatchResult = { ids: string[]; success: boolean }
+
+/**
+ * Sends `ids` in batches of 100, one after another: each batch is atomic on
+ * the server, the selection as a whole is not.
+ */
+async function inBatches(
+  ids: string[],
+  call: (batch: string[]) => Promise<BatchResult>
+): Promise<BatchResult> {
+  const done: string[] = []
+  for (let start = 0; start < ids.length; start += BATCH_SIZE) {
+    const result = await call(ids.slice(start, start + BATCH_SIZE))
+    done.push(...result.ids)
+  }
+  return { ids: done, success: true }
+}
+
+function patchDocuments(
+  current: DocumentSummary[] | undefined,
+  ids: string[],
+  patch: (document: DocumentSummary) => DocumentSummary
+) {
+  const targets = new Set(ids)
+  return current?.map((document) => {
+    if (!targets.has(document.id)) return document
+    return patch(document)
+  })
+}
 
 export const useDocuments = () =>
   useHydratedQuery(orpc.v1.document.list.queryOptions())
@@ -52,11 +88,11 @@ export const downloadDocumentVersion = (id: string, versionNumber?: number) =>
   )
 
 export const useDocumentUpload = () =>
-  useOrpcMutation<DocumentSummary, { file: File }>({
+  useOrpcMutation<DocumentSummary, { file: File; folderId?: string }>({
     mutationFn: (input) => orpc.v1.document.upload.call(input),
     success: "Documento subido",
     error: "No se pudo subir el documento",
-    invalidate: [documentsListKey],
+    invalidate: [documentsListKey, foldersKey],
   })
 
 export const useDocumentRename = () =>
@@ -80,6 +116,98 @@ export const useDocumentRename = () =>
     },
   })
 
+export const useDocumentsMove = () =>
+  useResourceMutation<
+    { ids: string[]; folderId: string | null },
+    BatchResult,
+    DocumentSummary[]
+  >({
+    mutationFn: ({ ids, folderId }) =>
+      inBatches(ids, (batch) =>
+        orpc.v1.document.move.call({ ids: batch, folderId })
+      ),
+    listKey: documentsListKey,
+    applyOptimistic: (current, input) =>
+      patchDocuments(current, input.ids, (document) => ({
+        ...document,
+        folderId: input.folderId,
+      })),
+    extraInvalidate: [foldersKey, orpc.v1.document.get.key()],
+    messages: {
+      success: "Documentos movidos",
+      error: "No se pudieron mover los documentos",
+    },
+  })
+
+export const useDocumentsUpdateTags = () =>
+  useResourceMutation<
+    { ids: string[]; add: string[]; remove: string[] },
+    BatchResult,
+    DocumentSummary[]
+  >({
+    mutationFn: ({ ids, add, remove }) =>
+      inBatches(ids, (batch) =>
+        orpc.v1.document.updateTags.call({ ids: batch, add, remove })
+      ),
+    listKey: documentsListKey,
+    applyOptimistic: (current, input) =>
+      patchDocuments(current, input.ids, (document) => {
+        const kept = document.tagIds.filter(
+          (tagId) => !input.remove.includes(tagId)
+        )
+        const added = input.add.filter((tagId) => !kept.includes(tagId))
+        return { ...document, tagIds: [...kept, ...added] }
+      }),
+    extraInvalidate: [tagsKey, orpc.v1.document.get.key()],
+    messages: {
+      success: "Etiquetas actualizadas",
+      error: "No se pudieron actualizar las etiquetas",
+    },
+  })
+
+export const useDocumentsSetPinned = () =>
+  useResourceMutation<
+    { ids: string[]; pinned: boolean },
+    BatchResult,
+    DocumentSummary[]
+  >({
+    mutationFn: ({ ids, pinned }) =>
+      inBatches(ids, (batch) =>
+        orpc.v1.document.setPinned.call({ ids: batch, pinned })
+      ),
+    listKey: documentsListKey,
+    applyOptimistic: (current, input) => {
+      const now = new Date().toISOString()
+      return patchDocuments(current, input.ids, (document) => {
+        if (!input.pinned) return { ...document, pinnedAt: null }
+        // Pinning again keeps the first pin moment, like the server.
+        if (document.pinnedAt !== null) return document
+        return { ...document, pinnedAt: now }
+      })
+    },
+    extraInvalidate: [orpc.v1.document.get.key()],
+    messages: {
+      success: "Fijados actualizados",
+      error: "No se pudieron actualizar los fijados",
+    },
+  })
+
+export const useDocumentsDelete = () =>
+  useResourceMutation<{ ids: string[] }, BatchResult, DocumentSummary[]>({
+    mutationFn: ({ ids }) =>
+      inBatches(ids, (batch) =>
+        orpc.v1.document.deleteMany.call({ ids: batch })
+      ),
+    listKey: documentsListKey,
+    applyOptimistic: (current, input) =>
+      current?.filter((document) => !input.ids.includes(document.id)),
+    extraInvalidate: [foldersKey, tagsKey],
+    messages: {
+      success: "Documentos eliminados",
+      error: "No se pudieron eliminar los documentos",
+    },
+  })
+
 export const useDocumentDelete = () =>
   useResourceMutation<
     { id: string },
@@ -90,6 +218,7 @@ export const useDocumentDelete = () =>
     listKey: documentsListKey,
     applyOptimistic: (current, input) =>
       current?.filter((document) => document.id !== input.id),
+    extraInvalidate: [foldersKey, tagsKey],
     messages: {
       success: "Documento eliminado",
       error: "No se pudo eliminar el documento",

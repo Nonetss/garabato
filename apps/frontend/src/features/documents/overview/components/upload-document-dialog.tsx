@@ -24,11 +24,14 @@ function errorMessage(error: unknown) {
 interface UploadDocumentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Folder the new document goes into; the library root when null. */
+  folderId: string | null
 }
 
 export function UploadDocumentDialog({
   open,
   onOpenChange,
+  folderId,
 }: UploadDocumentDialogProps) {
   const upload = useDocumentUpload()
   const [file, setFile] = useState<File | null>(null)
@@ -65,7 +68,10 @@ export function UploadDocumentDialog({
       return
     }
     try {
-      await upload.mutateAsync({ file })
+      await upload.mutateAsync({
+        file,
+        ...(folderId !== null && { folderId }),
+      })
     } catch (error) {
       setSubmitError(errorMessage(error))
       return

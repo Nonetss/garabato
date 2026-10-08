@@ -43,6 +43,8 @@ const adminIcons = {
 const entityIcons = {
   organization: Lucide.Building2,
   apiKey: Lucide.KeyRound,
+  folder: Lucide.Folder,
+  tag: Lucide.Tag,
 } as const
 
 const identityIcons = {
@@ -82,6 +84,11 @@ const actionIcons = {
   run: Lucide.Play,
   pause: Lucide.Pause,
   pickIcon: Lucide.SmilePlus,
+  newFolder: Lucide.FolderPlus,
+  move: Lucide.FolderInput,
+  tags: Lucide.Tags,
+  pin: Lucide.Pin,
+  unpin: Lucide.PinOff,
 } as const
 
 const controlIcons = {
@@ -90,6 +97,8 @@ const controlIcons = {
   menu: Lucide.Menu,
   previous: Lucide.ChevronLeft,
   next: Lucide.ChevronRight,
+  first: Lucide.ChevronsLeft,
+  last: Lucide.ChevronsRight,
   expand: Lucide.ChevronDown,
   collapse: Lucide.ChevronUp,
   check: Lucide.Check,
@@ -97,8 +106,6 @@ const controlIcons = {
   chevronDown: Lucide.ChevronDown,
   chevronDownIcon: Lucide.ChevronDown,
   chevronLeft: Lucide.ChevronLeft,
-  first: Lucide.ChevronsLeft,
-  last: Lucide.ChevronsRight,
   chevronLeftIcon: Lucide.ChevronLeft,
   chevronRight: Lucide.ChevronRight,
   chevronRightIcon: Lucide.ChevronRight,

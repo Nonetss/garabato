@@ -122,7 +122,7 @@ export function IconPicker({
       <Hint label={label}>
         <PopoverTrigger render={triggerButton}>{triggerGlyph}</PopoverTrigger>
       </Hint>
-      <PopoverContent align="start" className="w-[22rem] p-3">
+      <PopoverContent align="start" className="w-[23rem] p-3">
         <IconPickerPanel {...panelProps} size="compact" />
       </PopoverContent>
     </Popover>

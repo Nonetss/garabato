@@ -1,3 +1,5 @@
+import type { EntityIconColor } from "@/features/entity-icons"
+
 export type DocumentSummary = {
   id: string
   name: string
@@ -7,6 +9,32 @@ export type DocumentSummary = {
   versionCount: number
   signatureCount: number
   lastSignedAt: string | null
+  /** Null for the library root. */
+  folderId: string | null
+  tagIds: string[]
+  /** When it was pinned; null when not pinned. */
+  pinnedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentFolder = {
+  id: string
+  name: string
+  /** Null for a top-level folder. */
+  parentId: string | null
+  /** Live documents directly inside. */
+  documentCount: number
+  createdAt: string
+  updatedAt: string
+}
+
+export type DocumentTag = {
+  id: string
+  name: string
+  color: EntityIconColor
+  /** Live documents carrying it. */
+  documentCount: number
   createdAt: string
   updatedAt: string
 }

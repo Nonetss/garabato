@@ -13,7 +13,7 @@ interface IconColorSwatchesProps {
 
 export function IconColorSwatches({ value, onChange }: IconColorSwatchesProps) {
   return (
-    <fieldset className="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0">
+    <fieldset className="m-0 flex min-w-0 flex-wrap gap-1.5 border-0 p-0">
       <legend className="sr-only">Color</legend>
       {ICON_COLORS.map((color) => {
         const { label, swatch } = ICON_PALETTE[color]

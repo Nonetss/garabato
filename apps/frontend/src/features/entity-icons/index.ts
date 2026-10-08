@@ -8,6 +8,8 @@ export type {
 export {
   EntityIcon,
   EntityIconPicker,
+  ICON_PALETTE,
+  IconColorSwatches,
   IconPicker,
   useClearEntityIcon,
   useEntityIcons,

@@ -13,6 +13,10 @@ import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
+  DocumentOrganizationMenu,
+  DocumentPlacement,
+} from "@/features/documents/detail/components/document-organization"
+import {
   PdfViewer,
   type StampPlacement,
 } from "@/features/documents/detail/components/pdf-viewer"
@@ -126,9 +130,12 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
                 Firmar
               </Button>
             )}
+            <DocumentOrganizationMenu document={document} />
           </div>
         }
-      />
+      >
+        <DocumentPlacement document={document} />
+      </PageHero>
 
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col rounded-lg bg-desk lg:min-h-0 lg:overflow-hidden">

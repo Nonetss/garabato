@@ -195,14 +195,18 @@ export function IconPickerPanel({
         ) : null}
       </div>
 
+      {/* The swatches never break: when the row is too narrow (the compact
+          popover) the remove action wraps below them instead. */}
       <div
         className={cn(
-          "flex items-center gap-2",
+          "flex flex-wrap items-center gap-2",
           allowColor ? "justify-between" : "justify-end"
         )}
       >
         {allowColor ? (
-          <IconColorSwatches value={color} onChange={selectColor} />
+          <div className="shrink-0">
+            <IconColorSwatches value={color} onChange={selectColor} />
+          </div>
         ) : null}
         <Button
           type="button"
@@ -210,7 +214,7 @@ export function IconPickerPanel({
           size="xs"
           disabled={!value}
           onClick={() => onChange(null)}
-          className={cn(!value && "invisible")}
+          className={cn("ml-auto", !value && "invisible")}
         >
           Quitar icono
         </Button>
