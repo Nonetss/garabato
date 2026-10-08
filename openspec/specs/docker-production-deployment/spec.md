@@ -63,12 +63,12 @@ The gateway image (`apps/gateway/Dockerfile`) SHALL be built from `caddy:2-alpin
 
 ### Requirement: Production compose from registry images
 
-`compose.prod.yml`, with compose project name `stack`, SHALL run `frontend`, `backend` and `gateway` from the registry images `ghcr.io/nonetss/stack-frontend:main`, `ghcr.io/nonetss/stack-backend:main` and `ghcr.io/nonetss/stack-gateway:main`, plus a `db` service (`postgres:17`, database `stack`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `stack-<service>` and SHALL share a bridge network `stack`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL` set to the `.env`'s `CORS_ORIGIN` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
+`compose.prod.yml`, with compose project name `stack`, SHALL run `frontend`, `backend` and `gateway` from the registry images `ghcr.io/nonetss/garabato-frontend:main`, `ghcr.io/nonetss/garabato-backend:main` and `ghcr.io/nonetss/garabato-gateway:main`, plus a `db` service (`postgres:17`, database `stack`, password `POSTGRES_PASSWORD` from `.env`, data in the named volume `db_data`) and a `loki` service (`grafana/loki`, data in the named volume `loki_data`, 720h retention). Containers SHALL be named `stack-<service>` and SHALL share a bridge network `stack`. The app services SHALL load `.env` through `env_file`; the backend SHALL receive `NODE_ENV=production`, `BETTER_AUTH_URL` set to the `.env`'s `CORS_ORIGIN` and `LOKI_URL=http://loki:3100`, and the frontend SHALL receive `BACKEND_URL=http://backend:3000` and `LOKI_URL=http://loki:3100`. The gateway SHALL publish `${FRONTEND_PORT:-4444}:80`.
 
 #### Scenario: Starting a deployment
 
 - **WHEN** an operator runs `docker compose -f compose.prod.yml --env-file .env up -d` in a directory holding a `.env` written by `scripts/bootstrap.sh`
-- **THEN** compose SHALL pull the `stack-*` images, start `db`, `loki`, `backend`, `frontend` and `gateway`, and serve the app on `FRONTEND_PORT`
+- **THEN** compose SHALL pull the `garabato-*` images, start `db`, `loki`, `backend`, `frontend` and `gateway`, and serve the app on `FRONTEND_PORT`
 
 #### Scenario: Data survives a redeploy
 
@@ -114,12 +114,12 @@ The root `.dockerignore` SHALL exclude every `.env` and `.env.*` file (except `.
 
 ### Requirement: CI builds only the changed images
 
-`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. The jobs SHALL run on GitHub-hosted `ubuntu-26.04` runners. Each image SHALL be pushed to the GitHub Container Registry, authenticated with the workflow's `GITHUB_TOKEN` (`packages: write`), as `ghcr.io/<owner>/<repo>-<app>` in lowercase (for this repo `ghcr.io/nonetss/stack-<app>`) with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
+`.github/workflows/docker-build.yml` SHALL, on push to the configured branches (including `main`), determine which of the `backend`, `frontend` and `gateway` images are affected by the pushed changes and build and push only those, as a matrix. The backend and frontend SHALL be affected by changes under their app directory, `packages/`, `package.json`, `bun.lock` or `bunfig.toml`; the gateway by changes under `apps/gateway/`; and every image by changes to the workflow itself or `.dockerignore`. A new branch, a force push or a missing base commit SHALL build every image. The jobs SHALL run on GitHub-hosted `ubuntu-26.04` runners. Each image SHALL be pushed to the GitHub Container Registry, authenticated with the workflow's `GITHUB_TOKEN` (`packages: write`), as `ghcr.io/<owner>/<repo>-<app>` in lowercase (for this repo `ghcr.io/nonetss/garabato-<app>`) with the tags `latest`, the branch name and `<branch>-<short sha>`, using a registry layer cache per branch that falls back to `main`'s. A newer push to the same branch SHALL cancel a running build.
 
 #### Scenario: Frontend-only change
 
 - **WHEN** a push to `main` changes only files under `apps/frontend/`
-- **THEN** CI SHALL build and push only the `stack-frontend` image, tagged `latest`, `main` and `main-<short sha>`
+- **THEN** CI SHALL build and push only the `garabato-frontend` image, tagged `latest`, `main` and `main-<short sha>`
 
 #### Scenario: Shared package change
 
@@ -133,7 +133,7 @@ The root `.dockerignore` SHALL exclude every `.env` and `.env.*` file (except `.
 
 ### Requirement: Deployment bootstrap script
 
-`scripts/bootstrap.sh`, runnable from a clone or through `curl | bash`, SHALL generate a production `.env` in the current directory. It SHALL require `docker` (with the compose plugin), `openssl` and `curl`, read its prompts from `/dev/tty`, and refuse to run when a `.env` already exists there. It SHALL prompt for the host port (default `4444`), the public URL (default `http://localhost:<port>`), warning that Secure session cookies only work over plain `http` on `localhost`, and the admin name, email and password (at least 8 characters). After confirmation it SHALL generate `POSTGRES_PASSWORD` (URL-safe hex) and `BETTER_AUTH_SECRET` with `openssl`, and write `FRONTEND_PORT`, `CORS_ORIGIN` (the public URL), `POSTGRES_PASSWORD`, `DATABASE_URL` (pointing at `db:5432/stack`), `BETTER_AUTH_SECRET`, `ADMIN_NAME`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`, every value single-quoted, to a file created with mode `600`. It SHALL download `compose.prod.yml` from the `stack` repository when it is missing and SHALL offer to pull and start the stack.
+`scripts/bootstrap.sh`, runnable from a clone or through `curl | bash`, SHALL generate a production `.env` in the current directory. It SHALL require `docker` (with the compose plugin), `openssl` and `curl`, read its prompts from `/dev/tty`, and refuse to run when a `.env` already exists there. It SHALL prompt for the host port (default `4444`), the public URL (default `http://localhost:<port>`), warning that Secure session cookies only work over plain `http` on `localhost`, and the admin name, email and password (at least 8 characters). After confirmation it SHALL generate `POSTGRES_PASSWORD` (URL-safe hex) and `BETTER_AUTH_SECRET` with `openssl`, and write `FRONTEND_PORT`, `CORS_ORIGIN` (the public URL), `POSTGRES_PASSWORD`, `DATABASE_URL` (pointing at `db:5432/stack`), `BETTER_AUTH_SECRET`, `ADMIN_NAME`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`, every value single-quoted, to a file created with mode `600`. It SHALL download `compose.prod.yml` from the `garabato` repository when it is missing and SHALL offer to pull and start the stack.
 
 #### Scenario: Fresh deployment
 

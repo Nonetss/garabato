@@ -7,7 +7,7 @@
 # compose (compose.prod.yml).
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Nonetss/garabato/main/scripts/bootstrap.sh | bash
 #
 # Requirements: docker, openssl, curl.
 #
@@ -26,7 +26,7 @@ ENV_FILE="$TARGET_DIR/.env"
 # Branch or tag used to download compose.prod.yml. Override: PB_REF=v0.1.0 ...
 # This only pins compose.prod.yml: the images it references stay on `:main`.
 PB_REF="${PB_REF:-main}"
-RAW_REPO="https://raw.githubusercontent.com/Nonetss/stack"
+RAW_REPO="https://raw.githubusercontent.com/Nonetss/garabato"
 
 # ── Output helpers ───────────────────────────────────────────────────────────
 if [[ -t 1 ]]; then

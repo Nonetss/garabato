@@ -47,7 +47,7 @@ Comandos: `docker:build`, `docker:up`, `docker:logs` y `docker:down`.
 
 ## `compose.prod.yml`: producción
 
-Usa las imágenes publicadas `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main`
+Usa las imágenes publicadas `ghcr.io/nonetss/garabato-{frontend,backend,gateway}:main`
 y los mismos cinco servicios en una red `stack`. Toda la configuración sale
 de un `.env` junto al compose, en el directorio del servidor.
 
@@ -61,7 +61,7 @@ crea el admin al arrancar.
 ### Instalar en un servidor nuevo
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/garabato/main/scripts/bootstrap.sh | bash
 ```
 
 `bootstrap.sh` trabaja en el directorio donde lo ejecutas:

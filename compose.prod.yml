@@ -2,7 +2,7 @@ name: stack
 
 services:
   frontend:
-    image: ghcr.io/nonetss/stack-frontend:main
+    image: ghcr.io/nonetss/garabato-frontend:main
     container_name: stack-frontend
     init: true
     # Reached only through the gateway, which publishes the site
@@ -26,7 +26,7 @@ services:
       - stack
 
   backend:
-    image: ghcr.io/nonetss/stack-backend:main
+    image: ghcr.io/nonetss/garabato-backend:main
     container_name: stack-backend
     init: true
     expose:
@@ -59,7 +59,7 @@ services:
   # site routes /rpc, /api, /scalar and /openapi.json to the backend and the
   # rest to the frontend.
   gateway:
-    image: ghcr.io/nonetss/stack-gateway:main
+    image: ghcr.io/nonetss/garabato-gateway:main
     container_name: stack-gateway
     ports:
       # Host port comes from .env (scripts/bootstrap.sh prompts for it); the

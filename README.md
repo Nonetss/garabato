@@ -295,7 +295,7 @@ overridden in the compose file.
 
 ### Docker Compose (production, prebuilt images)
 
-- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/stack-{frontend,backend,gateway}:main` images, plus `db` (Postgres) and `loki`, and a bundled MinIO (`pgsty/silo`) for documents under the `minio` profile (`COMPOSE_PROFILES=minio` in `.env`); leave the profile off to use an external S3-compatible store set in the `S3_*` variables
+- Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/garabato-{frontend,backend,gateway}:main` images, plus `db` (Postgres) and `loki`, and a bundled MinIO (`pgsty/silo`) for documents under the `minio` profile (`COMPOSE_PROFILES=minio` in `.env`); leave the profile off to use an external S3-compatible store set in the `S3_*` variables
 - Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
 - Only the gateway publishes a public port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port. The bundled MinIO's console is on the host's loopback (`127.0.0.1:9001`, use an SSH tunnel) and its S3 API is never published
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
@@ -305,7 +305,7 @@ prompts for the public URL and admin credentials, generates `.env`, downloads
 `compose.prod.yml` if missing, and can start the stack:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Nonetss/garabato/main/scripts/bootstrap.sh | bash
 ```
 
 Session cookies are `Secure`, so outside `localhost` the stack must be served
