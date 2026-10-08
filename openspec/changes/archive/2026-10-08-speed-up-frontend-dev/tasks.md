@@ -54,4 +54,4 @@
 ## 10. Final validation
 
 - [x] 10.1 `bun run check-types`, Biome on changed files, `docker compose -f compose.dev.yml config --quiet` and `docker compose -f apps/gateway/compose.yml config --quiet`
-- [ ] 10.2 Ask the user to update `.env` if not done, restart the dev stack, run `bun run dev:cert`, trust the CA and confirm that only `4321` is published, that the console shows no service worker errors after one reload, that `https://localhost:4321` loads over `h2` (Network → Protocol column), sign-in works and HMR applies an edit
+- [x] 10.2 Ask the user to update `.env` if not done, restart the dev stack, run `bun run dev:cert`, trust the CA and confirm that only `4321` is published, that the console shows no service worker errors after one reload, that `https://localhost:4321` loads over `h2` (Network → Protocol column), sign-in works and HMR applies an edit
