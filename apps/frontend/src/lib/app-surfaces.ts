@@ -130,7 +130,7 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
   home: {
     id: "home",
     path: "/",
-    title: "Inicio",
+    title: "Garabato",
     label: "Inicio",
     description: "Sube un PDF y fírmalo con uno de tus certificados.",
     icon: iconRef("navigation", "home"),
