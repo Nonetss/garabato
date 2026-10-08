@@ -12,6 +12,11 @@ function pagesLabel(count: number) {
   return `${count} páginas`
 }
 
+/** "3 páginas · 412 KB": the facts under a library card's name. */
+export function documentFacts(document: DocumentSummary) {
+  return `${pagesLabel(document.pageCount)} · ${formatFileSize(document.sizeBytes)}`
+}
+
 export interface DocumentsRowContext {
   onDownload: (document: DocumentSummary) => void
   onDelete: (document: DocumentSummary) => void

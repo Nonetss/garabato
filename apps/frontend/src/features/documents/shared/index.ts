@@ -4,6 +4,7 @@ export {
   useDocument,
   useDocumentDelete,
   useDocumentFile,
+  useDocumentPreviewFile,
   useDocumentSign,
   useDocuments,
   useDocumentUpload,

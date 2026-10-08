@@ -4,11 +4,16 @@ const DocumentIcon = getIcon("navigation", "documents")
 const UploadIcon = getIcon("actions", "upload")
 
 import { useState } from "react"
+import {
+  SegmentedPicker,
+  type SegmentedPickerOption,
+} from "@/components/shared/form/segmented-picker"
 import { HeroCount } from "@/components/shared/layout/page-hero"
 import { EntityList } from "@/components/shared/resource/entity-list"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { DocumentGrid } from "@/features/documents/overview/components/document-grid"
 import { UploadDocumentDialog } from "@/features/documents/overview/components/upload-document-dialog"
 import {
   type DocumentsRowContext,
@@ -22,13 +27,38 @@ import {
   useDocumentDelete,
   useDocuments,
 } from "@/features/documents/shared"
+import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { notifyError } from "@/lib/toast"
+
+type DocumentsView = "grid" | "list"
+
+const viewOptions: readonly SegmentedPickerOption<DocumentsView>[] = [
+  { value: "grid", label: "Miniaturas" },
+  { value: "list", label: "Lista" },
+]
+
+// `?vista=lista` keeps the list across reloads; the thumbnails are the default.
+const viewCodec: QueryParamCodec<DocumentsView> = {
+  parse: (raw) => {
+    if (raw === "lista") return "list"
+    return "grid"
+  },
+  serialize: (value) => {
+    if (value === "list") return "lista"
+    return "miniaturas"
+  },
+}
 
 export function DocumentsContent() {
   const { data: documents = [], isPending, isError, refetch } = useDocuments()
   const deleteDocument = useDocumentDelete()
   const [uploadOpen, setUploadOpen] = useState(false)
+  const [view, setView] = useQueryParam<DocumentsView>(
+    "vista",
+    "grid",
+    viewCodec
+  )
 
   const deleteDialog = useTargetConfirmDialog<DocumentSummary>({
     title: documentLabels.deleteTitle,
@@ -72,6 +102,21 @@ export function DocumentsContent() {
           />
         }
         heroAction={uploadButton}
+        filters={
+          documents.length > 0 ? (
+            <div className="-mt-2 flex justify-end">
+              <div className="w-52">
+                <SegmentedPicker
+                  label="Vista"
+                  options={viewOptions}
+                  value={view}
+                  onChange={setView}
+                  columns={2}
+                />
+              </div>
+            </div>
+          ) : null
+        }
         query={{ data: documents, isPending, isError, refetch }}
         loading="Cargando documentos..."
         error={{
@@ -88,13 +133,18 @@ export function DocumentsContent() {
           action: uploadButton,
         }}
       >
-        {(data) => (
-          <EntityList
-            items={data}
-            context={rowContext}
-            definition={documentDefinition}
-          />
-        )}
+        {(data) => {
+          if (view === "list") {
+            return (
+              <EntityList
+                items={data}
+                context={rowContext}
+                definition={documentDefinition}
+              />
+            )
+          }
+          return <DocumentGrid documents={data} context={rowContext} />
+        }}
       </ResourceOverview>
 
       <UploadDocumentDialog open={uploadOpen} onOpenChange={setUploadOpen} />

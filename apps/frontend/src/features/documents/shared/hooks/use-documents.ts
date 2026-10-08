@@ -32,6 +32,19 @@ export const useDocumentFile = (id: string, versionNumber?: number) =>
     staleTime: Number.POSITIVE_INFINITY,
   })
 
+/**
+ * The current version's bytes for a library thumbnail, fetched only once the
+ * thumbnail is `enabled` (scrolled near the viewport). Shares its cache entry
+ * with `useDocumentFile(id)`, so opening the document reuses the download and
+ * a new signature refreshes both.
+ */
+export const useDocumentPreviewFile = (id: string, enabled: boolean) =>
+  useHydratedQuery({
+    ...orpc.v1.document.download.queryOptions({ input: { id } }),
+    staleTime: Number.POSITIVE_INFINITY,
+    enabled,
+  })
+
 export const downloadDocumentVersion = (id: string, versionNumber?: number) =>
   orpc.v1.document.download.call(
     { id, versionNumber },
