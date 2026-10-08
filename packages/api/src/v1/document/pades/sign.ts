@@ -1,10 +1,15 @@
-import signpdf from "@signpdf/signpdf"
+import { SignPdf } from "@signpdf/signpdf"
 import {
   stampContent,
   type VisibleAppearance,
 } from "#v1/document/pades/appearance"
 import { addPlaceholder } from "#v1/document/pades/placeholder"
 import { PadesSigner, type SignerIdentity } from "#v1/document/pades/signer"
+
+// The named class, not the default instance: the backend bundle imports this
+// CommonJS package in Node interop mode, where `default` is the whole
+// `module.exports` and `default.sign` is undefined.
+const signpdf = new SignPdf()
 
 export type SignPdfOptions = {
   identity: SignerIdentity
