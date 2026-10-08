@@ -6,6 +6,10 @@
    Importing it here bakes it into the bundled stylesheet so it always persists. */
 @import "sonner/dist/styles.css";
 @import "@fontsource-variable/schibsted-grotesk";
+/* The real italic, so `italic` (deleted comments, anonymous actors, empty
+   cron fields) never renders as a slanted roman. Not preloaded: the browser
+   fetches it only on a page that sets italic text. */
+@import "@fontsource-variable/schibsted-grotesk/wght-italic.css";
 @import "@fontsource-variable/jetbrains-mono";
 @import "./typeset.css";
 
