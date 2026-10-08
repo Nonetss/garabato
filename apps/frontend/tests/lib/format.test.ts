@@ -14,6 +14,7 @@ import {
   formatDuration,
   formatDurationMs,
   formatFileSize,
+  formatPages,
   formatRelativeDay,
   getDateBucketLabel,
 } from "@/lib/format"
@@ -104,5 +105,15 @@ describe("formatFileSize", () => {
     expect(formatFileSize(512)).toBe("512 B")
     expect(formatFileSize(1536)).toBe("1,5 KB")
     expect(formatFileSize(20 * 1024 * 1024)).toBe("20 MB")
+  })
+})
+
+describe("formatPages", () => {
+  test("numbers pages from 1, sorted, and joins ranges of three or more", () => {
+    expect(formatPages([])).toBe("—")
+    expect(formatPages([0])).toBe("1")
+    expect(formatPages([2, 0])).toBe("1, 3")
+    expect(formatPages([0, 1])).toBe("1, 2")
+    expect(formatPages([2, 1, 0])).toBe("1–3")
   })
 })

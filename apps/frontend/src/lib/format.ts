@@ -140,3 +140,16 @@ export function formatFileSize(bytes: number): string {
   const digits = unit === 0 ? 0 : 1
   return `${value.toLocaleString("es-ES", { maximumFractionDigits: digits })} ${FILE_SIZE_UNITS[unit]}`
 }
+
+/** 1-based page list for display: "1", "1–3", "1, 3". */
+export function formatPages(pages: number[]): string {
+  if (pages.length === 0) return "—"
+  const sorted = [...pages].sort((a, b) => a - b).map((page) => page + 1)
+  const first = sorted[0]
+  const last = sorted.at(-1)
+  const contiguous = sorted.every(
+    (page, index) => page === (first ?? 0) + index
+  )
+  if (contiguous && sorted.length > 2) return `${first}–${last}`
+  return sorted.join(", ")
+}

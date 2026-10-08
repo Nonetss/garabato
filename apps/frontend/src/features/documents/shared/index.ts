@@ -17,7 +17,6 @@ export {
 } from "@/features/documents/shared/hooks/use-documents"
 export { usePdfDocument } from "@/features/documents/shared/hooks/use-pdf-document"
 export {
-  formatPages,
   MAX_PDF_BYTES,
   type PdfFileProblem,
   pdfFileProblem,

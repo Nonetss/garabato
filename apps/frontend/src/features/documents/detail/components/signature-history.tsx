@@ -1,7 +1,7 @@
 import { Text } from "@/components/shared/brand/typography"
 import { SoftCardList } from "@/components/shared/data-display/soft-card-list"
-import { formatPages, type SignatureRecord } from "@/features/documents/shared"
-import { formatDateTime } from "@/lib/format"
+import type { SignatureRecord } from "@/features/documents/shared"
+import { formatDateTime, formatPages } from "@/lib/format"
 
 function placementLabel(record: SignatureRecord) {
   if (!record.visible) return "Firma invisible"
