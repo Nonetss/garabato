@@ -8,7 +8,8 @@
     "build": "astro build",
     "check-types": "astro check",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "bun test"
   },
   "dependencies": {
     "@astrojs/node": "11.1.7",
@@ -43,9 +44,13 @@
   },
   "devDependencies": {
     "@astrojs/check": "catalog:",
+    "@happy-dom/global-registrator": "^20.14.5",
     "@nonete/config": "workspace:*",
     "@tailwindcss/language-server": "^0.16.0",
     "@tailwindcss/vite": "catalog:",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/bun": "catalog:",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "dotenv": "catalog:",
