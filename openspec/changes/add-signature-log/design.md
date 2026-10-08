@@ -51,11 +51,11 @@ Fetch `limit + 1` and pass a `count()` query with the same joins and filters min
 A new `signatures` feature with a single `overview` slice (no `shared` slice: only one consumer):
 
 - `components/signatures-page.tsx` (provider boundary) and `signatures-content.tsx` (hero with total, `ResourceFilters`, list, sentinel, empty and no-match `StateCard`s).
-- `components/signature-row.tsx`: a button row in a `divide-y` list; `components/signature-detail-sheet.tsx`: a `Sheet` like `certificate-signatures-sheet.tsx`, with the facts in a `<dl>` and `CopyButton` on hashes and fingerprint.
+- `definitions/signature.definition.tsx`: the rows as an `EntityList` definition whose row opens the detail; `components/signature-detail-sheet.tsx`: a `Sheet` like `certificate-signatures-sheet.tsx`, with the facts in a `<dl>` and `CopyButton` on hashes and fingerprint.
 - `hooks/use-signature-log.ts`: filter state, the query input, the infinite query and the certificate options query, modelled on `use-activity-log.ts`; the text filter goes through `useDebouncedValue`.
 - `model/filters.ts`: pure helpers — filters → query input (day bounds), placement label ("Firma invisible" / "Visible en página(s) …"), deleted-name label — so they can be unit-tested without rendering.
 
-Reuse `formatPages` (today exported only by `features/documents/shared`) for page numbers: re-export it from the `documents` feature's public `index.ts` so the `signatures` feature imports it from `@/features/documents`, never from another feature's slice. The `signatures` surface goes in `app-surfaces.ts` with `nav: { primary: true }` after `certificates`, and a `signatures` entry in `navigationIcons` (`Lucide.FileSignature`). The page is `apps/frontend/src/pages/signatures/index.astro` with the same layout as `/documents` and `scrollToTop`.
+`formatPages` moves from `features/documents/shared/model/files.ts` to `src/lib/format.ts`: it is a generic formatter with two feature consumers now, and importing it through the `documents` barrel at runtime would pull Astro-only modules into the model code and its tests. The `SignatureRecord` type is re-exported from `@/features/documents` (type-only import). The `signatures` surface goes in `app-surfaces.ts` with `nav: { primary: true }` after `certificates`, and a `signatures` entry in `navigationIcons` (`Lucide.FileSignature`). The page is `apps/frontend/src/pages/signatures/index.astro` with the same layout as `/documents` and `scrollToTop`.
 
 ## Risks / Trade-offs
 

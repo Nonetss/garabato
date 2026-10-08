@@ -40,8 +40,9 @@ in Spanish.
 - **Document signing**: a PDF library with thumbnails (`/documents`), a viewer
   that places the visible signature, versions and a signature history
   (`/documents/[id]`), and digital certificates stored encrypted
-  (`/certificates`). The home page (`/`) is a drop zone that opens the
-  document ready to sign
+  (`/certificates`), and a log of every signature with its certificate,
+  hashes and filters (`/signatures`). The home page (`/`) is a drop zone that
+  opens the document ready to sign
 - **Astro + TailwindCSS**: SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI), light/dark/system theme
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
 - **Better Auth**: email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
@@ -63,6 +64,7 @@ Every page except login and signup requires a session.
 | `/` | Drop a PDF and open it ready to sign |
 | `/documents`, `/documents/[id]` | The library, then the viewer: place the signature, sign, versions and signature history |
 | `/certificates` | Import and keep the digital certificates used to sign |
+| `/signatures` | The signature log: every signature, filtered by certificate, document name and dates, with each record's full detail |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
 | `/config/profile`, `/config/appearance` | Profile settings and theme |
