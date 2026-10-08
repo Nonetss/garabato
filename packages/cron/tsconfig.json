@@ -1,0 +1,8 @@
+{
+  "extends": "@nonete/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "outDir": "dist",
+    "composite": true
+  }
+}
