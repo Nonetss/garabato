@@ -59,6 +59,7 @@ export const documentOutput = {
     versions: z.array(version).describe("Oldest first"),
     signatures: z.array(signatureRecord).describe("Newest first"),
   }),
+  rename: documentSummary,
   download: z.file().describe("The PDF of the requested version"),
   delete: z.object({ id: z.uuid(), success: z.boolean() }),
   sign: z.object({ version, signature: signatureRecord }),

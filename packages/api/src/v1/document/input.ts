@@ -53,6 +53,16 @@ export const documentInput = {
       .describe("Version to download; the current one when omitted"),
   }),
 
+  rename: z.object({
+    id,
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .describe("New name; `.pdf` is appended when missing"),
+  }),
+
   delete: z.object({ id }),
 
   sign: z.object({

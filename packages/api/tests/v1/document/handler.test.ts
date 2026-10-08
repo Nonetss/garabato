@@ -19,7 +19,7 @@ import { type PdfFixture, pdfFixture } from "#tests/fixtures/document-files"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { fakeObjectStorage } from "#tests/fixtures/object-storage"
 import { verifySignatures } from "#tests/fixtures/pdf-signatures"
-import { documentHandler, documentName } from "#v1/document/handler"
+import { documentHandler, documentName, pdfName } from "#v1/document/handler"
 import type { documentInput } from "#v1/document/input"
 
 type SignInput = z.infer<typeof documentInput.sign>
@@ -136,6 +136,16 @@ describe("documentName", () => {
     expect(documentName("../../etc/acuerdo")).toBe("acuerdo.pdf")
     expect(documentName("a\u0000b\u001f.pdf")).toBe("ab.pdf")
     expect(documentName("   ")).toBe("documento.pdf")
+  })
+})
+
+describe("pdfName", () => {
+  test("strips control characters and ensures .pdf", () => {
+    expect(pdfName("Contrato firmado")).toBe("Contrato firmado.pdf")
+    expect(pdfName("Acuerdo.PDF")).toBe("Acuerdo.PDF")
+    expect(pdfName("  a\u0007b  ")).toBe("ab.pdf")
+    expect(pdfName("\u0000")).toBe("documento.pdf")
+    expect(pdfName("x".repeat(300))).toBe(`${"x".repeat(196)}.pdf`)
   })
 })
 
@@ -367,6 +377,42 @@ describe("document.download", () => {
       documentHandler.download({ context, input: { id: DOC_ID } }),
       "INTERNAL_SERVER_ERROR"
     )
+  })
+})
+
+describe("document.rename", () => {
+  test("renames an owned document and returns its summary", async () => {
+    const { document, version } = await storedDocument()
+    fakeDb.queue("update", [{ ...document, name: "Contrato final.pdf" }])
+    fakeDb.queue("query.documentVersions.findMany", [version])
+    fakeDb.queue("select", [])
+
+    const result = await documentHandler.rename({
+      context,
+      input: { id: DOC_ID, name: "Contrato final" },
+    })
+
+    expect(written("update")).toEqual({ name: "Contrato final.pdf" })
+    expect(result).toMatchObject({
+      id: DOC_ID,
+      name: "Contrato final.pdf",
+      versionCount: 1,
+      signatureCount: 0,
+      sizeBytes: version.sizeBytes,
+    })
+  })
+
+  test("answers NOT_FOUND when nothing owned matches", async () => {
+    fakeDb.queue("update", [])
+
+    await expectErrorCode(
+      documentHandler.rename({
+        context,
+        input: { id: DOC_ID, name: "Otro" },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("query.documentVersions.findMany")).toEqual([])
   })
 })
 

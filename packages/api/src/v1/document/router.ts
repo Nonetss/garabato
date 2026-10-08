@@ -65,6 +65,22 @@ export const documentRouter = {
       documentHandler.download({ context, input })
     ),
 
+  rename: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Rename a document",
+        description:
+          "Changes the name of one of the caller's documents. Control characters are stripped and `.pdf` is appended when missing. Signature records show the new name.",
+        tags: ["Documents"],
+        method: "PATCH",
+      })
+    )
+    .input(documentInput.rename)
+    .output(documentOutput.rename)
+    .handler(({ context, input }) =>
+      documentHandler.rename({ context, input })
+    ),
+
   delete: protectedProcedure
     .meta(
       openapi({

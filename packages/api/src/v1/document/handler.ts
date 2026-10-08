@@ -54,14 +54,18 @@ function sha256(bytes: Uint8Array) {
   return createHash("sha256").update(bytes).digest("hex")
 }
 
-// Base name only, no control characters, at most 200 characters, `.pdf`.
-export function documentName(fileName: string) {
-  const base = fileName.split(/[\\/]/).at(-1) ?? ""
+// No control characters, at most 200 characters, ending in `.pdf`.
+export function pdfName(name: string) {
   // biome-ignore lint/suspicious/noControlCharactersInRegex: stripping them is the point
-  const clean = base.replace(/[\u0000-\u001f\u007f]/g, "").trim()
+  const clean = name.replace(/[\u0000-\u001f\u007f]/g, "").trim()
   if (clean === "") return "documento.pdf"
   if (/\.pdf$/i.test(clean)) return clean.slice(-200)
   return `${clean.slice(0, 196)}.pdf`
+}
+
+// An uploaded file's base name, without the client's directories.
+export function documentName(fileName: string) {
+  return pdfName(fileName.split(/[\\/]/).at(-1) ?? "")
 }
 
 // `contrato.pdf` for the current version, `contrato (v1).pdf` for older ones.
@@ -507,6 +511,25 @@ export const documentHandler = {
       downloadName(document.name, version.number, version === current),
       { type: "application/pdf" }
     )
+  },
+
+  rename: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.rename>
+  }) => {
+    const userId = requireUserId(context)
+    const [row] = await db
+      .update(documents)
+      .set({ name: pdfName(input.name) })
+      .where(ownedActive(userId, input.id))
+      .returning()
+    const document = assertFound(row, NOT_FOUND_MESSAGE)
+    const versions = await versionsOf(document.id)
+    const records = await signaturesOfDocument(userId, document.id)
+    return summaryOf(document, versions, records)
   },
 
   delete: async ({
