@@ -8,7 +8,7 @@ web
 
 ## Users
 
-stack es la plantilla personal del usuario, reconstruida sobre la base del `stack` original. Por ahora el único visitante es el propio usuario operando su scaffold: revisando crons, gestionando organizaciones / usuarios / API keys y comentarios, y leyendo logs y docs. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
+Garabato (sobre la base del template `stack`) lo usa por ahora el propio usuario para firmar sus PDF con sus certificados digitales: sube un documento, coloca la firma visible, firma y descarga. No le interesan paneles de pendientes ni recientes; le interesa ir del archivo al PDF firmado rápido y saber con qué certificado va a firmar. Cuando el producto tenga usuarios externos, este fichero se actualiza para describirlos.
 
 ## Product Purpose
 
@@ -25,7 +25,8 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 - **Autenticación** con email/password (y OIDC opcional) vía Better Auth, sesiones, roles (admin) y protección por rol en `/admin`.
 - **Organizaciones, equipos, miembros e invitaciones** vía el plugin `organization` de Better Auth, con control de acceso dinámico.
 - **API keys** como método de autenticación machine-to-machine (`@better-auth/api-key`).
-- **Cron scheduling y management** (`/crons`, `/crons/[id]`) con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles.
+- **Firma de documentos**: biblioteca de PDF con miniaturas (`/documents`), visor con colocación de la firma visible, versiones e historial de firmas (`/documents/[id]`), y certificados digitales guardados cifrados (`/certificates`). El inicio (`/`) es una zona para soltar un PDF que abre el documento listo para firmar.
+- **Cron scheduling y management** (`/crons`, `/crons/[id]`) con un scheduler en el propio backend que ejecuta procedimientos de la API marcados como elegibles. Se conserva por si se usa en el futuro, pero está fuera de la navegación, del inicio y del buscador.
 - **RPC tipado** vía oRPC en `packages/api`, versionado (`src/<version>/`) por feature.
 - **Comentarios** sobre cualquier recurso; **iconos de entidad** personalizables.
 - **Registro de actividad** (`/admin/logs`) sobre Loki.
@@ -39,7 +40,7 @@ Logo propio: una firma de un solo trazo sobre línea base, estilo Lucide (trazo 
 
 ## Brand Commitments
 
-**Estilo visual "quiet editorial", heredado del `stack` original.** Las reglas de `DESIGN.md` son obligaciones vigentes: monocromo con un único acento naranja (`primary`) reservado a icono de hero, CTA principal y punto de estado activo; `destructive` solo para fallos o acciones irreversibles; nunca verde/azul/ámbar semánticos. Tipografía: **Space Grotesk Variable** (UI) y **Space Mono** (código, `tabular-nums`). Anatomía: `PageShell maxWidth="6xl"` para listas, `Detail.astro` para detalle, cabeceras con `PageHero`, listas en `divide-y`, hechos en una franja `border-y` con `<dl>`, estados con `StateCard` y formularios en `FormDialog`. Excepciones: `components/ui/**` (shadcn base), el chrome de `features/app-shell` y los formularios de login/signup.
+**Estilo visual "quiet editorial", heredado del `stack` original.** Las reglas de `DESIGN.md` son obligaciones vigentes: monocromo con un único acento naranja (`primary`) reservado a icono de hero, CTA principal y punto de estado activo; `destructive` solo para fallos o acciones irreversibles; nunca verde/azul/ámbar semánticos. La paleta de color actual es una decisión del usuario y no se cambia sin que lo pida. Tipografía: **Schibsted Grotesk Variable** (UI) y **JetBrains Mono Variable** (datos, `tabular-nums`). Superficies de firma: la hoja (`shadow-sheet` sobre `bg-desk`) y la rúbrica del logo como único momento de movimiento (ver `DESIGN.md`, "Signing surfaces"). Anatomía: `PageShell maxWidth="6xl"` para listas, `Detail.astro` para detalle, cabeceras con `PageHero`, listas en `divide-y`, hechos en una franja `border-y` con `<dl>`, estados con `StateCard` y formularios en `FormDialog`. Excepciones: `components/ui/**` (shadcn base), el chrome de `features/app-shell` y los formularios de login/signup.
 
 Voz: consola técnica, clara, sin ornamento.
 

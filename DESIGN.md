@@ -10,6 +10,7 @@ colors:
   neutral-card-fg: "oklch(0.1908 0.002 106.5859)"
   neutral-border: "oklch(0.94 0.003 97.3627)"
   neutral-input: "oklch(0.92 0.004 98.3528)"
+  desk: "oklch(0.9665 0.0067 97.3521)"   # `bg-desk`: the surface a PDF sheet rests on (dark: oklch(0.2213 0.0038 106.707))
   destructive: "oklch(0.1908 0.002 106.5859)"
   destructive-fg: "oklch(1 0 0)"
   dark-bg: "oklch(0.2679 0.0036 106.6427)"
@@ -21,51 +22,51 @@ colors:
   dark-destructive: "oklch(0.6368 0.2078 25.3313)"
 typography:
   sans:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
   mono:
-    fontFamily: "Space Mono, ui-monospace, monospace"
+    fontFamily: "JetBrains Mono Variable, JetBrains Mono, ui-monospace, monospace"
   display:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
-    fontSize: "1.125rem"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
+    fontSize: "1.5rem"
     fontWeight: 600
-    lineHeight: 1.2
+    lineHeight: 1.15
     letterSpacing: "-0.025em"
   headline:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "1rem"
     fontWeight: 500
     lineHeight: 1.4
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 500
     letterSpacing: "-0.025em"
   body:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "0.875rem"
     lineHeight: 1.5
   meta:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "0.8125rem"
     lineHeight: 1.625
   stat:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "1.5rem"
     fontWeight: 500
     lineHeight: 1.1
     letterSpacing: "-0.025em"
   label:
-    fontFamily: "Space Grotesk Variable, Space Grotesk, sans-serif"
+    fontFamily: "Schibsted Grotesk Variable, Schibsted Grotesk, sans-serif"
     fontSize: "0.6875rem"
     fontWeight: 500
     letterSpacing: "0.12em"
     textCase: "uppercase"
 rounded:
-  sm: "calc(0.375rem - 4px)"   # 2px
-  md: "calc(0.375rem - 2px)"   # 4px
-  lg: "0.375rem"               # 6px (radius base)
-  xl: "calc(0.375rem + 4px)"   # 10px
+  sm: "calc(0.25rem - 4px)"    # 0px
+  md: "calc(0.25rem - 2px)"    # 2px
+  lg: "0.25rem"                # 4px (radius base) — near-square sheets
+  xl: "calc(0.25rem + 4px)"    # 8px
   container: "0.75rem"          # 12px — list containers, state cards
 spacing:
   px: "0.25rem"                # Tailwind 1 unit
@@ -199,17 +200,17 @@ Dark theme mirrors the same roles with a slightly warm dark surface (`oklch(0.26
 
 ## Typography
 
-**Display / Sans:** Space Grotesk Variable (Space Grotesk fallback), `font-sans`.
-**Body:** Space Grotesk Variable — same family as display, sized down.
-**Mono:** Space Mono (`font-mono`), reserved for expressions, cron strings, IDs, durations, and any value that needs `tabular-nums`. Never the default for UI copy. Ships as static 400/700 weights only — no variable axis.
+**Display / Sans:** Schibsted Grotesk Variable (`@fontsource-variable/schibsted-grotesk`), `font-sans`.
+**Body:** Schibsted Grotesk Variable — same family as display, sized down.
+**Mono:** JetBrains Mono Variable (`@fontsource-variable/jetbrains-mono`, `font-mono`), reserved for fingerprints, serials, IDs, durations, cron strings and any value that needs `tabular-nums`. Never the default for UI copy. Both faces ship one variable `wght` file, preloaded in `layouts/font-preload.astro`.
 
-**Character.** The pairing reads like a technical zine: a geometric sans with a distinctive squared-off personality (Space Grotesk) for prose, paired with a typewriter-precise monospace (Space Mono) for technical values. There is no third face — no serif display, no system fallback masquerading as a choice. System fonts are explicitly excluded by the brand commitment.
+**Character.** A grotesk cut for printed paper (Schibsted) for prose, paired with a clear monospace for technical values. Garabato is a sheet and a pen: the type reads like a well-set form, the signature is the only hand-drawn thing. There is no third face — no serif display, no system fallback masquerading as a choice.
 
 ### Hierarchy
 
 Every role below is a `variant` of the `Text` component (`components/shared/brand/typography.tsx`), which owns its full recipe on top of the `--font-size-*` / `--line-height-*` / `--tracking-*` tokens in `global.css`. Call sites pick a role and a tone (`default`, `muted`, `primary`, `destructive`) and keep only layout in `className`; components that can't be a `Text` (shadcn primitives, `button`, `summary`, `Input`) take the same classes through `textVariants({ role, tone })`.
 
-- **Display** (`font-semibold`, `text-lg`, `tracking-tight`, `line-height: 1.2`): page title in `PageHero`, used on both overview and detail pages. Single line, never eyebrowed.
+- **Display** (`font-semibold`, `1.5rem`, `tracking-tight`, `line-height: 1.15`): page title in `PageHero`, used on both overview and detail pages. Single line, never eyebrowed.
 - **Headline** (`font-medium`, `text-base`, `tracking-tight`): tile and card titles (`SurfaceCard`).
 - **Title** (`font-medium`, `text-sm`, `tracking-tight`): the name of a list row, a picker result or a selected entity — the body-size counterpart to Headline.
 - **Body** (`text-sm`, `line-height: 1.5`): prose, form values, fact values inside `MetadataCell`.
@@ -218,7 +219,7 @@ Every role below is a `variant` of the `Text` component (`components/shared/bran
 - **Label** (micro-caps, `0.6875rem`, `font-medium`, `uppercase`, `0.12em` tracking, `muted-foreground` at full opacity): the recurring field label in fact rows, form fields, filters, section headings and tile subaccess. This is the signature detail that ties the whole system together. Full opacity, not `/80` — the faded version fails WCAG AA contrast (3.33:1 light mode).
 - **Status** (`text-xs`, `uppercase`, `0.08em` tracking): state words ("Vigente", "En pausa"); `StatusTag` adds the dot.
 - **Stat** (`1.5rem`, `font-medium`, `tabular-nums`, `line-height: 1.1`): a single big number in an overview fact cell.
-- **Data** (`Space Mono`, `text-xs`, `tabular-nums`, `tracking-tight`): any technical value — cron expressions, durations, ISO timestamps, IDs, keys, JSON.
+- **Data** (`JetBrains Mono`, `text-xs`, `tabular-nums`, `tracking-tight`): any technical value — cron expressions, durations, ISO timestamps, IDs, keys, JSON.
 - **Compact** (`text-xs`): any other dense copy — menu descriptions, secondary row lines, dialog and sheet descriptions, footers.
 
 ### Named Rules
@@ -582,7 +583,7 @@ If an icon needs to change, update it in `icon-registry.ts` — all references p
 - **Do** reserve Brand Terracotta for hero icon, primary CTA, and "alive" state dot.
 - **Do** wrap list rows in one `divide-y` container; one container per page.
 - **Do** use `FieldLabel` for form labels, `SectionHeading` for section titles and the `label` role of `Text` for every other micro-caps label; never hand-build the class string.
-- **Do** set text through a `Text` role (or `textVariants` on a component's `className`); use the `data` role (Space Mono, `tabular-nums`) for cron expressions, durations, ISO timestamps, and IDs.
+- **Do** set text through a `Text` role (or `textVariants` on a component's `className`); use the `data` role (JetBrains Mono, `tabular-nums`) for cron expressions, durations, ISO timestamps, and IDs.
 - **Do** name every icon-only control with a `Hint` bubble and keep its `aria-label`.
 - **Do** animate list entrances with `dash-enter` and a `--dash-delay` step of ~40ms.
 - **Do** reach for `FormDialog` + `FormField` for every create/edit dialog; let it own header/footer hairlines.
@@ -620,3 +621,15 @@ The style applies to product surfaces (lists, detail, forms, settings). It does 
 - `components/ui/**` (shadcn base — they remain the available primitives).
 - `features/app-shell` chrome (navbar, sidebar, theme toggle) — small adjustments permitted.
 - `/login`, `/signup` — may stay as form-card; not a list/detail page.
+
+## Signing surfaces (Garabato)
+
+The colour tokens above are pinned by the user and do not change; the signing product speaks through type, near-square corners, the sheet and the rubric.
+
+- **The sheet.** A PDF page (viewer, library thumbnail) or the home drop zone is a sheet: `bg-white` (`bg-background` for the drop zone), `rounded-sm`/`rounded-lg`, `shadow-sheet` (a soft offset paper shadow, the one sanctioned resting shadow besides back-to-top), resting on `bg-desk`. The home page and the document viewer pane sit on `bg-desk`.
+- **The rubric** (`components/shared/brand/rubric.tsx`): the logo's single stroke over its baseline as live SVG, the stroke in `stroke-brand` (the logo terracotta). `motion="write"` draws it once (the home drop zone), `motion="loop"` keeps writing during an upload, `static` marks a signed document's thumbnail corner. Reduced motion always shows the finished mark. It is the product's one authored motion moment.
+- **Home** (`/`): a signing desk, no stats and no pending/recent panels. The drop zone (`features/documents/overview/components/document-drop-zone.tsx`) owns the `h1` ("Suelta un PDF para firmarlo"); a dropped or picked PDF is validated (`pdfFileProblem`), uploaded and opened at `/documents/<id>?firmar=1` with signing open. The side column lists the certificates that will sign (status, expiry, whether the password is remembered) and links to the library.
+- **Library** (`/documents`): thumbnails by default (`DocumentGrid`, first page rendered lazily with pdf.js through `useDocumentPreviewFile`), `?vista=lista` switches to the `EntityList` rows. Name, facts (`3 páginas · 412 KB`) and a `StatusTag` sit under each sheet; actions live in `RowActionsMenu`.
+- **Document detail** (`/documents/[id]`): `Detail.astro fillViewport` pins the page to the viewport; from `lg` only the PDF pane (and the side panel when it overflows) scrolls, below `lg` the page root scrolls as one.
+- **Crons** stay routable at `/crons` but are out of the navbar, the home and the surface search.
+
