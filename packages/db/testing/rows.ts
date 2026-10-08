@@ -1,5 +1,6 @@
 /** Complete rows with fixed defaults, for queueing on the fake database. */
 import type {
+  certificates,
   comments,
   entityIcons,
   member,
@@ -15,6 +16,7 @@ export type CronRunRow = typeof cronRun.$inferSelect
 export type UserRow = typeof user.$inferSelect
 export type SessionRow = typeof session.$inferSelect
 export type CommentRow = typeof comments.$inferSelect
+export type CertificateRow = typeof certificates.$inferSelect
 export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
@@ -99,6 +101,36 @@ export function commentRow(overrides: Partial<CommentRow> = {}): CommentRow {
     entityId: "00000000-0000-4000-8000-000000000001",
     parentId: null,
     authorId: "user-1",
+    deletedAt: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+// The sealed columns hold placeholders: a test that decrypts them overrides
+// them with values sealed by the vault for the row's id.
+export function certificateRow(
+  overrides: Partial<CertificateRow> = {}
+): CertificateRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000c1",
+    userId: "user-1",
+    alias: "Personal",
+    commonName: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+    givenName: "JUAN",
+    surname: "ESPAÑOL PÉREZ",
+    taxId: "12345678Z",
+    issuerCommonName: "AC PRUEBAS AUTOFIRMAS",
+    serialNumber: "1DA4064E22D19F8E5ADFA4F4A5C540E11AE51FB9",
+    fingerprintSha256:
+      "79e9b2ecc60d29095afd435a404e828b5b84bb91e1c3a19e435c5650444148dc",
+    keyAlgorithm: "RSA",
+    notBefore: new Date("2025-01-01T00:00:00.000Z"),
+    notAfter: new Date("2027-01-01T00:00:00.000Z"),
+    encryptedDataKey: Buffer.from("wrapped-data-key"),
+    encryptedP12: Buffer.from("sealed-p12"),
+    encryptedPassword: null,
     deletedAt: null,
     createdAt: NOW,
     updatedAt: NOW,
