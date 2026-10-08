@@ -25,6 +25,16 @@ export const env = createEnv({
         (value) => Buffer.from(value, "base64").length === 32,
         "must decode to exactly 32 bytes"
       ),
+    // S3-compatible object store for documents: the bundled MinIO
+    // (http://minio:9000 in compose, http://localhost:9000 for native dev) or
+    // any external service. The bucket must exist; the bundled MinIO's init
+    // service creates it.
+    S3_ENDPOINT: z.url(),
+    S3_BUCKET: z.string().min(1),
+    S3_REGION: z.string().min(1).default("us-east-1"),
+    S3_ACCESS_KEY_ID: z.string().min(1),
+    // Also the bundled MinIO's root password, which must be ≥ 8 characters.
+    S3_SECRET_ACCESS_KEY: z.string().min(8),
     // Node Environment
     NODE_ENV: z
       .enum(["development", "production", "test"])

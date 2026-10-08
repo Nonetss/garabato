@@ -1,6 +1,7 @@
 import { mock } from "bun:test"
 
 import { fakeDb } from "#tests/fixtures/db"
+import { fakeObjectStorage } from "#tests/fixtures/object-storage"
 
 /**
  * Preloaded before every test file (`bunfig.toml`). Importing the procedure
@@ -20,6 +21,12 @@ const placeholders = {
   // 32 bytes of 0x01: a fixed vault master key, so sealed values are
   // reproducible across runs.
   CERTIFICATE_ENCRYPTION_KEY: "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+  // Never dialled: `#shared/object-storage` is replaced by an in-memory fake.
+  S3_ENDPOINT: "http://127.0.0.1:1",
+  S3_BUCKET: "unit-test",
+  S3_REGION: "us-east-1",
+  S3_ACCESS_KEY_ID: "unit-test",
+  S3_SECRET_ACCESS_KEY: "unit-test-secret",
 }
 
 /**
@@ -48,4 +55,9 @@ mock.module("@nonete/db", () => ({
   db: fakeDb.db,
   createDb: () => fakeDb.db,
   closeDb: async () => {},
+}))
+
+// Same for the document store: no unit test may reach an S3 endpoint.
+mock.module("#lib/object-storage", () => ({
+  objectStorage: fakeObjectStorage.storage,
 }))
