@@ -147,6 +147,7 @@ It checks what the code reads and writes, not the SQL. Queue results in the orde
   - `tests/lib/<file>.test.ts` covers `src/lib`.
   - `tests/hooks/<hook>.test.tsx` covers `src/hooks`.
   - `tests/components/<group>/<component>.test.tsx` covers `src/components/shared`.
+  - `tests/features/<domain>/<file>.test.ts` covers pure model helpers of a feature (`features/<domain>/**/model/`).
 - Render with `@testing-library/react` (`render`, `renderHook`, `act`, `fireEvent`, `screen`), query by role and accessible name, and call `cleanup()` in `afterEach`: `bun test` doesn't clean up on its own. There is no `user-event` and no `jest-dom`.
 - Not covered yet: hooks built on TanStack Query or Better Auth's client, and feature components under `src/features/`.
 

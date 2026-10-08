@@ -152,6 +152,17 @@ function jobSearchDescription(job: {
   return job.cronExpression
 }
 
+/** A document's line in the search: "3 páginas · Firmado". */
+export function documentSearchDescription(document: {
+  pageCount: number
+  signatureCount: number
+}): string {
+  const pages =
+    document.pageCount === 1 ? "1 página" : `${document.pageCount} páginas`
+  if (document.signatureCount === 0) return `${pages} · Sin firmar`
+  return `${pages} · Firmado`
+}
+
 export const surfaceSearchSources = {
   "cron-jobs": defineSearchSource("Tareas programadas", ({ enabled }) =>
     orpc.v1.cron.list.queryOptions({
@@ -161,6 +172,17 @@ export const surfaceSearchSources = {
           params: { id: job.id },
           label: job.name,
           description: jobSearchDescription(job),
+        })),
+    })
+  ),
+  documents: defineSearchSource("Documentos", ({ enabled }) =>
+    orpc.v1.document.list.queryOptions({
+      enabled,
+      select: (documents) =>
+        documents.map((document) => ({
+          params: { id: document.id },
+          label: document.name,
+          description: documentSearchDescription(document),
         })),
     })
   ),

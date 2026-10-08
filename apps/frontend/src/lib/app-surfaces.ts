@@ -34,7 +34,7 @@ export type SurfaceId =
  * `[param]` surface. Resolved by the registry in
  * `features/app-shell/authenticated/model/surface-search-sources.ts`.
  */
-export type SurfaceSearchSourceId = "cron-jobs"
+export type SurfaceSearchSourceId = "cron-jobs" | "documents"
 
 /** Navigation placement for a surface that appears in the navbar/sidebars. */
 export interface SurfaceNavConfig {
@@ -80,7 +80,7 @@ export interface AppSurface {
   search?: false
   /**
    * Makes a dynamic `[param]` surface reachable from the navbar search by
-   * listing its records (each cron job). A plain-data
+   * listing its records (each document). A plain-data
    * key — like `icon` — so this module stays safe to import from Astro
    * frontmatter; ignored on concrete paths.
    */
@@ -170,6 +170,7 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     label: "Documento",
     description: "Vista, versiones y firmas del documento.",
     icon: iconRef("navigation", "documents"),
+    searchSource: "documents",
   },
   certificates: {
     id: "certificates",
