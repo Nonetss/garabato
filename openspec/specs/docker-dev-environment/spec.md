@@ -6,17 +6,17 @@ Provides a hot-reloading Docker Compose dev stack with a local Loki that shares 
 ## Requirements
 ### Requirement: Hot-reloading Docker dev stack
 
-The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `loki` on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend` and `loki` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`, the apps SHALL reach Loki as `loki:3100`, and the backend SHALL reach the database through `DATABASE_URL`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
+The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`, running `frontend`, `backend`, `gateway` and `loki`, plus `minio` and the one-shot `minio-init` under the `minio` profile, on the stack's private network. Like production, the `gateway` SHALL be the only service that publishes a port (`4321:4321`, see "HTTPS and HTTP/2 dev entry on the usual port"). `frontend`, `backend`, `loki` and `minio` SHALL use `expose` only, and no dev service SHALL use `network_mode: host`. Each app SHALL run its development server from source: the frontend `astro dev` on `0.0.0.0:4320` and the backend `bun --hot` on `:3000`. The gateway SHALL reach them as `frontend:4320` and `backend:3000`, the apps SHALL reach Loki as `loki:3100`, the backend SHALL reach the object store at the `S3_ENDPOINT` of `.env` (`http://minio:9000` for the bundled one), and the backend SHALL reach the database through `DATABASE_URL`. `bun run dev` SHALL run `docker compose -f compose.dev.yml up --build --watch` and `bun run dev:down` SHALL remove the containers.
 
 #### Scenario: Starting the dev stack
 
 - **WHEN** a developer runs `bun run dev` with `DATABASE_URL` pointing at a reachable dev PostgreSQL
-- **THEN** compose SHALL build the dev images, start all four services with file watching enabled, and the app SHALL be reachable at `https://localhost:4321`
+- **THEN** compose SHALL build the dev images, start all the services with file watching enabled, and the app SHALL be reachable at `https://localhost:4321`
 
 #### Scenario: Single published port
 
 - **WHEN** the dev stack runs
-- **THEN** only the host port `4321` SHALL be bound by the stack, and the backend (`3000`), the frontend dev server (`4320`) and Loki (`3100`) SHALL NOT be reachable from the host except through the gateway's routing
+- **THEN** only the host port `4321` SHALL be bound by the stack, and the backend (`3000`), the frontend dev server (`4320`), Loki (`3100`) and MinIO (`9000`, `9001`) SHALL NOT be reachable from the host except through the gateway's routing
 
 #### Scenario: Production-like routing in the dev stack
 
@@ -45,6 +45,30 @@ The repo SHALL provide `compose.dev.yml`, with compose project name `stack-dev`,
 
 - **WHEN** a developer runs `bun run loki:start`
 - **THEN** only `loki-native` SHALL start, on `127.0.0.1:3100`, and the apps started with `bun run dev:local` SHALL ship logs to it with the default `LOKI_URL`
+
+### Requirement: Local object storage
+
+`compose.dev.yml` SHALL define, under the `minio` profile, a `minio` service running the `pgsty/silo` image (`server /data --console-address ":9001"`), with its root credentials taken from `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` and its data in a named volume, reachable only on the stack's private network, plus a one-shot `minio-init` service that creates the `S3_BUCKET` bucket when it does not exist and then exits. With that profile active (`COMPOSE_PROFILES=minio` and `S3_ENDPOINT=http://minio:9000` in `.env`) the backend SHALL wait for `minio-init` to complete; without it the backend SHALL use the store set in `.env` and wait for nothing. For native dev, `compose.dev.yml` SHALL define `minio-native` and `minio-native-init` with the same definitions under the `native` profile, `minio-native` published only on `127.0.0.1:9000` (the `S3_ENDPOINT` of `.env.example`) and `127.0.0.1:9001` (its console). `bun run dev` SHALL NOT start them. The root scripts `minio:start` and `minio:stop` SHALL start (detached) and stop only `minio-native` and its init service.
+
+#### Scenario: Uploads to an external store in the dev stack
+
+- **WHEN** `.env` sets `S3_ENDPOINT` to the developer's own S3-compatible store, without the `minio` profile, and the developer runs `bun run dev` and uploads a PDF
+- **THEN** no MinIO container SHALL start and the backend SHALL store the document in that store
+
+#### Scenario: Uploads to the bundled store in the dev stack
+
+- **WHEN** `.env` sets `COMPOSE_PROFILES=minio` and `S3_ENDPOINT=http://minio:9000` and the developer runs `bun run dev` and uploads a PDF
+- **THEN** the backend SHALL store it in the dev MinIO's bucket, created at startup, over the private network
+
+#### Scenario: Standalone MinIO for native dev
+
+- **WHEN** a developer runs `bun run minio:start`
+- **THEN** only `minio-native` and its init service SHALL start, the bucket SHALL exist, and the apps started with `bun run dev:local` SHALL store documents in it with the default `S3_ENDPOINT`
+
+#### Scenario: Data survives restarts
+
+- **WHEN** a developer runs `bun run dev:down` and `bun run dev` again
+- **THEN** the documents uploaded before SHALL still be in the MinIO volume
 
 ### Requirement: Edits reach containers without rebuilding
 
@@ -87,7 +111,7 @@ Each of backend and frontend SHALL have an `apps/<app>/Dockerfile.dev` that inst
 
 ### Requirement: Dev stack uses the native dev configuration
 
-Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `LOKI_URL=http://loki:3100` for both apps. Every other value, including `DATABASE_URL`, `BETTER_AUTH_URL` and `CORS_ORIGIN`, SHALL come from `.env` unchanged.
+Each dev app container SHALL read its configuration from the root `.env` file that native dev reads. The only compose `environment` overrides for the apps SHALL be container addresses: `BACKEND_URL=http://backend:3000` for the frontend and `LOKI_URL=http://loki:3100` for both apps. Every other value, including `DATABASE_URL`, `BETTER_AUTH_URL`, `CORS_ORIGIN` and every `S3_*` setting, SHALL come from `.env` unchanged, so the dev stack stores documents wherever `.env` points.
 
 #### Scenario: Shared data with native dev
 
@@ -105,11 +129,11 @@ Each dev app container SHALL read its configuration from the root `.env` file th
 
 ### Requirement: Coexistence with native dev
 
-Native dev (`bun run dev:local` plus `bun run gateway`, and optionally `bun run loki:start`) SHALL keep working alongside the Docker dev stack and serve the app at the same `https://localhost:4321`. The gateway is required for native dev, because it terminates TLS on `:4321` in front of the host processes `astro dev` (`:4320`) and backend (`:3000`). Because both setups bind the host's `:4321`, the documentation SHALL state that only one of them runs at a time.
+Native dev (`bun run dev:local` plus `bun run gateway`, optionally `bun run loki:start`, and an object store: `bun run minio:start` or an external one set in `S3_ENDPOINT`) SHALL keep working alongside the Docker dev stack and serve the app at the same `https://localhost:4321`. The gateway is required for native dev, because it terminates TLS on `:4321` in front of the host processes `astro dev` (`:4320`) and backend (`:3000`). Because both setups bind the host's `:4321`, the documentation SHALL state that only one of them runs at a time.
 
 #### Scenario: Switching back to native dev
 
-- **WHEN** a developer stops the Docker dev stack and runs `bun run dev:local` and `bun run gateway`
+- **WHEN** a developer stops the Docker dev stack and runs `bun run minio:start`, `bun run dev:local` and `bun run gateway`
 - **THEN** native dev SHALL work at `https://localhost:4321` with the same root `.env` file, the same trusted CA and no extra changes
 
 ### Requirement: Persistent frontend dependency cache
