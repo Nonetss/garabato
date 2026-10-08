@@ -10,6 +10,8 @@ import {
   type DocumentVersion,
   documentSignatures,
   documents,
+  documentTagAssignments,
+  documentTags,
   documentVersions,
 } from "@nonete/db/schema"
 import {
@@ -20,6 +22,7 @@ import {
   eq,
   gte,
   ilike,
+  inArray,
   isNull,
   lt,
   max,
@@ -60,6 +63,9 @@ import { EncryptedPdfError } from "#v1/document/pades/placeholder"
 import { signPdf } from "#v1/document/pades/sign"
 
 const NOT_FOUND_MESSAGE = "Documento no encontrado"
+const SOME_NOT_FOUND_MESSAGE = "Alguno de los documentos no existe"
+const FOLDER_NOT_FOUND_MESSAGE = "Carpeta no encontrada"
+const TAG_NOT_FOUND_MESSAGE = "Alguna de las etiquetas no existe"
 const CERTIFICATE_NOT_FOUND_MESSAGE = "Certificado no encontrado"
 const CHANGED_MESSAGE =
   "El documento ha cambiado desde que lo abriste; recárgalo para firmar la última versión"
@@ -197,7 +203,8 @@ function toLogRecord(row: SignatureLogJoin): SignatureLogRecord {
 function summaryOf(
   document: Document,
   versions: DocumentVersion[],
-  records: SignatureRecord[]
+  records: SignatureRecord[],
+  tagIds: string[]
 ): DocumentSummary {
   const current = versions.at(-1)
   return {
@@ -208,6 +215,9 @@ function summaryOf(
     versionCount: versions.length,
     signatureCount: records.length,
     lastSignedAt: records[0]?.signedAt ?? null,
+    folderId: document.folderId,
+    tagIds,
+    pinnedAt: toIsoOrNull(document.pinnedAt),
     createdAt: toIso(document.createdAt),
     updatedAt: toIso(document.updatedAt),
   }
@@ -232,6 +242,121 @@ async function loadOwned(userId: string, id: string) {
     where: { id, userId, deletedAt: { isNull: true } },
   })
   return assertFound(row, NOT_FOUND_MESSAGE)
+}
+
+type Executor = Pick<typeof db, "select" | "query">
+
+async function tagIdsOf(documentId: string) {
+  const rows = await db
+    .select({ tagId: documentTagAssignments.tagId })
+    .from(documentTagAssignments)
+    .where(eq(documentTagAssignments.documentId, documentId))
+    .orderBy(asc(documentTagAssignments.tagId))
+  return rows.map((row) => row.tagId)
+}
+
+/**
+ * The distinct `ids`, after checking every one is a live document of the
+ * caller; otherwise NOT_FOUND, before anything is written.
+ */
+async function assertOwnedActive(
+  executor: Executor,
+  userId: string,
+  ids: string[],
+  notFoundMessage = SOME_NOT_FOUND_MESSAGE
+) {
+  const unique = [...new Set(ids)]
+  const rows = await executor
+    .select({ id: documents.id })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.userId, userId),
+        isNull(documents.deletedAt),
+        inArray(documents.id, unique)
+      )
+    )
+  if (rows.length !== unique.length) {
+    throw errors.NOT_FOUND({ message: notFoundMessage })
+  }
+  return unique
+}
+
+async function assertOwnedFolder(
+  executor: Executor,
+  userId: string,
+  folderId: string
+) {
+  const folder = await executor.query.documentFolders.findFirst({
+    where: { id: folderId, userId },
+  })
+  assertFound(folder, FOLDER_NOT_FOUND_MESSAGE)
+}
+
+async function assertOwnedTags(
+  executor: Executor,
+  userId: string,
+  tagIds: string[]
+) {
+  const unique = [...new Set(tagIds)]
+  const rows = await executor
+    .select({ id: documentTags.id })
+    .from(documentTags)
+    .where(
+      and(eq(documentTags.userId, userId), inArray(documentTags.id, unique))
+    )
+  if (rows.length !== unique.length) {
+    throw errors.NOT_FOUND({ message: TAG_NOT_FOUND_MESSAGE })
+  }
+}
+
+/**
+ * Crypto-shreds the caller's documents `ids` all-or-nothing: without the data
+ * key no stored version can ever be decrypted again. Names and signature
+ * records stay; tags and pins go. Removing the objects afterwards is
+ * housekeeping, best-effort, since they are unreadable already.
+ */
+async function deleteDocuments(
+  context: Context,
+  userId: string,
+  ids: string[],
+  notFoundMessage = SOME_NOT_FOUND_MESSAGE
+) {
+  const deleted = await db.transaction(async (tx) => {
+    const unique = await assertOwnedActive(tx, userId, ids, notFoundMessage)
+    const rows = await tx
+      .update(documents)
+      .set({ encryptedDataKey: null, deletedAt: new Date(), pinnedAt: null })
+      .where(
+        and(
+          eq(documents.userId, userId),
+          isNull(documents.deletedAt),
+          inArray(documents.id, unique)
+        )
+      )
+      .returning({ id: documents.id })
+    // A concurrent delete got there first: roll the whole batch back.
+    if (rows.length !== unique.length) {
+      throw errors.NOT_FOUND({ message: notFoundMessage })
+    }
+    await tx
+      .delete(documentTagAssignments)
+      .where(inArray(documentTagAssignments.documentId, unique))
+    return unique
+  })
+
+  const versions = await db.query.documentVersions.findMany({
+    where: { documentId: { in: deleted } },
+  })
+  for (const version of versions) {
+    await objectStorage.deleteObject(version.objectKey).catch((error) => {
+      getRequestLogger(context)?.warn(
+        { err: error, objectKey: version.objectKey },
+        "Could not remove a deleted document's object"
+      )
+    })
+  }
+  return deleted
 }
 
 async function versionsOf(documentId: string) {
@@ -457,6 +582,8 @@ export const documentHandler = {
     const userId = requireUserId(context)
     const bytes = new Uint8Array(await input.file.arrayBuffer())
     const pageCount = await pageCountOf(bytes)
+    const folderId = input.folderId ?? null
+    if (folderId !== null) await assertOwnedFolder(db, userId, folderId)
 
     // The id is generated here because the stored objects are bound to it.
     const id = crypto.randomUUID()
@@ -479,6 +606,7 @@ export const documentHandler = {
               userId,
               name: documentName(input.file.name),
               pageCount,
+              folderId,
               encryptedDataKey,
             })
             .returning()
@@ -501,7 +629,7 @@ export const documentHandler = {
           return { document: documentRow, version: versionRow }
         })
     )
-    return summaryOf(document, [version], [])
+    return summaryOf(document, [version], [], [])
   },
 
   list: async ({ context }: { context: Context }) => {
@@ -527,6 +655,19 @@ export const documentHandler = {
       .from(documentSignatures)
       .groupBy(documentSignatures.documentId)
       .as("signature_stats")
+    // `text[]` so the driver hands back plain strings.
+    const tagLists = db
+      .select({
+        documentId: documentTagAssignments.documentId,
+        tagIds: sql<
+          string[]
+        >`array_agg(${documentTagAssignments.tagId} order by ${documentTagAssignments.tagId})::text[]`.as(
+          "tag_ids"
+        ),
+      })
+      .from(documentTagAssignments)
+      .groupBy(documentTagAssignments.documentId)
+      .as("tag_lists")
 
     const rows = await db
       .select({
@@ -535,12 +676,18 @@ export const documentHandler = {
         sizeBytes: currentVersion.sizeBytes,
         signatureCount: signatureStats.signatureCount,
         lastSignedAt: signatureStats.lastSignedAt,
+        tagIds: tagLists.tagIds,
       })
       .from(documents)
       .leftJoin(currentVersion, eq(currentVersion.documentId, documents.id))
       .leftJoin(signatureStats, eq(signatureStats.documentId, documents.id))
+      .leftJoin(tagLists, eq(tagLists.documentId, documents.id))
       .where(and(eq(documents.userId, userId), isNull(documents.deletedAt)))
-      .orderBy(desc(documents.createdAt))
+      // Pinned first, most recently pinned first; then newest first.
+      .orderBy(
+        sql`${documents.pinnedAt} desc nulls last`,
+        desc(documents.createdAt)
+      )
 
     return rows.map(
       (row): DocumentSummary => ({
@@ -551,6 +698,9 @@ export const documentHandler = {
         versionCount: row.versionCount ?? 0,
         signatureCount: row.signatureCount ?? 0,
         lastSignedAt: toIsoOrNull(row.lastSignedAt),
+        folderId: row.document.folderId,
+        tagIds: row.tagIds ?? [],
+        pinnedAt: toIsoOrNull(row.document.pinnedAt),
         createdAt: toIso(row.document.createdAt),
         updatedAt: toIso(row.document.updatedAt),
       })
@@ -568,8 +718,9 @@ export const documentHandler = {
     const document = await loadOwned(userId, input.id)
     const versions = await versionsOf(document.id)
     const records = await signaturesOfDocument(userId, document.id)
+    const tagIds = await tagIdsOf(document.id)
     return {
-      ...summaryOf(document, versions, records),
+      ...summaryOf(document, versions, records, tagIds),
       versions: versions.map(toVersion),
       signatures: records,
     }
@@ -615,7 +766,8 @@ export const documentHandler = {
     const document = assertFound(row, NOT_FOUND_MESSAGE)
     const versions = await versionsOf(document.id)
     const records = await signaturesOfDocument(userId, document.id)
-    return summaryOf(document, versions, records)
+    const tagIds = await tagIdsOf(document.id)
+    return summaryOf(document, versions, records, tagIds)
   },
 
   delete: async ({
@@ -626,26 +778,101 @@ export const documentHandler = {
     input: z.infer<typeof documentInput.delete>
   }) => {
     const userId = requireUserId(context)
-    // Crypto-shredding: without the data key no stored version can ever be
-    // decrypted again. Name and signature records stay.
-    const [row] = await db
-      .update(documents)
-      .set({ encryptedDataKey: null, deletedAt: new Date() })
-      .where(ownedActive(userId, input.id))
-      .returning()
-    const document = assertFound(row, NOT_FOUND_MESSAGE)
+    await deleteDocuments(context, userId, [input.id], NOT_FOUND_MESSAGE)
+    return { id: input.id, success: true }
+  },
 
-    // Removing the objects is housekeeping: they are unreadable already.
-    const versions = await versionsOf(document.id)
-    for (const version of versions) {
-      await objectStorage.deleteObject(version.objectKey).catch((error) => {
-        getRequestLogger(context)?.warn(
-          { err: error, objectKey: version.objectKey },
-          "Could not remove a deleted document's object"
+  deleteMany: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.deleteMany>
+  }) => {
+    const userId = requireUserId(context)
+    const ids = await deleteDocuments(context, userId, input.ids)
+    return { ids, success: true }
+  },
+
+  move: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.move>
+  }) => {
+    const userId = requireUserId(context)
+    const ids = await db.transaction(async (tx) => {
+      const unique = await assertOwnedActive(tx, userId, input.ids)
+      if (input.folderId !== null) {
+        await assertOwnedFolder(tx, userId, input.folderId)
+      }
+      await tx
+        .update(documents)
+        .set({ folderId: input.folderId })
+        .where(and(eq(documents.userId, userId), inArray(documents.id, unique)))
+      return unique
+    })
+    return { ids, success: true }
+  },
+
+  updateTags: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.updateTags>
+  }) => {
+    const userId = requireUserId(context)
+    const ids = await db.transaction(async (tx) => {
+      const unique = await assertOwnedActive(tx, userId, input.ids)
+      await assertOwnedTags(tx, userId, [...input.add, ...input.remove])
+      const add = [...new Set(input.add)]
+      if (add.length > 0) {
+        const pairs = unique.flatMap((documentId) =>
+          add.map((tagId) => ({ documentId, tagId }))
         )
-      })
-    }
-    return { id: document.id, success: true }
+        await tx
+          .insert(documentTagAssignments)
+          .values(pairs)
+          .onConflictDoNothing()
+      }
+      if (input.remove.length > 0) {
+        await tx
+          .delete(documentTagAssignments)
+          .where(
+            and(
+              inArray(documentTagAssignments.documentId, unique),
+              inArray(documentTagAssignments.tagId, input.remove)
+            )
+          )
+      }
+      return unique
+    })
+    return { ids, success: true }
+  },
+
+  setPinned: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.setPinned>
+  }) => {
+    const userId = requireUserId(context)
+    // Pinning again keeps the first pin moment, so the order stays stable.
+    const pinnedAt = input.pinned
+      ? sql`coalesce(${documents.pinnedAt}, now())`
+      : null
+    const ids = await db.transaction(async (tx) => {
+      const unique = await assertOwnedActive(tx, userId, input.ids)
+      await tx
+        .update(documents)
+        .set({ pinnedAt })
+        .where(and(eq(documents.userId, userId), inArray(documents.id, unique)))
+      return unique
+    })
+    return { ids, success: true }
   },
 
   sign: async ({ context, input }: { context: Context; input: SignInput }) => {

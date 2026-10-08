@@ -1,16 +1,17 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test"
 import { entityIconRow, stepArgs } from "@nonete/db/testing"
+import type { z } from "zod"
 import { userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { deleteEntityIcons, entityIconHandler } from "#v1/entity-icon/handler"
+import type { entityIconInput } from "#v1/entity-icon/input"
 import { entityIconTargets } from "#v1/entity-icon/targets"
 
 const TYPE = "test-entity"
 const context = userContext()
 
-// Production registers no target yet; the tests register one the same way an
-// icon-capable feature would.
+// A test-only target, registered the same way an icon-capable feature does.
 const readable = mock(
   async ({ entityIds }: { entityIds: string[] }) =>
     new Set(entityIds.filter((id) => id !== "hidden"))
@@ -154,6 +155,58 @@ describe("entityIcon.clear", () => {
 describe("deleteEntityIcons", () => {
   test("makes no query without ids", async () => {
     await deleteEntityIcons({ entityType: TYPE, entityIds: [] })
+    expect(fakeDb.calls()).toEqual([])
+  })
+})
+
+describe("documentFolder icon target", () => {
+  const FOLDER_ID = "00000000-0000-4000-8000-00000000a001"
+  const input: z.infer<typeof entityIconInput.set> = {
+    entityType: "documentFolder",
+    entityId: FOLDER_ID,
+    icon: "briefcase",
+    color: "blue",
+  }
+
+  test("lets the owner set a folder's icon", async () => {
+    fakeDb.queue("select", [{ id: FOLDER_ID }])
+    fakeDb.queue("insert", [
+      entityIconRow({
+        entityType: "documentFolder",
+        entityId: FOLDER_ID,
+        icon: "briefcase",
+        color: "blue",
+      }),
+    ])
+
+    const icon = await entityIconHandler.set({ context, input })
+
+    expect(icon).toEqual({
+      entityType: "documentFolder",
+      entityId: FOLDER_ID,
+      icon: "briefcase",
+      color: "blue",
+    })
+  })
+
+  test("answers NOT_FOUND for another user's folder", async () => {
+    fakeDb.queue("select", [])
+
+    await expectErrorCode(
+      entityIconHandler.set({ context, input }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("never queries for ids that can't be folders", async () => {
+    await expectErrorCode(
+      entityIconHandler.clear({
+        context,
+        input: { entityType: "documentFolder", entityId: "not-a-uuid" },
+      }),
+      "NOT_FOUND"
+    )
     expect(fakeDb.calls()).toEqual([])
   })
 })

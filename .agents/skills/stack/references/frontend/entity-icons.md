@@ -1,6 +1,6 @@
 # Entity icons (user-chosen Lucide icon + color)
 
-A polymorphic building block, like comments: any entity can carry one Lucide icon and one palette color, chosen by the user. No entity type is registered yet: `entityIconTargets` is empty, so every call is `BAD_REQUEST` until the first consumer opts in.
+A polymorphic building block, like comments: any entity can carry one Lucide icon and one palette color, chosen by the user. The registered types live in `entityIconTargets`; today only `documentFolder` (document folders, readable and writable by their owner, `packages/api/src/v1/document-folder/icon-target.ts`).
 
 ## Pieces
 

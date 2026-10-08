@@ -3,6 +3,7 @@ import { createHash } from "node:crypto"
 import {
   type CertificateRow,
   certificateRow,
+  documentFolderRow,
   documentRow,
   documentSignatureRow,
   documentVersionRow,
@@ -29,6 +30,10 @@ const USER_ID = "user-id"
 const DOC_ID = "00000000-0000-4000-8000-0000000000d1"
 const V1_ID = "00000000-0000-4000-8000-0000000000e1"
 const CERT_ID = "00000000-0000-4000-8000-0000000000c1"
+const DOC2_ID = "00000000-0000-4000-8000-0000000000d2"
+const FOLDER_ID = "00000000-0000-4000-8000-0000000000a1"
+const TAG_A = "00000000-0000-4000-8000-0000000000b1"
+const TAG_B = "00000000-0000-4000-8000-0000000000b2"
 const context = userContext()
 const DOC_SCOPE: VaultScope = { kind: "document", id: DOC_ID }
 
@@ -233,6 +238,57 @@ describe("document.upload", () => {
     )
     expect(fakeDb.calls()).toEqual([])
   })
+
+  test("puts the document in the root when no folder is given", async () => {
+    fakeDb.queue("insert", [documentRow({ id: DOC_ID })])
+    fakeDb.queue("insert", [documentVersionRow()])
+
+    const result = await documentHandler.upload({
+      context,
+      input: { file: new File([await pdfFixture("plain")], "a.pdf") },
+    })
+
+    expect(written("insert", 0)).toMatchObject({ folderId: null })
+    expect(result).toMatchObject({ folderId: null, tagIds: [], pinnedAt: null })
+  })
+
+  test("uploads into one of the caller's folders", async () => {
+    fakeDb.queue("query.documentFolders.findFirst", documentFolderRow())
+    fakeDb.queue("insert", [documentRow({ folderId: FOLDER_ID })])
+    fakeDb.queue("insert", [documentVersionRow()])
+
+    const result = await documentHandler.upload({
+      context,
+      input: {
+        file: new File([await pdfFixture("plain")], "a.pdf"),
+        folderId: FOLDER_ID,
+      },
+    })
+
+    const [call] = fakeDb.calls("query.documentFolders.findFirst")
+    expect(call && stepArgs(call, "findFirst")[0]).toEqual({
+      where: { id: FOLDER_ID, userId: USER_ID },
+    })
+    expect(written("insert", 0)).toMatchObject({ folderId: FOLDER_ID })
+    expect(result.folderId).toBe(FOLDER_ID)
+  })
+
+  test("stores nothing for a folder that isn't the caller's", async () => {
+    fakeDb.queue("query.documentFolders.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.upload({
+        context,
+        input: {
+          file: new File([await pdfFixture("plain")], "a.pdf"),
+          folderId: FOLDER_ID,
+        },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.size).toBe(0)
+  })
 })
 
 describe("document.list", () => {
@@ -244,13 +300,15 @@ describe("document.list", () => {
         sizeBytes: 4096,
         signatureCount: 1,
         lastSignedAt: new Date("2026-02-01T10:00:00.000Z"),
+        tagIds: [TAG_A, TAG_B],
       },
       {
-        document: documentRow({ id: "00000000-0000-4000-8000-0000000000d2" }),
+        document: documentRow({ id: DOC2_ID }),
         versionCount: null,
         sizeBytes: null,
         signatureCount: null,
         lastSignedAt: null,
+        tagIds: null,
       },
     ])
 
@@ -266,7 +324,39 @@ describe("document.list", () => {
       versionCount: 0,
       signatureCount: 0,
       lastSignedAt: null,
+      tagIds: [],
     })
+  })
+
+  test("returns the folder, tags and pin time", async () => {
+    const pinnedAt = new Date("2026-03-01T09:00:00.000Z")
+    fakeDb.queue("select", [
+      {
+        document: documentRow({ folderId: FOLDER_ID, pinnedAt }),
+        versionCount: 1,
+        sizeBytes: 10,
+        signatureCount: 0,
+        lastSignedAt: null,
+        tagIds: [TAG_A],
+      },
+    ])
+
+    const [document] = await documentHandler.list({ context })
+
+    expect(document).toMatchObject({
+      folderId: FOLDER_ID,
+      tagIds: [TAG_A],
+      pinnedAt: "2026-03-01T09:00:00.000Z",
+    })
+  })
+
+  test("orders pinned documents first, then newest first", async () => {
+    fakeDb.queue("select", [])
+
+    await documentHandler.list({ context })
+
+    const [call] = fakeDb.calls("select")
+    expect(call && stepArgs(call, "orderBy")).toHaveLength(2)
   })
 })
 
@@ -289,9 +379,11 @@ describe("document.get", () => {
         certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
       },
     ])
+    fakeDb.queue("select", [{ tagId: TAG_A }])
 
     const result = await documentHandler.get({ context, input: { id: DOC_ID } })
 
+    expect(result.tagIds).toEqual([TAG_A])
     expect(result.versions.map((entry) => entry.number)).toEqual([1, 2])
     expect(result).toMatchObject({ versionCount: 2, signatureCount: 1 })
     expect(result.signatures[0]).toMatchObject({
@@ -386,7 +478,7 @@ describe("document.rename", () => {
     const { document, version } = await storedDocument()
     fakeDb.queue("update", [{ ...document, name: "Contrato final.pdf" }])
     fakeDb.queue("query.documentVersions.findMany", [version])
-    fakeDb.queue("select", [])
+    fakeDb.queue("select", [], [])
 
     const result = await documentHandler.rename({
       context,
@@ -418,9 +510,11 @@ describe("document.rename", () => {
 })
 
 describe("document.delete", () => {
-  test("shreds the key, soft-deletes and removes the objects", async () => {
+  test("shreds the key, drops tags and pin, soft-deletes and removes the objects", async () => {
     const { document, version } = await storedDocument()
-    fakeDb.queue("update", [{ ...document, deletedAt: new Date() }])
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("update", [{ id: document.id }])
+    fakeDb.queue("delete", [])
     fakeDb.queue("query.documentVersions.findMany", [version])
 
     const result = await documentHandler.delete({
@@ -429,14 +523,20 @@ describe("document.delete", () => {
     })
 
     expect(result).toEqual({ id: DOC_ID, success: true })
-    expect(written("update")).toMatchObject({ encryptedDataKey: null })
+    expect(written("update")).toMatchObject({
+      encryptedDataKey: null,
+      pinnedAt: null,
+    })
     expect(field(written("update"), "deletedAt")).toBeInstanceOf(Date)
+    expect(fakeDb.calls("delete")).toHaveLength(1)
     expect(fakeObjectStorage.objects.size).toBe(0)
   })
 
   test("still succeeds when an object cannot be removed", async () => {
-    const { document, version } = await storedDocument()
-    fakeDb.queue("update", [document])
+    const { version } = await storedDocument()
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("update", [{ id: DOC_ID }])
+    fakeDb.queue("delete", [])
     fakeDb.queue("query.documentVersions.findMany", [version])
     fakeObjectStorage.failNext("deleteObject", errors.BAD_GATEWAY())
 
@@ -449,12 +549,234 @@ describe("document.delete", () => {
   })
 
   test("answers NOT_FOUND when nothing owned matches", async () => {
-    fakeDb.queue("update", [])
+    fakeDb.queue("select", [])
 
     await expectErrorCode(
       documentHandler.delete({ context, input: { id: DOC_ID } }),
       "NOT_FOUND"
     )
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+})
+
+describe("document.deleteMany", () => {
+  test("deletes every listed document once", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("update", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("delete", [])
+    fakeDb.queue("query.documentVersions.findMany", [])
+
+    const result = await documentHandler.deleteMany({
+      context,
+      input: { ids: [DOC_ID, DOC2_ID, DOC_ID] },
+    })
+
+    expect(result).toEqual({ ids: [DOC_ID, DOC2_ID], success: true })
+    expect(fakeDb.calls("delete")).toHaveLength(1)
+  })
+
+  test("deletes nothing when one of them isn't the caller's", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+
+    await expectErrorCode(
+      documentHandler.deleteMany({
+        context,
+        input: { ids: [DOC_ID, DOC2_ID] },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("delete")).toEqual([])
+  })
+
+  test("rolls back when a concurrent delete took one of them", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("update", [{ id: DOC_ID }])
+
+    await expectErrorCode(
+      documentHandler.deleteMany({
+        context,
+        input: { ids: [DOC_ID, DOC2_ID] },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("delete")).toEqual([])
+  })
+})
+
+describe("document.move", () => {
+  test("moves a selection into one of the caller's folders", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("query.documentFolders.findFirst", documentFolderRow())
+    fakeDb.queue("update", [])
+
+    const result = await documentHandler.move({
+      context,
+      input: { ids: [DOC_ID, DOC2_ID], folderId: FOLDER_ID },
+    })
+
+    expect(result).toEqual({ ids: [DOC_ID, DOC2_ID], success: true })
+    expect(written("update")).toEqual({ folderId: FOLDER_ID })
+  })
+
+  test("moves documents to the library root", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("update", [])
+
+    await documentHandler.move({
+      context,
+      input: { ids: [DOC_ID], folderId: null },
+    })
+
+    expect(written("update")).toEqual({ folderId: null })
+    expect(fakeDb.calls("query.documentFolders.findFirst")).toEqual([])
+  })
+
+  test("moves nothing when one document isn't the caller's", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+
+    await expectErrorCode(
+      documentHandler.move({
+        context,
+        input: { ids: [DOC_ID, DOC2_ID], folderId: null },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+
+  test("moves nothing into a folder that isn't the caller's", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("query.documentFolders.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.move({
+        context,
+        input: { ids: [DOC_ID], folderId: FOLDER_ID },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+})
+
+describe("document.updateTags", () => {
+  test("adds and removes tags together on every document", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("select", [{ id: TAG_A }, { id: TAG_B }])
+    fakeDb.queue("insert", [])
+    fakeDb.queue("delete", [])
+
+    const result = await documentHandler.updateTags({
+      context,
+      input: { ids: [DOC_ID, DOC2_ID], add: [TAG_A], remove: [TAG_B] },
+    })
+
+    expect(result.ids).toEqual([DOC_ID, DOC2_ID])
+    expect(written("insert")).toEqual([
+      { documentId: DOC_ID, tagId: TAG_A },
+      { documentId: DOC2_ID, tagId: TAG_A },
+    ])
+    const [insert] = fakeDb.calls("insert")
+    expect(insert?.steps.map((step) => step.method)).toContain(
+      "onConflictDoNothing"
+    )
+    expect(fakeDb.calls("delete")).toHaveLength(1)
+  })
+
+  test("only removes when nothing is added", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("select", [{ id: TAG_B }])
+    fakeDb.queue("delete", [])
+
+    await documentHandler.updateTags({
+      context,
+      input: { ids: [DOC_ID], add: [], remove: [TAG_B] },
+    })
+
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("changes nothing when one document isn't the caller's", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+
+    await expectErrorCode(
+      documentHandler.updateTags({
+        context,
+        input: { ids: [DOC_ID, DOC2_ID], add: [TAG_A], remove: [] },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeDb.calls("delete")).toEqual([])
+  })
+
+  test("changes nothing when a tag isn't the caller's", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("select", [{ id: TAG_A }])
+
+    await expectErrorCode(
+      documentHandler.updateTags({
+        context,
+        input: { ids: [DOC_ID], add: [TAG_A], remove: [TAG_B] },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeDb.calls("delete")).toEqual([])
+  })
+
+  test.each([
+    ["no tag at all", { add: [], remove: [] }],
+    ["a tag both added and removed", { add: [TAG_A], remove: [TAG_A] }],
+  ])("rejects %s", (_, tags) => {
+    const parsed = documentInput.updateTags.safeParse({
+      ids: [DOC_ID],
+      ...tags,
+    })
+    expect(parsed.success).toBe(false)
+  })
+})
+
+describe("document.setPinned", () => {
+  test("pins keeping the first pin moment", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("update", [])
+
+    const result = await documentHandler.setPinned({
+      context,
+      input: { ids: [DOC_ID], pinned: true },
+    })
+
+    expect(result).toEqual({ ids: [DOC_ID], success: true })
+    // A coalesce over the stored value, not a fresh timestamp.
+    expect(field(written("update"), "pinnedAt")).not.toBeInstanceOf(Date)
+    expect(field(written("update"), "pinnedAt")).not.toBeNull()
+  })
+
+  test("unpins", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("update", [])
+
+    await documentHandler.setPinned({
+      context,
+      input: { ids: [DOC_ID], pinned: false },
+    })
+
+    expect(written("update")).toEqual({ pinnedAt: null })
+  })
+
+  test("changes nothing when one document isn't the caller's", async () => {
+    fakeDb.queue("select", [])
+
+    await expectErrorCode(
+      documentHandler.setPinned({
+        context,
+        input: { ids: [DOC_ID], pinned: true },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
   })
 })
 

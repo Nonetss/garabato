@@ -6,6 +6,8 @@ import { certificateRouter } from "#v1/certificate/router"
 import { commentRouter } from "#v1/comment/router"
 import { cronRouter } from "#v1/cron/router"
 import { documentRouter } from "#v1/document/router"
+import { documentFolderRouter } from "#v1/document-folder/router"
+import { documentTagRouter } from "#v1/document-tag/router"
 import { entityIconRouter } from "#v1/entity-icon/router"
 import { healthRouter } from "#v1/health/router"
 import { logsRouter } from "#v1/logs/router"
@@ -21,6 +23,8 @@ export const appRouter = {
   comment: commentRouter,
   certificate: certificateRouter,
   document: documentRouter,
+  documentFolder: documentFolderRouter,
+  documentTag: documentTagRouter,
   entityIcon: entityIconRouter,
   private: privateRouter,
   organization: organizationRouter,

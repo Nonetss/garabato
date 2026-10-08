@@ -1,4 +1,8 @@
 import type { Context } from "#context"
+import {
+  DOCUMENT_FOLDER_ENTITY_TYPE,
+  documentFolderIconTarget,
+} from "#v1/document-folder/icon-target"
 
 type AccessArgs = { context: Context; entityIds: string[] }
 
@@ -14,6 +18,7 @@ export type EntityIconTarget = {
 /**
  * Entity types that accept icons. Enabling icons for a new entity type is a
  * new entry here; the table, procedures and frontend components stay as-is.
- * While it is empty, every entityIcon procedure fails with BAD_REQUEST.
  */
-export const entityIconTargets: Record<string, EntityIconTarget> = {}
+export const entityIconTargets: Record<string, EntityIconTarget> = {
+  [DOCUMENT_FOLDER_ENTITY_TYPE]: documentFolderIconTarget,
+}

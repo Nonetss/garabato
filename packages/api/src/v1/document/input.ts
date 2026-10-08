@@ -6,6 +6,15 @@ export const MAX_PDF_BYTES = 20 * 1024 * 1024
 
 const id = z.uuid()
 
+// A batch of the caller's documents; duplicates are ignored.
+const ids = z
+  .array(id)
+  .min(1)
+  .max(100)
+  .describe("1 to 100 of the caller's document ids")
+
+const tagIds = z.array(id).max(100)
+
 // Fractions of the page as displayed (what the browser renders), origin at
 // its top-left; the server maps them to the page's own geometry.
 const rect = z
@@ -41,6 +50,9 @@ export const documentInput = {
       .file()
       .max(MAX_PDF_BYTES)
       .describe("PDF file, at most 20 MiB, not password-protected"),
+    folderId: id
+      .optional()
+      .describe("Folder to put it in; the library root when omitted"),
   }),
 
   get: z.object({ id }),
@@ -66,6 +78,37 @@ export const documentInput = {
   }),
 
   delete: z.object({ id }),
+
+  deleteMany: z.object({ ids }),
+
+  move: z.object({
+    ids,
+    folderId: id
+      .nullable()
+      .describe("Destination folder, or null for the library root"),
+  }),
+
+  updateTags: z
+    .object({
+      ids,
+      add: tagIds.describe("Tags to add; ones already carried are kept"),
+      remove: tagIds.describe("Tags to remove; ones not carried are ignored"),
+    })
+    .refine(
+      (input) => input.add.length + input.remove.length > 0,
+      "Pass at least one tag to add or remove"
+    )
+    .refine(
+      (input) => !input.add.some((tagId) => input.remove.includes(tagId)),
+      "A tag cannot be added and removed at once"
+    ),
+
+  setPinned: z.object({
+    ids,
+    pinned: z
+      .boolean()
+      .describe("Pin (keeping the first pin moment) or unpin the documents"),
+  }),
 
   sign: z.object({
     documentId: id,

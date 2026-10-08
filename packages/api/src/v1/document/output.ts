@@ -63,8 +63,19 @@ const documentSummary = z.object({
   versionCount: z.number().int(),
   signatureCount: z.number().int(),
   lastSignedAt: z.string().nullable(),
+  folderId: z.uuid().nullable().describe("Null for the library root"),
+  tagIds: z.array(z.uuid()).describe("Tags the document carries"),
+  pinnedAt: z
+    .string()
+    .nullable()
+    .describe("When the document was pinned; null when not pinned"),
   createdAt: z.string(),
   updatedAt: z.string(),
+})
+
+const batchResult = z.object({
+  ids: z.array(z.uuid()).describe("The documents changed, without duplicates"),
+  success: z.boolean(),
 })
 
 export type DocumentSummary = z.infer<typeof documentSummary>
@@ -83,6 +94,10 @@ export const documentOutput = {
   rename: documentSummary,
   download: z.file().describe("The PDF of the requested version"),
   delete: z.object({ id: z.uuid(), success: z.boolean() }),
+  deleteMany: batchResult,
+  move: batchResult,
+  updateTags: batchResult,
+  setPinned: batchResult,
   sign: z.object({ version, signature: signatureRecord }),
   signatures: z.array(signatureRecord),
   signatureLog: z.object({
