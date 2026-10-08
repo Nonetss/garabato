@@ -131,12 +131,16 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
       />
 
       <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 overscroll-contain rounded-lg bg-desk p-3 sm:p-6 lg:overflow-y-auto xl:p-8">
+        <div className="flex min-w-0 flex-col rounded-lg bg-desk lg:min-h-0 lg:overflow-hidden">
           {pdf.status === "error" ? (
-            <ViewerState documentId={document.id} />
+            <div className="p-3 sm:p-6 xl:p-8">
+              <ViewerState documentId={document.id} />
+            </div>
           ) : null}
           {pdf.status === "loading" ? (
-            <Skeleton className="aspect-[1/1.414] w-full rounded-sm" />
+            <div className="p-3 sm:p-6 xl:p-8">
+              <Skeleton className="aspect-[1/1.414] w-full rounded-sm" />
+            </div>
           ) : null}
           {pdf.status === "ready" ? (
             <PdfViewer

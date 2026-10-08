@@ -2,6 +2,12 @@ import type { PDFDocumentProxy } from "pdfjs-dist"
 import { type PointerEvent, useEffect, useRef, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PdfPageNav } from "@/features/documents/detail/components/pdf-page-nav"
+import {
+  CURRENT_PAGE_PROBE,
+  clampPageIndex,
+  currentPageIndex,
+} from "@/features/documents/detail/model/page-nav"
 import {
   isUsableRect,
   type PagePoint,
@@ -26,6 +32,10 @@ interface PdfViewerProps {
   stamp: StampPlacement | null
   onDraw: (page: number, rect: StampRect) => void
 }
+
+// Room left above a page scrolled to by the page controls, matching the gap
+// between pages.
+const PAGE_SCROLL_OFFSET = 24
 
 // Renders at the displayed width times the device pixel ratio, capped so a
 // zoomed-out page doesn't allocate a huge canvas.
@@ -195,14 +205,77 @@ function PdfPage({
   )
 }
 
-/** Renders every page of a PDF lazily, with the stamp placement overlay. */
+function pageElements(root: HTMLElement) {
+  return Array.from(root.querySelectorAll<HTMLElement>("[data-pdf-page]"))
+}
+
+/**
+ * Renders every page of a PDF lazily, with the stamp placement overlay and a
+ * bottom bar to jump between pages. Fills a flex column frame.
+ */
 export function PdfViewer(props: PdfViewerProps) {
-  const pages = Array.from({ length: props.pdf.numPages }, (_, index) => index)
+  const count = props.pdf.numPages
+  const pages = Array.from({ length: count }, (_, index) => index)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [current, setCurrent] = useState(0)
+
+  // Tracks the page being read from whichever pane scrolls the viewer (it
+  // changes with the breakpoint), so listen to every scroll in capture phase.
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    const update = () => {
+      const pane = scrollParent(root)
+      if (!pane) return
+      const paneTop = pane.getBoundingClientRect().top
+      const tops = pageElements(root).map(
+        (page) => page.getBoundingClientRect().top - paneTop
+      )
+      const atEnd = pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 1
+      setCurrent(
+        currentPageIndex(tops, pane.clientHeight * CURRENT_PAGE_PROBE, atEnd)
+      )
+    }
+    update()
+    const options = { capture: true, passive: true }
+    document.addEventListener("scroll", update, options)
+    window.addEventListener("resize", update)
+    return () => {
+      document.removeEventListener("scroll", update, options)
+      window.removeEventListener("resize", update)
+    }
+  }, [])
+
+  const goTo = (index: number) => {
+    const root = rootRef.current
+    if (!root) return
+    const pane = scrollParent(root)
+    const page = pageElements(root)[clampPageIndex(index, count)]
+    if (!pane || !page) return
+    const offset =
+      page.getBoundingClientRect().top - pane.getBoundingClientRect().top
+    pane.scrollTo({
+      top: pane.scrollTop + offset - PAGE_SCROLL_OFFSET,
+      behavior: "smooth",
+    })
+  }
+
+  // From `lg` the pages scroll in their own pane above the page controls;
+  // below it the whole route scrolls and the controls stick to its bottom.
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {pages.map((index) => (
-        <PdfPage key={index} {...props} index={index} />
-      ))}
-    </div>
+    <>
+      <div className="min-h-0 flex-1 overscroll-contain p-3 sm:p-6 lg:overflow-y-auto xl:p-8">
+        <div ref={rootRef} className="mx-auto max-w-4xl space-y-6">
+          {pages.map((index) => (
+            <div key={index} data-pdf-page>
+              <PdfPage {...props} index={index} />
+            </div>
+          ))}
+        </div>
+      </div>
+      {count > 1 ? (
+        <PdfPageNav current={current} count={count} onGoTo={goTo} />
+      ) : null}
+    </>
   )
 }

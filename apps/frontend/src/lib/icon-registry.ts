@@ -97,6 +97,8 @@ const controlIcons = {
   chevronDown: Lucide.ChevronDown,
   chevronDownIcon: Lucide.ChevronDown,
   chevronLeft: Lucide.ChevronLeft,
+  first: Lucide.ChevronsLeft,
+  last: Lucide.ChevronsRight,
   chevronLeftIcon: Lucide.ChevronLeft,
   chevronRight: Lucide.ChevronRight,
   chevronRightIcon: Lucide.ChevronRight,
