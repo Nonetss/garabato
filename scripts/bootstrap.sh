@@ -7,7 +7,7 @@
 # compose (compose.prod.yml).
 #
 # Usage:
-#   curl -fsSL https://git.noneweb.online/nonete/better/raw/branch/main/scripts/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Nonetss/stack/main/scripts/bootstrap.sh | bash
 #
 # Requirements: docker, openssl, curl.
 #
@@ -24,10 +24,9 @@ TARGET_DIR="$(pwd -P)"
 ENV_FILE="$TARGET_DIR/.env"
 
 # Branch or tag used to download compose.prod.yml. Override: PB_REF=v0.1.0 ...
-# Gitea serves branches and tags under different paths, so both are tried.
 # This only pins compose.prod.yml: the images it references stay on `:main`.
 PB_REF="${PB_REF:-main}"
-RAW_REPO="https://git.noneweb.online/nonete/better/raw"
+RAW_REPO="https://raw.githubusercontent.com/Nonetss/stack"
 
 # ── Output helpers ───────────────────────────────────────────────────────────
 if [[ -t 1 ]]; then
@@ -273,8 +272,7 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
   log "Downloading compose.prod.yml ($PB_REF)..."
   # compose.prod.yml holds no secrets; restore the usual permissions for it.
   umask 022
-  if ! curl -fsSL "$RAW_REPO/branch/$PB_REF/compose.prod.yml" -o "$COMPOSE_FILE" 2>/dev/null \
-    && ! curl -fsSL "$RAW_REPO/tag/$PB_REF/compose.prod.yml" -o "$COMPOSE_FILE"; then
+  if ! curl -fsSL "$RAW_REPO/$PB_REF/compose.prod.yml" -o "$COMPOSE_FILE"; then
     rm -f "$COMPOSE_FILE"
     err "Could not download compose.prod.yml for '$PB_REF' (no such branch or tag)."
     err ".env is already written; fix PB_REF and download compose.prod.yml by hand."

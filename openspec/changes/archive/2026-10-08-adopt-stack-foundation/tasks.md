@@ -62,7 +62,7 @@
 ## 9. Docker de producción y despliegue
 
 - [x] 9.1 Copiar `apps/backend/Dockerfile` y `apps/frontend/Dockerfile` (multi-stage, `BUN_VERSION=1.4.2`, install con manifiestos primero, runtime sin `node_modules`, migraciones en la imagen del backend) con los `COPY` de los workspaces de este repo
-- [x] 9.2 Escribir `compose.yml` (proyecto `better`, construido desde el repo) con frontend, backend, gateway, db y loki, y `compose.prod.yml` con imágenes `git.noneweb.online/nonete/better-{frontend,backend,gateway}:main`, `db`, `loki`, red `better`, healthchecks y `FRONTEND_PORT`
+- [x] 9.2 Escribir `compose.yml` (proyecto `better`, construido desde el repo) con frontend, backend, gateway, db y loki, y `compose.prod.yml` con imágenes `better-{frontend,backend,gateway}:main` del registry, `db`, `loki`, red `better`, healthchecks y `FRONTEND_PORT`
 - [x] 9.3 Copiar `.github/workflows/docker-build.yml` con la matriz reducida a backend, frontend y gateway y la rama `main`
 - [x] 9.4 Copiar `scripts/bootstrap.sh` apuntando al repo de `better`, sin preguntas de Anthropic/Jev ni `SERVICE_TOKEN`
 - [x] 9.5 Verificar `bun run docker:up`: los tres servicios de la app quedan healthy, solo el gateway publica puerto, el login funciona por el gateway y `/scalar` responde solo a admins

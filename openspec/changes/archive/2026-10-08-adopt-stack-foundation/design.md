@@ -70,7 +70,7 @@ El frontend llama a `/rpc` y `/api/auth` con rutas relativas. En producción Cad
 
 ### 9. Docker e imágenes
 
-Se copian los Dockerfiles de `stack` con dos ajustes: la lista de `COPY <workspace>/package.json` refleja los workspaces de `better` (`apps/{backend,frontend}`, `packages/{api,auth,config,cron,db,env,logger}`), y el backend no ejecuta `generate-grpc`. Las imágenes de producción se publican como `git.noneweb.online/nonete/better-{backend,frontend,gateway}` (mismo registry que `stack`) mediante el workflow de CI adaptado (matriz solo con esas tres imágenes y la rama `main`). `scripts/bootstrap.sh` y `scripts/setup-dev.sh` se adaptan quitando las preguntas de Anthropic/Jev y los secretos de servicio.
+Se copian los Dockerfiles de `stack` con dos ajustes: la lista de `COPY <workspace>/package.json` refleja los workspaces de `better` (`apps/{backend,frontend}`, `packages/{api,auth,config,cron,db,env,logger}`), y el backend no ejecuta `generate-grpc`. Las imágenes de producción se publican como `better-{backend,frontend,gateway}` en el mismo registry que `stack` mediante el workflow de CI adaptado (matriz solo con esas tres imágenes y la rama `main`). `scripts/bootstrap.sh` y `scripts/setup-dev.sh` se adaptan quitando las preguntas de Anthropic/Jev y los secretos de servicio.
 
 ### 10. Versiones alineadas con `stack`
 
@@ -118,6 +118,6 @@ También se trae el bloque `context` de `stack/openspec/config.yaml` (convenció
 
 ## Open Questions
 
-- Registry y nombre de imágenes: se asume `git.noneweb.online/nonete/better-*` y CI en Gitea Actions con runner `amd64` como en `stack`. Confirmar antes de activar el workflow.
+- Registry y nombre de imágenes: se asume el registry de `stack` con imágenes `better-*` y CI en Gitea Actions con runner `amd64` como en `stack`. Confirmar antes de activar el workflow.
 - Rama por defecto: el repo está en `master` y el contexto indica `main` para PRs; el workflow de CI se configura para `main`.
 - Marca/logo: se reutilizan temporalmente los assets de `stack` (logo, iconos PWA, `theme-color`) con el nombre "Better" hasta que haya identidad propia.
