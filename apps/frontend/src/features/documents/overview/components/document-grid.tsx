@@ -16,10 +16,10 @@ import { DocumentThumbnail } from "@/features/documents/overview/components/docu
 import {
   type DocumentsRowContext,
   documentDefinition,
-  documentFacts,
 } from "@/features/documents/overview/definitions/document.definition"
 import {
   type DocumentSummary,
+  documentFacts,
   documentLabels,
 } from "@/features/documents/shared"
 

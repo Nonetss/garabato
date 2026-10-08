@@ -130,7 +130,8 @@ export function PageHero(props: PageHeroProps) {
             {icon}
           </div>
           <div className="min-w-0">
-            <Text as="h1" variant="display">
+            {/* Entity names (a PDF's file name) can be one unbroken token. */}
+            <Text as="h1" variant="display" className="wrap-break-word">
               {title}
             </Text>
             {resolvedDescription ? (

@@ -2,19 +2,11 @@ import type { EntityListDefinition } from "@/components/shared/resource/entity-l
 import {
   type DocumentSummary,
   documentLabels,
+  documentSigningStatus,
+  formatPageCount,
 } from "@/features/documents/shared"
 import { formatDateTime, formatFileSize } from "@/lib/format"
 import { iconRef } from "@/lib/icon-registry"
-
-function pagesLabel(count: number) {
-  if (count === 1) return "1 página"
-  return `${count} páginas`
-}
-
-/** "3 páginas · 412 KB": the facts under a library card's name. */
-export function documentFacts(document: DocumentSummary) {
-  return `${pagesLabel(document.pageCount)} · ${formatFileSize(document.sizeBytes)}`
-}
 
 export interface DocumentsRowContext {
   onDownload: (document: DocumentSummary) => void
@@ -31,14 +23,9 @@ export const documentDefinition: EntityListDefinition<
   getKey: (document) => document.id,
   getAccessibleLabel: (document) => document.name,
   getPrimary: (document) => document.name,
-  getSecondary: (document) => pagesLabel(document.pageCount),
+  getSecondary: (document) => formatPageCount(document.pageCount),
   getOpenHref: (document) => `/documents/${document.id}`,
-  getStatus: (document) => {
-    if (document.signatureCount === 0) {
-      return { tone: "border", label: documentLabels.unsigned }
-    }
-    return { tone: "foreground", label: documentLabels.signed }
-  },
+  getStatus: (document) => documentSigningStatus(document),
   metadata: [
     {
       key: "size",

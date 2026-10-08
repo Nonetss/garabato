@@ -6,6 +6,7 @@ const SignIcon = getIcon("actions", "sign")
 
 import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
+import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
@@ -20,6 +21,8 @@ import { SignatureHistory } from "@/features/documents/detail/components/signatu
 import { VersionList } from "@/features/documents/detail/components/version-list"
 import {
   type DocumentVersion,
+  documentFacts,
+  documentSigningStatus,
   downloadDocumentVersion,
   saveFile,
   useDocument,
@@ -27,7 +30,6 @@ import {
   usePdfDocument,
 } from "@/features/documents/shared"
 import { flagCodec, useQueryParam } from "@/hooks/use-query-param"
-import { formatFileSize } from "@/lib/format"
 import { notifyError } from "@/lib/toast"
 
 function download(documentId: string, versionNumber?: number) {
@@ -95,6 +97,7 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   }
 
   const placing = signing && visible
+  const signingStatus = documentSigningStatus(document)
 
   return (
     // Below `lg` the whole page scrolls inside this root; from `lg` it is
@@ -103,7 +106,14 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
       <PageHero
         icon={<DocumentIcon className="size-5" />}
         title={document.name}
-        description={`${document.pageCount} páginas · ${formatFileSize(document.sizeBytes)} · ${document.signatureCount} firmas`}
+        description={
+          <span className="tabular-nums">{documentFacts(document)}</span>
+        }
+        status={
+          <StatusTag dotTone={signingStatus.tone}>
+            {signingStatus.label}
+          </StatusTag>
+        }
         action={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => download(document.id)}>

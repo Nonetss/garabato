@@ -1,3 +1,8 @@
+export {
+  documentFacts,
+  documentSigningStatus,
+  formatPageCount,
+} from "@/features/documents/shared/definitions/document-facts"
 export { documentLabels } from "@/features/documents/shared/definitions/document-labels"
 export {
   downloadDocumentVersion,
