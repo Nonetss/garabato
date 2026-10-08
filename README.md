@@ -15,6 +15,52 @@ product on top of it is document signing.
 The code is in English; the UI copy and the API error messages users see are
 in Spanish.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/documents-dark.webp">
+  <img alt="The document library: folders with their own icons, PDF thumbnails, pinned documents and colored tags" src="doc/screenshots/documents.webp">
+</picture>
+
+## Screenshots
+
+All the data in these captures is made up: a demo account, self-signed test
+certificates issued by a throwaway CA and generated PDFs.
+
+**Drop a PDF to sign it.** The home page is a drop zone, next to the
+certificates you will sign with.
+
+![The home page: a drop zone for a PDF and the list of certificates the user signs with](doc/screenshots/home.webp)
+
+**Place the signature and sign.** Pick a certificate, choose a visible or
+invisible signature, drag a rectangle on the page and add an optional reason
+and place.
+
+![The viewer in signing mode: a rectangle drawn on the page and the signing panel with the certificate, reason and place](doc/screenshots/sign.webp)
+
+**Every signature is a new version.** The viewer shows the visible stamps,
+the version history (each one downloadable) and who signed with which
+certificate.
+
+![A contract signed twice: two visible stamps on the last page, three versions and two signature records](doc/screenshots/viewer.webp)
+
+**Certificates** are imported from PKCS#12 files and stored encrypted, with
+their validity at a glance.
+
+![The certificates page: three certificates with holder, tax id, issuer and validity bar](doc/screenshots/certificates.webp)
+
+**The signature log** lists every signature with its certificate, version and
+placement, filterable by certificate, document name and dates.
+
+![The signature log: one row per signature with document, certificate, date, version and placement](doc/screenshots/signatures.webp)
+
+**Dark theme and mobile.** Light, dark or system theme, and a layout that
+works on a phone.
+
+<p>
+  <img alt="The signed contract in the dark theme" src="doc/screenshots/viewer-dark.webp" width="66%">
+  <img alt="The document library on a phone" src="doc/screenshots/mobile-documents.webp" width="16%">
+  <img alt="A signed invoice on a phone" src="doc/screenshots/mobile-viewer.webp" width="16%">
+</p>
+
 ## How it fits together
 
 ![The browser only talks to the gateway, which sends the API paths to the backend and everything else to the frontend](doc/diagrams/architecture.svg)
@@ -157,7 +203,7 @@ garabato/
 │   ├── env/            # @t3-oss/env-core validated env access
 │   ├── logger/         # Shared pino logger (+ Loki stream)
 │   └── config/         # Shared tsconfig base
-├── doc/                # Human documentation (Spanish) with diagrams
+├── doc/                # Human documentation (Spanish) with diagrams and screenshots
 ├── openspec/           # Capability specs (openspec/specs) and change proposals
 └── scripts/
     ├── setup-dev.sh    # Generates the local root .env with real secrets
