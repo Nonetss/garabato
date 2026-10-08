@@ -9,7 +9,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - Dev `astro dev` on `:4321` (proxies `/rpc`, `/api`, `/scalar`, `/openapi.json` → `BACKEND_URL`, default `http://localhost:3000`). In Docker, Astro alone listens on `0.0.0.0:4321` (compose `expose`, never `ports`) and `apps/gateway` serves it, plus the backend API, on the public port.
 - Check `astro check`. No unit or end-to-end suite.
 - Middleware `src/middleware.ts` gates auth; layouts in `src/layouts/`; pages in `src/pages/`; features in `src/features/<domain>/`; providers in `src/providers/`; route identity in `src/lib/app-surfaces.ts`.
-- PWA: `public/manifest.webmanifest` and the service worker `public/sw.js`, registered by `Layout.astro` and `Admin.astro`.
+- PWA: `public/manifest.webmanifest` and the service worker `public/sw.js`, registered by `src/layouts/service-worker.astro` (included by `Layout.astro` and `Admin.astro`) in production builds only. In dev that component unregisters any worker and deletes its cache, because the worker would intercept every unbundled Vite module.
 - `scripts/generate-icon-catalog.ts` regenerates the entity icon picker's Lucide catalog (`bun run icons:catalog`, see `frontend/entity-icons.md`).
 
 ### `apps/backend`

@@ -1,0 +1,23 @@
+---
+// Registers the PWA worker (`public/sw.js`) in production builds only. In
+// dev it would intercept every unbundled module Vite serves — hundreds per
+// page — re-fetch it and write a copy to Cache Storage, which makes dev
+// crawl and occasionally fails module loads. So dev instead removes any
+// worker and cache a previous visit left behind on this origin.
+const isProduction = import.meta.env.PROD
+---
+
+{isProduction && (
+  <script is:inline>
+    if ("serviceWorker" in navigator) { window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js") }) }
+  </script>
+)}
+{!isProduction && (
+  <script is:inline>
+    if ("serviceWorker" in navigator) { navigator.serviceWorker
+    .getRegistrations() .then((registrations) =>
+    Promise.all(registrations.map((r) => r.unregister())) ) } if ("caches" in
+    window) caches.delete("stack-shell-v1")
+  </script>
+)}

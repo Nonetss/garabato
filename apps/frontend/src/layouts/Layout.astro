@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { NavbarAuthenticated } from "@/features/app-shell/authenticated"
 import { NavbarGuest, SiteFooter } from "@/features/app-shell/guest"
 import FontPreload from "@/layouts/font-preload.astro"
+import ServiceWorker from "@/layouts/service-worker.astro"
 import { isAdminUser } from "@/lib/auth"
 
 interface Props {
@@ -80,13 +81,7 @@ const isAdmin = isAdminUser(user)
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.webmanifest">
     <meta name="theme-color" content="#262624">
-    <script is:inline>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js")
-      })
-    }
-    </script>
+    <ServiceWorker />
   </head>
   <body
     class:list={[

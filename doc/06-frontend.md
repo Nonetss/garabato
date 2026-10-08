@@ -210,4 +210,7 @@ Los iconos de la interfaz (Lucide) se resuelven por nombre a través de
 ## PWA
 
 La app se puede instalar: tiene `public/manifest.webmanifest` y un service
-worker (`public/sw.js`) que registran los layouts.
+worker (`public/sw.js`) que los layouts registran a través de
+`src/layouts/service-worker.astro`, solo en producción. En desarrollo ese
+componente desregistra el worker y borra su caché, porque interceptaría cada
+uno de los módulos sin empaquetar que sirve Vite.
