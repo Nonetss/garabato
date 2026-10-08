@@ -4,11 +4,6 @@ schema: spec-driven
 # reference repo (/opt/dev/stack); see the stack skill in .agents/skills/stack.
 
 context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-context: |
   Frontend feature convention: features live under
   apps/frontend/src/features/<domain>/. Each direct child is a semantic
   use-case slice (overview, detail, workspace, sign-in, etc.), a domain-local
