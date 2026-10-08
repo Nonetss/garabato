@@ -89,7 +89,14 @@ las cookies `Secure` no funcionarían.
 
 ### Gateway
 
-`caddy:2-alpine` más el `Caddyfile`, sin paso de compilación.
+`caddy:2-alpine` más el `Caddyfile`, sin paso de compilación. El `Caddyfile`
+añade además cabeceras de seguridad básicas a todas las respuestas
+(`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
+`Permissions-Policy`) y quita la cabecera `Server`. HSTS y CSP se dejan fuera a
+propósito: HSTS corresponde a lo que termine el TLS delante, y una CSP necesita
+probarse antes en modo `Report-Only`. Si una funcionalidad necesita cámara,
+micrófono, geolocalización, pagos o USB, hay que relajar `Permissions-Policy`
+ahí.
 
 ### Al añadir un workspace nuevo
 

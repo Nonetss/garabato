@@ -25,6 +25,20 @@ The gateway (`apps/gateway/Caddyfile`, Caddy) SHALL serve an HTTP site on port `
 - **WHEN** a client requests `/scalar` or `/openapi.json`
 - **THEN** the gateway SHALL forward it to the backend
 
+### Requirement: Baseline security headers
+
+Every response from the gateway's HTTP site SHALL carry `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin` and a `Permissions-Policy` that disables `camera`, `microphone`, `geolocation`, `payment` and `usb`, and SHALL omit the `Server` header. The gateway SHALL NOT set `Strict-Transport-Security` (TLS is terminated in front of it) nor a `Content-Security-Policy`.
+
+#### Scenario: Page response headers
+
+- **WHEN** the browser requests `/login` through the gateway
+- **THEN** the response SHALL include the four headers above and no `Server` header
+
+#### Scenario: Framed by another origin
+
+- **WHEN** a page on another origin embeds the app in an `<iframe>`
+- **THEN** the browser SHALL refuse to render it
+
 ### Requirement: Internal services are never exposed
 
 In `compose.prod.yml` the gateway SHALL be the only service with `ports`; the frontend, backend and Loki SHALL use `expose` only, and the `db` service SHALL publish no port. Nothing outside the Docker network SHALL reach the backend, the frontend, Postgres or Loki except through the gateway's HTTP site.
