@@ -11,8 +11,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/node": "11.1.5",
-    "@astrojs/react": "6.0.5",
+    "@astrojs/node": "11.1.7",
+    "@astrojs/react": "7.0.1",
     "@base-ui/react": "^1.8.0",
     "@better-auth/api-key": "catalog:",
     "@fontsource-variable/space-grotesk": "catalog:",

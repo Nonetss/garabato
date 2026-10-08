@@ -7,7 +7,7 @@
       "packages/*"
     ],
     "catalog": {
-      "dotenv": "^17.2.2",
+      "dotenv": "^18.0.6",
       "zod": "^4.6.5",
       "typescript": "^6",
       "@types/bun": "^1.4.2",
@@ -17,9 +17,9 @@
       "@orpc/openapi": "2.0.0-beta.42",
       "@orpc/zod": "2.0.0-beta.42",
       "@orpc/json-schema": "2.0.0-beta.42",
-      "better-auth": "1.7.5",
-      "@better-auth/api-key": "1.7.5",
-      "@better-auth/core": "1.7.5",
+      "better-auth": "1.7.7",
+      "@better-auth/api-key": "1.7.7",
+      "@better-auth/core": "1.7.7",
       "@orpc/client": "2.0.0-beta.42",
       "@orpc/tanstack-query": "2.0.0-beta.42",
       "@orpc/pino": "2.0.0-beta.42",
@@ -29,7 +29,7 @@
       "drizzle-orm": "^1.0.0-rc.4",
       "pg": "^8.23.0",
       "@types/pg": "^8.23.1",
-      "astro": "7.3.2",
+      "astro": "7.3.7",
       "@astrojs/check": "0.9.10",
       "tailwindcss": "^4.3.3",
       "@tailwindcss/vite": "^4.3.3",
@@ -68,7 +68,7 @@
     "tailwind:fix": "cd apps/frontend && tailwint --fix"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.13",
+    "@biomejs/biome": "2.5.15",
     "@nonete/config": "workspace:*",
     "@types/bun": "catalog:",
     "tailwint": "^1.1.15",
@@ -77,6 +77,6 @@
   },
   "packageManager": "bun@1.4.2",
   "overrides": {
-    "@better-auth/core": "1.7.5"
+    "@better-auth/core": "1.7.7"
   }
 }

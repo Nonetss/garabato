@@ -33,7 +33,7 @@ Capacidades confirmadas (todas con spec en `openspec/specs/`):
 - **Tema claro/oscuro/sistema** y **PWA** instalable.
 - **Structured logging** con pino.
 
-Restricciones técnicas: Bun 1.4.2 (`bunfig.toml` con `linker = "isolated"`), versiones fijadas en el `workspaces.catalog` raíz, Biome 2.5.13, `apps/backend` construido con `tsdown`, scripts de Drizzle solo en `packages/db`, migraciones aplicadas por el backend al arrancar, un único `.env` en la raíz, `BETTER_AUTH_SECRET` de al menos 32 caracteres.
+Restricciones técnicas: Bun 1.4.2 (`bunfig.toml` con `linker = "isolated"`), versiones fijadas en el `workspaces.catalog` raíz, Biome 2.5.15, `apps/backend` construido con `tsdown`, scripts de Drizzle solo en `packages/db`, migraciones aplicadas por el backend al arrancar, un único `.env` en la raíz, `BETTER_AUTH_SECRET` de al menos 32 caracteres.
 
 Producto sin decidir (no inventar): identidad de marca propia (logo, dominio, nombre público). Mientras tanto se reutilizan los assets de `stack` con el nombre "Better".
 
@@ -64,4 +64,4 @@ Sin requisito externo confirmado. Por defecto el frontend Astro y shadcn/ui son 
 
 ## Stack
 
-Monorepo Bun + Turborepo. Frontend Astro 7 SSR (`@astrojs/node` standalone) con React islands + Tailwind v4 + shadcn/ui (`base-nova` sobre Base UI, neutral, lucide). Backend Hono 4 + oRPC, construido con `tsdown` a `dist/index.mjs`. Gateway Caddy (`apps/gateway`). Paquetes compartidos: `@nonete/api`, `@nonete/auth`, `@nonete/cron`, `@nonete/db`, `@nonete/env`, `@nonete/logger`, `@nonete/config`. Lint/format: Biome 2.5.13.
+Monorepo Bun + Turborepo. Frontend Astro 7 SSR (`@astrojs/node` standalone) con React islands + Tailwind v4 + shadcn/ui (`base-nova` sobre Base UI, neutral, lucide). Backend Hono 4 + oRPC, construido con `tsdown` a `dist/index.mjs`. Gateway Caddy (`apps/gateway`). Paquetes compartidos: `@nonete/api`, `@nonete/auth`, `@nonete/cron`, `@nonete/db`, `@nonete/env`, `@nonete/logger`, `@nonete/config`. Lint/format: Biome 2.5.15.

@@ -78,7 +78,7 @@ Before writing a new React/UI component, hook, client-side helper or `packages/a
 ## Validation
 
 - Agent validation is `check-types` + Biome, plus `bun run test` (the hermetic `bun test` suite in `packages/api`, the only workspace with a `test` script). Live checks of `/scalar`, `/openapi.json`, `/rpc` or the UI happen only when the user explicitly asks.
-- Biome 2.5.13 (root `biome.json`): 2-space indent, double quotes, no semicolons, 80-col, organize imports on, experimental HTML formatting, Tailwind CSS directives. One override: `**/*.svelte|astro|vue` disables `useConst`, `useImportType`, unused-vars/imports.
+- Biome 2.5.15 (root `biome.json`): 2-space indent, double quotes, no semicolons, 80-col, organize imports on, experimental HTML formatting, Tailwind CSS directives. One override: `**/*.svelte|astro|vue` disables `useConst`, `useImportType`, unused-vars/imports.
 - Tailwind classes: `tailwint` (`bun run tailwind:check`).
 - No ESLint, no Prettier, no Husky.
 
