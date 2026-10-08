@@ -12,8 +12,7 @@ import {
   useState,
 } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import { Hint } from "@/components/shared/feedback/hint"
-import { Button } from "@/components/ui/button"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { formatFileSize } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -158,19 +157,13 @@ export function FileDropField({
         )}
       </label>
       {file ? (
-        <Hint label={removeLabel}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={removeLabel}
-            disabled={disabled}
-            onClick={handleRemove}
-            className="absolute top-1/2 right-3 -translate-y-1/2"
-          >
-            <RemoveIcon className="size-4" />
-          </Button>
-        </Hint>
+        <IconButton
+          label={removeLabel}
+          icon={RemoveIcon}
+          disabled={disabled}
+          onClick={handleRemove}
+          className="absolute top-1/2 right-3 -translate-y-1/2"
+        />
       ) : null}
     </div>
   )

@@ -1,7 +1,5 @@
-import type { ComponentType } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import { Hint } from "@/components/shared/feedback/hint"
-import { Button } from "@/components/ui/button"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { getIcon } from "@/lib/icon-registry"
 
 const FirstIcon = getIcon("controls", "first")
@@ -16,34 +14,6 @@ interface PdfPageNavProps {
   onGoTo: (index: number) => void
 }
 
-function NavButton({
-  label,
-  icon: Icon,
-  disabled,
-  onClick,
-}: {
-  label: string
-  icon: ComponentType<{ className?: string }>
-  disabled: boolean
-  onClick: () => void
-}) {
-  return (
-    <Hint label={label}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="rounded-full"
-        aria-label={label}
-        disabled={disabled}
-        onClick={onClick}
-      >
-        <Icon className="size-4" />
-      </Button>
-    </Hint>
-  )
-}
-
 /** First / previous / next / last controls along the bottom of the viewer. */
 export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
   const atFirst = current <= 0
@@ -53,13 +23,15 @@ export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
       aria-label="Páginas del documento"
       className="sticky bottom-0 z-10 flex shrink-0 items-center justify-center gap-0.5 rounded-b-lg border-t bg-background/90 py-1 backdrop-blur"
     >
-      <NavButton
+      <IconButton
+        className="rounded-full"
         label="Primera página"
         icon={FirstIcon}
         disabled={atFirst}
         onClick={() => onGoTo(0)}
       />
-      <NavButton
+      <IconButton
+        className="rounded-full"
         label="Página anterior"
         icon={PreviousIcon}
         disabled={atFirst}
@@ -74,13 +46,15 @@ export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
       >
         {current + 1} / {count}
       </Text>
-      <NavButton
+      <IconButton
+        className="rounded-full"
         label="Página siguiente"
         icon={NextIcon}
         disabled={atLast}
         onClick={() => onGoTo(current + 1)}
       />
-      <NavButton
+      <IconButton
+        className="rounded-full"
         label="Última página"
         icon={LastIcon}
         disabled={atLast}

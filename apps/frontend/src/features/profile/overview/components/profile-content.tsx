@@ -7,9 +7,8 @@ import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { MetadataDefinitionList } from "@/components/shared/data-display/metadata-cell"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
-import { Hint } from "@/components/shared/feedback/hint"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { UserAvatar } from "@/components/shared/user/avatar"
-import { Button } from "@/components/ui/button"
 import { ChangePasswordDialog } from "@/features/profile/overview/components/change-password-dialog"
 import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
 import { authClient } from "@/lib/auth-client"
@@ -80,16 +79,12 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
             label: "Nombre",
             value: ({ displayName }) => displayName,
             action: (
-              <Hint label="Editar nombre">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Editar nombre"
-                  onClick={() => setEditNameOpen(true)}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-              </Hint>
+              <IconButton
+                label="Editar nombre"
+                icon={Pencil}
+                iconClassName="size-3.5"
+                onClick={() => setEditNameOpen(true)}
+              />
             ),
           },
           {
@@ -107,16 +102,12 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
               </>
             ),
             action: (
-              <Hint label="Cambiar contraseña">
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Cambiar contraseña"
-                  onClick={() => setChangePasswordOpen(true)}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-              </Hint>
+              <IconButton
+                label="Cambiar contraseña"
+                icon={Pencil}
+                iconClassName="size-3.5"
+                onClick={() => setChangePasswordOpen(true)}
+              />
             ),
           },
           {

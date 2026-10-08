@@ -7,6 +7,7 @@ import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -130,17 +131,12 @@ function TagRow({
       >
         {documentLabels.documentCount(tag.documentCount)}
       </Text>
-      <Hint label={documentLabels.deleteTagTitle}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`${documentLabels.delete} ${tag.name}`}
-          onClick={() => onDelete(tag)}
-        >
-          <DeleteIcon aria-hidden />
-        </Button>
-      </Hint>
+      <IconButton
+        label={documentLabels.deleteTagTitle}
+        accessibleLabel={`${documentLabels.delete} ${tag.name}`}
+        icon={DeleteIcon}
+        onClick={() => onDelete(tag)}
+      />
     </li>
   )
 }

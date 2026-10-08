@@ -9,7 +9,7 @@ const DeleteIcon = getIcon("actions", "delete")
 
 import type { ComponentType, ReactNode } from "react"
 import { Text } from "@/components/shared/brand/typography"
-import { Hint } from "@/components/shared/feedback/hint"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { Button } from "@/components/ui/button"
 import { documentLabels } from "@/features/documents/shared"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -23,29 +23,24 @@ function BarAction({
   className,
 }: {
   label: string
-  Icon: ComponentType<{ "aria-hidden"?: boolean }>
+  Icon: ComponentType<{ className?: string }>
   onClick: () => void
   compact: boolean
   className?: string
 }): ReactNode {
   if (compact) {
     return (
-      <Hint label={label}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={label}
-          onClick={onClick}
-          className={className}
-        >
-          <Icon aria-hidden />
-        </Button>
-      </Hint>
+      <IconButton
+        label={label}
+        icon={Icon}
+        onClick={onClick}
+        className={className}
+      />
     )
   }
   return (
     <Button variant="ghost" size="sm" onClick={onClick} className={className}>
-      <Icon aria-hidden />
+      <Icon />
       {label}
     </Button>
   )
@@ -105,16 +100,11 @@ export function SelectionBar({
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:inset-x-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:rounded-lg md:border md:pb-3 md:shadow-lg"
     >
       <div className="flex items-center gap-1">
-        <Hint label={documentLabels.clearSelection}>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={documentLabels.clearSelection}
-            onClick={onClear}
-          >
-            <CloseIcon aria-hidden />
-          </Button>
-        </Hint>
+        <IconButton
+          label={documentLabels.clearSelection}
+          icon={CloseIcon}
+          onClick={onClear}
+        />
         <Text
           variant="title"
           aria-live="polite"

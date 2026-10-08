@@ -3,8 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const Check = getIcon("controls", "check")
 const Copy = getIcon("actions", "copy")
 
-import { Hint } from "@/components/shared/feedback/hint"
-import { Button } from "@/components/ui/button"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard"
 import { notifySuccess } from "@/lib/toast"
 import { cn } from "@/lib/utils"
@@ -55,19 +54,17 @@ export function CopyButton({
 
   const Icon = copied ? Check : Copy
   const displayedLabel = copied ? (copiedLabel ?? `${label} (copiado)`) : label
+  const iconClassName = size === "icon-xs" ? "size-3.5" : "size-4"
 
   return (
-    <Hint label={displayedLabel}>
-      <Button
-        type="button"
-        variant={variant}
-        size={size}
-        aria-label={displayedLabel}
-        onClick={onClick}
-        className={cn("text-muted-foreground", className)}
-      >
-        <Icon className={size === "icon-xs" ? "size-3.5" : "size-4"} />
-      </Button>
-    </Hint>
+    <IconButton
+      label={displayedLabel}
+      icon={Icon}
+      iconClassName={iconClassName}
+      variant={variant}
+      size={size}
+      onClick={onClick}
+      className={cn("text-muted-foreground", className)}
+    />
   )
 }

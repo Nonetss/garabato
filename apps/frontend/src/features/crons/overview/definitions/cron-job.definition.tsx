@@ -4,8 +4,8 @@ const UserRound = getIcon("identity", "user")
 
 import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
+import { IconButton } from "@/components/shared/form/icon-button"
 import type { EntityListDefinition } from "@/components/shared/resource/entity-list"
-import { Button } from "@/components/ui/button"
 import type { CronJob } from "@/features/crons/shared"
 import { cronLabels, useCronSetEnabled } from "@/features/crons/shared"
 import { formatDateTime } from "@/lib/format"
@@ -45,25 +45,21 @@ function CronRowRunsAs({
 function CronRowEnabledToggle({ job }: { job: CronJob }) {
   const setEnabled = useCronSetEnabled(job.id)
   const Icon = job.enabled ? PauseIcon : PlayIcon
+  const hint = job.enabled ? "Pausar" : "Reanudar"
   return (
-    <Hint label={job.enabled ? "Pausar" : "Reanudar"}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="text-muted-foreground"
-        disabled={setEnabled.isPending}
-        aria-label={job.enabled ? `Pausar ${job.name}` : `Reanudar ${job.name}`}
-        aria-pressed={job.enabled}
-        onClick={(event) => {
-          event.preventDefault()
-          event.stopPropagation()
-          setEnabled.mutate({ id: job.id, enabled: !job.enabled })
-        }}
-      >
-        <Icon aria-hidden="true" />
-      </Button>
-    </Hint>
+    <IconButton
+      label={hint}
+      accessibleLabel={`${hint} ${job.name}`}
+      icon={Icon}
+      className="text-muted-foreground"
+      disabled={setEnabled.isPending}
+      aria-pressed={job.enabled}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        setEnabled.mutate({ id: job.id, enabled: !job.enabled })
+      }}
+    />
   )
 }
 
