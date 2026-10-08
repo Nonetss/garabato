@@ -1,12 +1,16 @@
-import { defineConfig } from "drizzle-kit";
-import "varlock/auto-load";
+import dotenv from "dotenv"
+import { defineConfig } from "drizzle-kit"
+
+dotenv.config({
+  path: "../../.env",
+  quiet: true,
+})
 
 export default defineConfig({
   schema: "./src/schema/index.ts",
   out: "./src/migrations",
   dialect: "postgresql",
-  schemaFilter: ["public"],
   dbCredentials: {
     url: process.env.DATABASE_URL || "",
   },
-});
+})

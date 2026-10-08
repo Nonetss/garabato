@@ -1,29 +1,51 @@
 {
-  "name": "@better/db",
+  "name": "@nonete/db",
   "type": "module",
+  "imports": {
+    "#schema": "./src/schema/index.ts",
+    "#schema/*": "./src/schema/*/index.ts",
+    "#seed": "./src/seed/index.ts",
+    "#seed/*": "./src/seed/*.ts",
+    "#*": "./src/*.ts"
+  },
   "exports": {
-    ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    },
+    "./seed": {
+      "default": "./src/seed/index.ts"
+    },
+    "./schema": {
+      "default": "./src/schema/index.ts"
+    },
+    "./schema/*": {
+      "default": "./src/schema/*/index.ts"
+    }
   },
   "scripts": {
-    "build": "tsc -b",
-    "check-types": "tsc -b",
+    "build": "true",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:deploy": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "check-types": "tsc --noEmit -p ."
   },
   "dependencies": {
+    "@nonete/env": "workspace:*",
+    "@nonete/logger": "workspace:*",
+    "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
-    "pg": "^8.23.0",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@better/config": "workspace:*",
-    "@types/pg": "^8.23.1",
-    "drizzle-kit": "1.0.0-rc.4",
-    "typescript": "catalog:",
-    "varlock": "catalog:"
+    "@nonete/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "@types/pg": "catalog:",
+    "drizzle-kit": "^1.0.0-rc.4",
+    "typescript": "catalog:"
   }
 }
