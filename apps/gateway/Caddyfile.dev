@@ -17,6 +17,13 @@
 	skip_install_trust
 	servers {
 		protocols h1 h2
+		# Plain HTTP on :4321 (http://localhost:4321) gets a redirect to
+		# https on the same port instead of Go's "Client sent an HTTP request
+		# to an HTTPS server". http_redirect must come before tls.
+		listener_wrappers {
+			http_redirect
+			tls
+		}
 	}
 }
 
