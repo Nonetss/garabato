@@ -19,6 +19,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@cantoo/pdf-lib": "^2.11.1",
     "@nonete/auth": "workspace:*",
     "@nonete/cron": "workspace:*",
     "@nonete/db": "workspace:*",
@@ -30,10 +31,14 @@
     "@orpc/publisher": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@signpdf/signpdf": "^3.3.0",
+    "@signpdf/utils": "^3.3.0",
+    "asn1js": "^3.0.10",
     "dotenv": "catalog:",
     "drizzle-orm": "catalog:",
     "node-forge": "^1.4.0",
     "pino": "catalog:",
+    "pkijs": "^3.4.1",
     "zod": "catalog:"
   },
   "devDependencies": {
