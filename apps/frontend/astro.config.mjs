@@ -70,7 +70,15 @@ export default defineConfig({
   vite: {
     envDir: repoRoot,
     optimizeDeps: {
-      include: ["@base-ui/react/**"],
+      include: [
+        "@base-ui/react/**",
+        // Injected by <ClientRouter />'s script, which Vite's import scanner
+        // doesn't see: discovered late, they force a dev page reload.
+        "astro/virtual-modules/transitions-events.js",
+        "astro/virtual-modules/transitions-router.js",
+        "astro/virtual-modules/transitions-swap-functions.js",
+        "astro/virtual-modules/transitions-types.js",
+      ],
     },
     ssr: {
       // Runtime image ships no node_modules, so every dependency must be
@@ -78,6 +86,18 @@ export default defineConfig({
       noExternal: process.argv.includes("dev") ? undefined : true,
     },
     server: {
+      // Transform at dev startup what the first visit would otherwise wait
+      // for. A `client:only` island hydrates from the module its page
+      // imported it from — the feature barrel — so warming the barrels
+      // covers each island's whole client graph.
+      warmup: {
+        clientFiles: [
+          "./src/features/**/index.ts",
+          "./src/components/shared/layout/*.tsx",
+          "./src/components/ui/sonner.tsx",
+        ],
+        ssrFiles: ["./src/pages/**/*.astro", "./src/middleware.ts"],
+      },
       proxy: {
         "/rpc": {
           target: backendUrl,
