@@ -33,42 +33,70 @@ bun run dev        # construye, arranca y vigila cambios; Ctrl+C para parar
 bun run dev:down   # elimina los contenedores
 ```
 
-Levanta el frontend (`astro dev`), el backend (`bun --hot`), el gateway y
-Loki con `compose.dev.yml`. No levanta ninguna base de datos: el backend usa la
-de `DATABASE_URL`, que está en otro servidor. Las apps usan la red del host, así que
-leen el mismo `.env` sin cambios y escuchan en los mismos puertos que en
-nativo. No hay volúmenes montados: `docker compose watch` copia tus cambios
-dentro de los contenedores.
+Levanta el frontend (`astro dev`, en `:4320`), el backend (`bun --hot`), el
+gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`) y
+Loki con `compose.dev.yml`. Como en producción, **solo el gateway publica un
+puerto** (`https://localhost:4321`). Las apps y Loki quedan en la red interna
+del stack y se encuentran por nombre de servicio: el compose sobrescribe
+`BACKEND_URL` y `LOKI_URL`, y el resto sale del `.env` sin cambios. No levanta
+ninguna base de datos: el backend usa la de `DATABASE_URL`, que está en otro
+servidor. No se monta el repositorio: `docker compose watch` copia tus cambios
+dentro de los contenedores. Solo hay volúmenes con nombre para la caché de
+Vite (`frontend_vite_cache`) y la autoridad de certificación del gateway
+(`gateway_data`); `bun run dev:down -v` los borra.
 
 | Si editas… | Pasa esto |
 | --- | --- |
 | `apps/*/src`, `packages/*/src`, `apps/frontend/public` | Se sincroniza y la recarga en caliente lo recoge. |
-| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile` | Se sincroniza y se reinicia ese servicio. |
+| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | Se sincroniza y se reinicia ese servicio. |
 | `package.json`, `bun.lock` | Se reconstruyen las imágenes afectadas. |
 
-La red del host solo funciona en Linux, o en Docker Desktop con esa opción
-activada.
 
 ### En nativo (`bun run dev:local`)
 
 ```bash
-bun run loki:start  # solo Loki, en Docker (opcional)
+bun run loki:start  # solo Loki, en Docker, en 127.0.0.1:3100 (opcional)
+bun run gateway     # el gateway de desarrollo: https://localhost:4321
 bun run dev:local   # frontend y backend con Turbo
 ```
+
+En nativo el gateway es obligatorio: es el que sirve `https://localhost:4321`.
+`astro dev` escucha en `:4320` y el inicio de sesión solo funciona en el
+origen del gateway.
 
 También puedes arrancar una sola app con `bun run dev:frontend` o
 `bun run dev:backend`.
 
 ### Dónde está cada cosa
 
-- Web: <http://localhost:4321>
-- API: <http://localhost:3000>
-- Documentación de la API: <http://localhost:4321/scalar> (requiere sesión de admin)
-- Gateway, opcional en desarrollo (`bun run gateway`): <http://localhost:8080>
+- Web: <https://localhost:4321>, el gateway de desarrollo (HTTPS + HTTP/2) y
+  el único puerto que se expone. Manda `/rpc`, `/api`, `/scalar` y
+  `/openapi.json` al backend y el resto a `astro dev`, igual que en producción.
+- Documentación de la API: <https://localhost:4321/scalar> (requiere sesión de admin)
+- Detrás del gateway: el backend en `:3000` y `astro dev` en `:4320`. Con
+  Docker solo existen en la red interna; en nativo son procesos del host en
+  esos puertos, pero el inicio de sesión solo funciona a través de `:4321`.
 
-El gateway no hace falta para desarrollar, porque `astro dev` ya reenvía las
-rutas de la API al backend. Sirve para probar el enrutado tal como será en
-producción.
+### Confiar en el certificado local (una vez)
+
+El gateway firma `https://localhost:4321` con la autoridad de certificación
+local de Caddy, guardada en el volumen `stack-dev_gateway_data` para que no
+cambie entre reinicios. Con el gateway arrancado al menos una vez:
+
+```bash
+bun run dev:cert   # deja caddy-local-root.crt (ignorado por git) en la raíz
+```
+
+Importa ese fichero en el navegador como autoridad de confianza (Chrome:
+`chrome://certificate-manager`, certificados personalizados; Firefox: Ajustes →
+Privacidad y seguridad → Certificados → Ver certificados → Autoridades →
+Importar, marcando que identifique sitios web) y recarga. Si borras el volumen
+(`bun run dev:down -v`) se crea una autoridad nueva y hay que importarla otra
+vez.
+
+El gateway sirve la app en HTTPS porque los navegadores solo usan HTTP/2
+sobre TLS: así los cientos de módulos sin empaquetar que sirve Vite en
+desarrollo comparten una conexión en vez de hacer cola en seis.
 
 ## Base de datos
 

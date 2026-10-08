@@ -1,15 +1,18 @@
 # Docker dev stack: every app runs its own hot-reload server from source and
 # `docker compose watch` syncs edits into the containers (no bind mounts, so
-# node_modules stays the containers' own).
+# node_modules stays the containers' own; only named volumes for caches/data).
 #
 #   bun run dev        # build, start and watch (Ctrl+C stops)
 #   bun run dev:down   # remove the containers
-#   bun run loki:start # only Loki, for native dev (`bun run dev:local`)
+#   bun run loki:start # only Loki on 127.0.0.1:3100, for native dev
 #
-# Behaves like native dev (`bun run dev:local` + `bun run gateway`): the apps
-# run on the host network, read the root .env unchanged and reach each other
-# and Loki through the same localhost addresses and ports. Run one or the
-# other, not both.
+# Like production, the gateway is the only service that publishes a port:
+# https://localhost:4321 (local CA, HTTP/2). The apps and Loki stay on the
+# stack's private network and reach each other by service name; the
+# `environment` overrides below swap .env's localhost addresses for those
+# names, everything else comes from the root .env unchanged. Native dev
+# (`bun run dev:local` + `bun run gateway`) uses the same ports on the host:
+# run one or the other, not both.
 #
 # There is no database here: DATABASE_URL in .env points at a dev PostgreSQL
 # that lives outside the project, on another server.
@@ -21,18 +24,48 @@ x-node-ignore: &node-ignore
   - .astro/
   - .turbo/
 
+# Same image, flags and 720h retention as compose.yml's loki.
+x-loki: &loki
+  image: grafana/loki:3.7.7
+  volumes:
+    - loki_data:/loki
+  command:
+    - -config.file=/etc/loki/local-config.yaml
+    - -validation.allow-structured-metadata=true
+    - -store.retention=720h
+    - -compactor.working-directory=/loki/compactor
+    - -compactor.delete-request-store=filesystem
+    - -compactor.retention-enabled=true
+  healthcheck:
+    test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+    start_period: 10s
+  restart: unless-stopped
+
 services:
   frontend:
     build:
       context: .
       dockerfile: apps/frontend/Dockerfile.dev
     init: true
-    network_mode: host
     env_file:
       - path: .env
         required: false
+    environment:
+      BACKEND_URL: http://backend:3000
+      LOKI_URL: http://loki:3100
+    expose:
+      - "4320"
     depends_on:
       - backend
+    # Vite's optimized-dependency cache outlives container recreation, so a
+    # fresh `bun run dev` doesn't re-optimize and force a reload on the first
+    # page load. Vite re-optimizes on its own when the lockfile or config
+    # hash changes; `bun run dev:down -v` resets it by hand.
+    volumes:
+      - frontend_vite_cache:/app/apps/frontend/node_modules/.vite
     develop:
       watch:
         - action: sync
@@ -69,10 +102,13 @@ services:
       context: .
       dockerfile: apps/backend/Dockerfile.dev
     init: true
-    network_mode: host
     env_file:
       - path: .env
         required: false
+    environment:
+      LOKI_URL: http://loki:3100
+    expose:
+      - "3000"
     develop:
       watch:
         - action: sync
@@ -104,47 +140,59 @@ services:
         - action: rebuild
           path: ./apps/backend/package.json
 
-  # Same image and upstreams as `bun run gateway` (apps/gateway/compose.yml):
-  # its HTTP site on :8080 so it never takes the host's port 80. The app is
-  # still served by `astro dev` on :4321.
+  # The only published port: https://localhost:4321 (Caddyfile.dev: local CA,
+  # HTTP/2) with the production routing to the backend and to `astro dev` on
+  # the private network. The CA persists in gateway_data (`bun run dev:cert`).
   gateway:
     build:
       context: .
       dockerfile: apps/gateway/Dockerfile
-    network_mode: host
+    command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile.dev
+      - --adapter
+      - caddyfile
+    ports:
+      - "4321:4321"
     environment:
-      GATEWAY_HTTP_PORT: "8080"
-      BACKEND_HTTP_UPSTREAM: localhost:3000
-      FRONTEND_HTTP_UPSTREAM: localhost:4321
+      BACKEND_HTTP_UPSTREAM: backend:3000
+      FRONTEND_HTTP_UPSTREAM: frontend:4320
+    volumes:
+      - gateway_data:/data
+    depends_on:
+      - backend
+      - frontend
     develop:
       watch:
         - action: sync+restart
-          path: ./apps/gateway/Caddyfile
-          target: /etc/caddy/Caddyfile
+          path: ./apps/gateway/Caddyfile.dev
+          target: /etc/caddy/Caddyfile.dev
+        - action: sync+restart
+          path: ./apps/gateway/routes.caddy
+          target: /etc/caddy/routes.caddy
 
-  # Activity log sink, published on localhost:3100 (the LOKI_URL in .env).
-  # Same image and flags as compose.yml; nothing waits for it.
+  # Activity log sink for the dev stack, on the private network only (the
+  # apps' LOKI_URL override). Nothing waits for it.
   loki:
-    image: grafana/loki:3.7.7
+    <<: *loki
     container_name: stack-dev-loki
+    expose:
+      - "3100"
+
+  # The same Loki for native dev (`bun run loki:start` / `loki:stop`, profile
+  # `native`), published on 127.0.0.1:3100, the LOKI_URL in .env. `bun run
+  # dev` never starts it; it shares loki_data, so run one or the other.
+  loki-native:
+    <<: *loki
+    container_name: stack-dev-loki-native
+    profiles:
+      - native
     ports:
-      - "3100:3100"
-    volumes:
-      - loki_data:/loki
-    command:
-      - -config.file=/etc/loki/local-config.yaml
-      - -validation.allow-structured-metadata=true
-      - -store.retention=720h
-      - -compactor.working-directory=/loki/compactor
-      - -compactor.delete-request-store=filesystem
-      - -compactor.retention-enabled=true
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3100/ready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
+      - "127.0.0.1:3100:3100"
 
 volumes:
+  frontend_vite_cache:
+  gateway_data:
   loki_data:

@@ -1,0 +1,36 @@
+# Site body shared by every gateway site: the production HTTP site
+# (Caddyfile) and the dev sites (Caddyfile.dev) import it, so dev and
+# production always route the same way.
+
+encode zstd gzip
+
+# Security headers that cost nothing and break nothing the app does today.
+# HSTS belongs to whatever terminates TLS in front of this HTTP-only site,
+# and a CSP needs a Report-Only rollout first (inline scripts in Astro and
+# Scalar), so neither is set here.
+header {
+	# Never guess a MIME type: a served file can't run as script or style
+	X-Content-Type-Options nosniff
+	# No embedding in another site's frame (clickjacking)
+	X-Frame-Options SAMEORIGIN
+	# Other origins only see the origin, never full URLs with ids
+	Referrer-Policy strict-origin-when-cross-origin
+	# Powerful APIs nothing here uses; relax one when a feature needs it
+	Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+	# Don't advertise the server software
+	-Server
+}
+
+# Liveness of the gateway itself, for the compose healthcheck
+handle /health {
+	respond "ok" 200
+}
+
+@backend path /rpc/* /api/* /scalar* /openapi.json
+handle @backend {
+	reverse_proxy {$BACKEND_HTTP_UPSTREAM:backend:3000}
+}
+
+handle {
+	reverse_proxy {$FRONTEND_HTTP_UPSTREAM:frontend:4321}
+}

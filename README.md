@@ -42,9 +42,11 @@ git push -u origin main
 - **One origin.** The gateway serves the site and the API from the same host,
   so the browser never makes cross-origin calls and session cookies just work.
   It is the only place that maps paths to apps; a new public route goes in
-  `apps/gateway/Caddyfile`, never as a published port on another service.
-- **In dev without the gateway**, `astro dev` proxies the same backend paths,
-  so `http://localhost:4321` behaves like production.
+  `apps/gateway/routes.caddy` (shared by the production `Caddyfile` and the
+  dev `Caddyfile.dev`), never as a published port on another service.
+- **In dev, the gateway serves `https://localhost:4321`** over HTTP/2 with a
+  local certificate, in front of `astro dev` on `:4320`, so dev routes exactly
+  like production and Vite's many unbundled modules share one connection.
 - **The backend owns the database.** On startup it applies the committed
   migrations, seeds the admin user and starts the cron scheduler.
 - **Shared packages are raw TypeScript.** `packages/*` have no build step;
@@ -217,13 +219,31 @@ restart the backend.
 ### Run everything
 
 ```bash
-bun run dev        # Docker dev stack with hot reload (Loki included); Ctrl+C stops
-bun run dev:local  # the same apps natively through Turbo (start Loki with `bun run loki:start`)
+bun run dev        # Docker dev stack with hot reload (Loki and the gateway included); Ctrl+C stops
+bun run dev:local  # the same apps natively through Turbo; also run `bun run gateway`
+                   # (and `bun run loki:start` for the activity log)
 ```
 
-- Frontend: [http://localhost:4321](http://localhost:4321)
-- Backend API: [http://localhost:3000](http://localhost:3000); API docs at [http://localhost:4321/scalar](http://localhost:4321/scalar) (admin session)
-- Gateway (optional in dev, `bun run gateway`): [http://localhost:8080](http://localhost:8080), production-like routing in front of both apps
+- App: [https://localhost:4321](https://localhost:4321), the dev gateway (HTTPS + HTTP/2) and the only port dev exposes. It routes `/rpc`, `/api`, `/scalar` and `/openapi.json` to the backend and everything else to `astro dev`, exactly like production.
+- API docs: [https://localhost:4321/scalar](https://localhost:4321/scalar) (admin session)
+- Behind the gateway: the backend on `:3000` and `astro dev` on `:4320`. In the Docker dev stack they are only on its private network. In native dev they are host processes on those ports, but sign-in only works through `:4321`.
+
+#### Trust the local certificate (once)
+
+The dev gateway signs `https://localhost:4321` with Caddy's local certificate
+authority, kept in the `stack-dev_gateway_data` Docker volume so it survives
+restarts. After the gateway has started once:
+
+```bash
+bun run dev:cert   # writes caddy-local-root.crt (git-ignored) at the repo root
+```
+
+Import that file as a trusted certificate authority in your browser (Chrome:
+`chrome://certificate-manager` → custom/local certificates → import as a
+trusted authority; Firefox: Settings → Privacy & Security → Certificates →
+View Certificates → Authorities → Import, trusting it for websites) and reload.
+Removing the volume (`bun run dev:down -v`) creates a new CA that has to be
+imported again.
 
 ### Develop in Docker (hot reload)
 
@@ -232,23 +252,24 @@ bun run dev        # build, start and watch; Ctrl+C stops
 bun run dev:down   # remove the dev containers
 ```
 
-`compose.dev.yml` runs the frontend (`astro dev`), the backend (`bun --hot`)
-and the gateway from `apps/*/Dockerfile.dev`, plus `loki` on
-`localhost:3100` (the `LOKI_URL` in `.env.example`) so `/admin/logs` works in
-development. There is no database service: the backend uses the external dev
-PostgreSQL in `DATABASE_URL`. The apps run on the host network and read the
-root `.env` unchanged, so they use the same ports and `localhost` addresses as
-native dev. `docker compose watch`
-copies your edits into the containers:
+`compose.dev.yml` runs the frontend (`astro dev` on `:4320`) and the backend
+(`bun --hot`) from `apps/*/Dockerfile.dev`, the gateway with
+`apps/gateway/Caddyfile.dev` and `loki`, so `/admin/logs` works in
+development. As in production, **only the gateway publishes a port**
+(`https://localhost:4321`). The apps and Loki stay on the stack's private
+network and reach each other by service name: compose overrides `BACKEND_URL`
+and `LOKI_URL`, and everything else comes from the root `.env` unchanged.
+There is no database service: the backend uses the external dev PostgreSQL in
+`DATABASE_URL`. `docker compose watch` copies your edits into the containers:
 
 | You edit | What happens |
 |---|---|
 | `apps/*/src`, `packages/*/src`, `apps/frontend/public` | synced, hot reload picks it up |
-| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile` | synced, that service restarts |
+| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | synced, that service restarts |
 | `package.json`, `bun.lock` | the affected images rebuild |
 
-- It uses the same ports as native dev (`4321`, `3000`, `8080`): run one or the other, not both.
-- Host networking needs Linux (or Docker Desktop with host networking enabled).
+- It publishes `4321`, which native dev's gateway also uses: run one or the other, not both.
+- The frontend's Vite dependency cache lives in the `frontend_vite_cache` volume, so restarts don't re-optimize; `bun run dev:down -v` resets it (and the gateway's CA).
 - Requires Docker Compose ≥ 2.22 (`watch`).
 
 ## Deployment
@@ -296,12 +317,13 @@ There are no git hooks.
 ## Available Scripts
 
 - `bun run dev`: Start the Docker dev stack with hot reload (`compose.dev.yml`); `dev:down` removes it
-- `bun run dev:local`: Start all applications natively through Turbo
+- `bun run dev:local`: Start all applications natively through Turbo (needs `bun run gateway` for `https://localhost:4321`)
 - `bun run dev:frontend` / `dev:backend`: Start a single app
-- `bun run gateway`: Start the gateway in front of the native apps (`:8080`)
+- `bun run gateway`: Start the dev gateway in front of the native apps (`https://localhost:4321`)
+- `bun run dev:cert`: Export the dev gateway's local CA root to `caddy-local-root.crt`, to trust in the browser
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
-- `bun run loki:start` / `loki:stop`: Only the dev Loki container, for native dev
+- `bun run loki:start` / `loki:stop`: Only the dev Loki container on `127.0.0.1:3100` (`loki-native`), for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
 - `bun run check` / `bun run format`: Biome formatting and linting

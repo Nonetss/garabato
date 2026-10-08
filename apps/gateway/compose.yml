@@ -1,8 +1,12 @@
 # Dev only: runs the gateway on the host network in front of the natively
 # running apps (`bun run dev:local`). Started with `bun run gateway`.
 #
-# Its HTTP site listens on :8080 (never the host's port 80) with the same
-# routing as production; the normal dev URL is still Vite on :4321.
+# Runs Caddyfile.dev, like the gateway of compose.dev.yml: the dev URL
+# https://localhost:4321 (local CA, HTTP/2) in front of the native backend
+# (:3000) and `astro dev` (:4320). Required for native dev: :4321 is only
+# served here. Shares the stack-dev_gateway_data volume (and so the CA) with
+# compose.dev.yml.
+
 name: stack-dev
 
 services:
@@ -11,8 +15,19 @@ services:
       context: ../..
       dockerfile: apps/gateway/Dockerfile
     container_name: stack-gateway-dev
+    command:
+      - caddy
+      - run
+      - --config
+      - /etc/caddy/Caddyfile.dev
+      - --adapter
+      - caddyfile
     network_mode: host
     environment:
-      GATEWAY_HTTP_PORT: "8080"
       BACKEND_HTTP_UPSTREAM: localhost:3000
-      FRONTEND_HTTP_UPSTREAM: localhost:4321
+      FRONTEND_HTTP_UPSTREAM: localhost:4320
+    volumes:
+      - gateway_data:/data
+
+volumes:
+  gateway_data:

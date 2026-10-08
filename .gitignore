@@ -12,6 +12,9 @@ build
 .env
 .env*.local
 
+# Dev gateway's local CA root, exported by `bun run dev:cert`
+caddy-local-root.crt
+
 # IDEs and editors
 .vscode/*
 !.vscode/settings.json

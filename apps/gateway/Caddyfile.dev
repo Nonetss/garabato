@@ -1,0 +1,26 @@
+# Dev gateway (compose.dev.yml and apps/gateway/compose.yml). Never used by
+# the production image's command.
+#
+# https://localhost:4321 is the dev URL and the only port dev exposes: TLS
+# from Caddy's local CA and HTTP/2, which browsers only speak over TLS, so the
+# hundreds of unbundled modules Vite serves in dev share one connection
+# instead of six. `astro dev` listens behind it on :4320 (Vite drops HTTP/2
+# when its proxy is on, so it can't do this itself).
+#
+# The CA lives in /data (the gateway_data volume); `bun run dev:cert` exports
+# its root for the browser to trust.
+{
+	admin off
+	# No HTTP site: never bind :80 for HTTP→HTTPS redirects
+	auto_https disable_redirects
+	# The container can't reach the host's trust store
+	skip_install_trust
+	servers {
+		protocols h1 h2
+	}
+}
+
+https://localhost:4321 {
+	tls internal
+	import routes.caddy
+}

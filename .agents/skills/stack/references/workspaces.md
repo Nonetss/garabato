@@ -6,7 +6,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 
 ### `apps/frontend`
 - Astro 7 SSR (`@astrojs/node` standalone), React 19 islands, Tailwind v4 via Vite plugin, shadcn/ui (`base-nova` style on Base UI, neutral, lucide icons; `components.json`), TanStack Query + oRPC (`src/lib/orpc.ts`).
-- Dev `astro dev` on `:4321` (proxies `/rpc`, `/api`, `/scalar`, `/openapi.json` → `BACKEND_URL`, default `http://localhost:3000`). In Docker, Astro alone listens on `0.0.0.0:4321` (compose `expose`, never `ports`) and `apps/gateway` serves it, plus the backend API, on the public port.
+- Dev `astro dev` on `:4320` (`dev` script, `strictPort`), behind the dev gateway's `https://localhost:4321`. It still proxies `/rpc`, `/api`, `/scalar`, `/openapi.json` → `BACKEND_URL` (default `http://localhost:3000`) for direct hits, but sign-in only works on the gateway origin. In the Docker dev stack it listens on `0.0.0.0:4320` inside its container (`expose`, never `ports`). In production Docker, Astro alone listens on `0.0.0.0:4321` (compose `expose`, never `ports`) and `apps/gateway` serves it, plus the backend API, on the public port.
 - Check `astro check`. No unit or end-to-end suite.
 - Middleware `src/middleware.ts` gates auth; layouts in `src/layouts/`; pages in `src/pages/`; features in `src/features/<domain>/`; providers in `src/providers/`; route identity in `src/lib/app-surfaces.ts`.
 - PWA: `public/manifest.webmanifest` and the service worker `public/sw.js`, registered by `src/layouts/service-worker.astro` (included by `Layout.astro` and `Admin.astro`) in production builds only. In dev that component unregisters any worker and deletes its cache, because the worker would intercept every unbundled Vite module.
@@ -22,8 +22,10 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - Dev `bun run --hot src/index.ts`. Build `tsdown` → `dist/index.mjs`; `deps.alwaysBundle` inlines every dependency because the runtime image ships no `node_modules`. Check `tsc -b`.
 
 ### `apps/gateway` (not a workspace)
-- Docker assets only: `Caddyfile`, `Dockerfile` (`caddy:2-alpine`), and a dev `compose.yml` (host network, `localhost` upstreams, HTTP on `:8080`) started by `bun run gateway`. The Caddyfile is the only place that maps requests to apps.
-- One HTTP site, `:{$GATEWAY_HTTP_PORT:80}` (`h1`/`h2c`, `admin off`, `auto_https off`, zstd/gzip): `/health` answers `ok` (the compose healthcheck); `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → `BACKEND_HTTP_UPSTREAM` (`backend:3000`); everything else → `FRONTEND_HTTP_UPSTREAM` (`frontend:4321`).
+- Docker assets only: `routes.caddy`, `Caddyfile`, `Caddyfile.dev`, `Dockerfile` (`caddy:2-alpine`, copies the three into `/etc/caddy`, runs `Caddyfile`), and a dev `compose.yml` (host network for the native apps, `localhost` upstreams, runs `Caddyfile.dev`) started by `bun run gateway`. `routes.caddy` is the only place that maps requests to apps.
+- `routes.caddy`, the site body every site imports (zstd/gzip, security headers): `/health` answers `ok` (the compose healthcheck); `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → `BACKEND_HTTP_UPSTREAM` (`backend:3000`); everything else → `FRONTEND_HTTP_UPSTREAM` (`frontend:4321`).
+- `Caddyfile` (production): one HTTP site, `:{$GATEWAY_HTTP_PORT:80}` (`h1`/`h2c`, `admin off`, `auto_https off`).
+- `Caddyfile.dev` (dev only): one site, `https://localhost:4321` (`tls internal`, `h1`/`h2`), the dev URL and the only port dev exposes; `auto_https disable_redirects`, `skip_install_trust`. Its CA lives in `/data` (volume `stack-dev_gateway_data`, shared by both dev compose files); `bun run dev:cert` exports the root.
 - It is the only service with `ports` in `compose.yml` and `compose.prod.yml`.
 
 `NODE_ENV` defaults to `development`; `production` (set by the compose files and Dockerfiles) switches logging to JSON lines. Logs go to stdout, and also to Loki when `LOKI_URL` is set.

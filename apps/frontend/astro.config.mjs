@@ -86,6 +86,9 @@ export default defineConfig({
       noExternal: process.argv.includes("dev") ? undefined : true,
     },
     server: {
+      // The dev gateway proxies https://localhost:4321 to this port (the
+      // `dev` script's --port 4320); never drift to another one silently.
+      strictPort: true,
       // Transform at dev startup what the first visit would otherwise wait
       // for. A `client:only` island hydrates from the module its page
       // imported it from — the feature barrel — so warming the barrels

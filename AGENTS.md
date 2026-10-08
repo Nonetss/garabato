@@ -22,7 +22,7 @@ This repo was started from a **template**, so it ships with a lot of features (B
 
 ## Project map
 
-- `apps/frontend` — Astro 7 SSR + React 19 islands + Tailwind v4 + shadcn/ui (`base-nova` on Base UI); dev `:4321` (Vite proxies the API), served through `apps/gateway` in Docker.
+- `apps/frontend` — Astro 7 SSR + React 19 islands + Tailwind v4 + shadcn/ui (`base-nova` on Base UI); dev at `https://localhost:4321` through the dev gateway (HTTP/2), with `astro dev` behind it on `:4320`; served through `apps/gateway` in Docker.
 - `apps/backend` — Hono + oRPC on Bun; HTTP `:3000`; applies migrations, seeds the admin and runs the cron scheduler.
 - `apps/gateway` — Caddy (Docker assets only, not a workspace) and the only place that maps requests to apps: the public HTTP entry point (backend API + frontend on one origin, the only published port).
 - `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/logger`, `packages/env`, `packages/config`.

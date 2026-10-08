@@ -12,12 +12,15 @@ Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
 ## `compose.dev.yml`: desarrollo
 
 Está explicado en [Desarrollo local](02-desarrollo.md#con-docker-bun-run-dev).
-Lo importante: las apps usan la red del host y leen el `.env` sin cambios, así
-que se comportan exactamente igual que en nativo. No levanta base de datos:
-la de desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a
-ella por el `DATABASE_URL` del `.env`. Sí levanta Loki (`stack-dev-loki`) en
-`localhost:3100`, el mismo que arranca `bun run loki:start` para el modo
-nativo, con la misma imagen y retención que en `compose.yml`.
+Lo importante: como en producción, solo el gateway publica un puerto
+(`https://localhost:4321`, HTTPS + HTTP/2). Las apps y Loki quedan en la red
+interna y leen el `.env` sin cambios, salvo `BACKEND_URL` y `LOKI_URL`, que el
+compose apunta a los nombres de servicio. No levanta base de datos: la de
+desarrollo está fuera del proyecto, en otro servidor, y las apps llegan a ella
+por el `DATABASE_URL` del `.env`. Sí levanta Loki (`stack-dev-loki`, solo en la
+red interna) con la misma imagen y retención que en `compose.yml`. Para el
+modo nativo, `bun run loki:start` arranca el servicio `loki-native` (perfil
+`native`) publicado solo en `127.0.0.1:3100`.
 
 Cuando un servicio empieza a importar un paquete o una carpeta nueva, hay que
 añadir su entrada `sync` en este fichero, o los cambios no llegarán al
@@ -49,8 +52,8 @@ y los mismos cinco servicios en una red `stack`. Toda la configuración sale
 de un `.env` junto al compose, en el directorio del servidor.
 
 **Solo el gateway publica un puerto.** Un proxy inverso con https delante del
-servidor apunta a ese puerto. Una ruta pública nueva se añade en el
-`Caddyfile`, nunca publicando el puerto de otro servicio.
+servidor apunta a ese puerto. Una ruta pública nueva se añade en
+`routes.caddy`, nunca publicando el puerto de otro servicio.
 
 No hay pasos manuales de base de datos: el backend aplica las migraciones y
 crea el admin al arrancar.
@@ -89,7 +92,9 @@ las cookies `Secure` no funcionarían.
 
 ### Gateway
 
-`caddy:2-alpine` más el `Caddyfile`, sin paso de compilación. El `Caddyfile`
+`caddy:2-alpine` más `routes.caddy`, el `Caddyfile` (producción) y el
+`Caddyfile.dev` (solo lo usan los compose de desarrollo, para servir
+`https://localhost:4321` con HTTP/2), sin paso de compilación. `routes.caddy`
 añade además cabeceras de seguridad básicas a todas las respuestas
 (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`,
 `Permissions-Policy`) y quita la cabecera `Server`. HSTS y CSP se dejan fuera a

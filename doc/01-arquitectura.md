@@ -17,8 +17,9 @@ aplicaciones y siete librerías compartidas, y todo se coordina con Turborepo.
   procedimientos de `packages/api`. Al arrancar aplica las migraciones, crea el
   usuario administrador y pone en marcha el planificador de crons.
 - **`apps/gateway`**: un Caddy que recibe todas las peticiones públicas y las
-  reparte. No es un workspace (no tiene `package.json`); solo contiene el
-  `Caddyfile` y su `Dockerfile`.
+  reparte. No es un workspace (no tiene `package.json`); solo contiene las
+  rutas (`routes.caddy`), el `Caddyfile` de producción, el `Caddyfile.dev` de
+  desarrollo y su `Dockerfile`.
 
 ### Librerías (`packages/`)
 
@@ -54,9 +55,9 @@ Ejemplo: abres `/crons` en el navegador.
 6. **El backend** identifica al usuario por la cookie, le asigna un id de
    petición, ejecuta el procedimiento y devuelve el resultado.
 
-En desarrollo sin gateway pasa lo mismo: `astro dev` hace de proxy de esas
-rutas hacia el backend, así que `http://localhost:4321` se comporta igual que
-producción.
+En desarrollo pasa lo mismo: el gateway de desarrollo sirve
+`https://localhost:4321` (HTTPS con HTTP/2 y un certificado local) con las
+mismas rutas, delante de `astro dev`, que escucha en `:4320`.
 
 ### ¿Por qué un solo origen?
 
@@ -64,7 +65,7 @@ Como el navegador lo ve todo bajo el mismo dominio, no hay peticiones
 cross-origin: no hace falta configurar CORS en el cliente y las cookies de
 sesión funcionan sin trucos. Por eso el gateway es **el único sitio** que
 decide qué app sirve cada ruta. Una ruta pública nueva se añade en
-`apps/gateway/Caddyfile`, nunca publicando el puerto de otro servicio.
+`apps/gateway/routes.caddy`, nunca publicando el puerto de otro servicio.
 
 ## Arranque y apagado del backend
 

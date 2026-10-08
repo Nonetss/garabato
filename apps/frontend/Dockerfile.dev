@@ -23,8 +23,10 @@ RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lock
 
 COPY . .
 
-EXPOSE 4321
+EXPOSE 4320
 
 WORKDIR /app/apps/frontend
-# Host network (compose.dev.yml): same address as native `astro dev`
-CMD ["bun", "run", "dev", "--port", "4321"]
+# Same port as native `astro dev` (:4320, from the `dev` script), on all
+# interfaces so the dev gateway reaches it over the compose network; only
+# the gateway publishes a port (https://localhost:4321)
+CMD ["bun", "run", "dev", "--host", "0.0.0.0"]
