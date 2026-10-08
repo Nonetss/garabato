@@ -6,8 +6,6 @@ import { Text } from "@/components/shared/brand/typography"
 import { Hint } from "@/components/shared/feedback/hint"
 import type { EntityListDefinition } from "@/components/shared/resource/entity-list"
 import { Button } from "@/components/ui/button"
-import { FavoriteButton } from "@/features/collections/favorites"
-import { CollectionButton } from "@/features/collections/save"
 import type { CronJob } from "@/features/crons/shared"
 import { cronLabels, useCronSetEnabled } from "@/features/crons/shared"
 import { formatDateTime } from "@/lib/format"
@@ -84,27 +82,15 @@ function CronRowLockedMarker() {
   )
 }
 
-function CronRowCollectionActions({
+function CronRowTrailingActions({
   job,
   isAdmin,
 }: {
   job: CronJob
   isAdmin: boolean
 }) {
-  const entity = {
-    entityType: "cron-job",
-    entityId: job.id,
-    metadata: {
-      title: job.name,
-      description: job.description ?? `Programa ${job.cronExpression}`,
-      href: `/crons/${job.id}`,
-    },
-  }
-
   return (
     <div className="flex items-center gap-1">
-      <FavoriteButton entity={entity} compact />
-      <CollectionButton entity={entity} compact />
       {isDeclaredInCode(job) ? (
         <CronRowLockedMarker />
       ) : isAdmin ? (
@@ -137,7 +123,7 @@ export const cronJobDefinition: EntityListDefinition<CronJob, CronsRowContext> =
     // Code-declared jobs read as dimmed, background machinery.
     isMuted: (job) => !job.enabled || isDeclaredInCode(job),
     renderTrailing: (job, ctx) => (
-      <CronRowCollectionActions job={job} isAdmin={ctx.isAdmin} />
+      <CronRowTrailingActions job={job} isAdmin={ctx.isAdmin} />
     ),
     metadata: [
       {

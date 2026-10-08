@@ -7,7 +7,7 @@ const entityRef = {
     .trim()
     .min(1)
     .max(64)
-    .describe("Registered icon-capable entity type (for example, collection)"),
+    .describe("Registered icon-capable entity type"),
   entityId: z
     .string()
     .trim()

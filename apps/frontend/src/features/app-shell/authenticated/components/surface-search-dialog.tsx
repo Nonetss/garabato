@@ -77,9 +77,9 @@ function matchSurface(_value: string, search: string, keywords?: string[]) {
  * the navbar triggers or with ⌘K / Ctrl+K. Owns the shortcut listener so the
  * navbar mounts exactly one per page, and records every searchable page the
  * user lands on so an empty query suggests the recent ones first. Once the
- * user types, it also lists the records behind dynamic surfaces (cron jobs,
- * custom collections), loaded while the dialog is open or, for sources
- * listed in pages, searched on the server for the settled text.
+ * user types, it also lists the records behind dynamic surfaces (cron jobs),
+ * loaded while the dialog is open or, for sources listed in pages, searched
+ * on the server for the settled text.
  */
 export function SurfaceSearchDialog({
   open,

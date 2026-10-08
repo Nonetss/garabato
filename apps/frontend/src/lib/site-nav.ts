@@ -44,7 +44,7 @@ function navItemHrefs(item: Pick<SiteNavItem, "href" | "subItems">) {
 
 /**
  * The most specific href in `hrefs` that matches `pathname`. A child like
- * `/collections/favorites` wins over its parent `/collections`, so only one
+ * `/config/appearance` wins over its parent `/config`, so only one
  * row in a section is current at a time.
  */
 function getCurrentNavHref(pathname: string, hrefs: readonly string[]) {
@@ -148,7 +148,7 @@ export interface SiteNavSearchItem {
   section: string
   /**
    * Labels of the sections above the item, outermost first, shown before its
-   * label (`Colecciones › Favoritos`) and matched like its own text.
+   * label (`Configuración › Apariencia`) and matched like its own text.
    */
   trail?: string[]
   /** Extra terms matched like its own text (e.g. a record's surface label). */
@@ -219,7 +219,7 @@ export function getSearchableSurfaces(isAdmin: boolean): SiteNavSearchGroup[] {
 
 /**
  * The most specific searchable href that matches `pathname`, so the search
- * marks `/collections/favorites` — not also `/collections` — as current.
+ * marks `/config/appearance` — not also `/config` — as current.
  */
 export function getCurrentSearchHref(
   pathname: string,

@@ -124,12 +124,6 @@ const schedulingIcons = {
   schedule: Lucide.CalendarClock,
 } as const
 
-const collectionIcons = {
-  favorite: Lucide.Star,
-  save: Lucide.BookmarkPlus,
-  custom: Lucide.Signature,
-} as const
-
 const themeIcons = {
   lightTheme: Lucide.Sun,
   darkTheme: Lucide.Moon,
@@ -154,7 +148,6 @@ export const iconRegistry = {
   views: viewIcons,
   communication: communicationIcons,
   scheduling: schedulingIcons,
-  collections: collectionIcons,
   theme: themeIcons,
   config: configIcons,
 } as const

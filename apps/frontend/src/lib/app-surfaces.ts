@@ -9,10 +9,6 @@ export type SurfaceId =
   | "home"
   | "crons"
   | "cron-detail"
-  | "collections"
-  | "collections-favorites"
-  | "collection-detail"
-  | "collection-detail-info"
   | "admin"
   | "admin-users"
   | "admin-sessions"
@@ -35,7 +31,7 @@ export type SurfaceId =
  * `[param]` surface. Resolved by the registry in
  * `features/app-shell/authenticated/model/surface-search-sources.ts`.
  */
-export type SurfaceSearchSourceId = "cron-jobs" | "custom-collections"
+export type SurfaceSearchSourceId = "cron-jobs"
 
 /** Navigation placement for a surface that appears in the navbar/sidebars. */
 export interface SurfaceNavConfig {
@@ -76,7 +72,7 @@ export interface AppSurface {
   search?: false
   /**
    * Makes a dynamic `[param]` surface reachable from the navbar search by
-   * listing its records (each cron job, each custom collection). A plain-data
+   * listing its records (each cron job). A plain-data
    * key — like `icon` — so this module stays safe to import from Astro
    * frontmatter; ignored on concrete paths.
    */
@@ -127,7 +123,7 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     path: "/",
     title: "Inicio",
     label: "Inicio",
-    description: "Revisa tus colecciones y las tareas programadas.",
+    description: "Revisa las tareas programadas.",
     icon: iconRef("navigation", "home"),
   },
   crons: {
@@ -147,41 +143,6 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     description: "Detalle e historial de ejecuciones de la tarea.",
     icon: iconRef("navigation", "crons"),
     searchSource: "cron-jobs",
-  },
-  collections: {
-    id: "collections",
-    path: "/collections",
-    title: "Colecciones",
-    label: "Colecciones",
-    description:
-      "Guarda y organiza los recursos que quieres consultar después.",
-    icon: iconRef("collections", "save"),
-    nav: { primary: false },
-    children: {
-      "collections-favorites": {
-        path: "/collections/favorites",
-        title: "Colecciones · Favoritos",
-        label: "Favoritos",
-        description: "Recursos marcados como favoritos.",
-        icon: iconRef("collections", "favorite"),
-      },
-      "collection-detail": {
-        path: "/collections/custom",
-        title: "Colecciones · Personalizadas",
-        label: "Personalizadas",
-        description: "Recursos guardados en esta colección.",
-        icon: iconRef("collections", "custom"),
-      },
-    },
-  },
-  "collection-detail-info": {
-    id: "collection-detail-info",
-    path: "/collections/custom/[id]",
-    title: "Colección · Personalizada",
-    label: "Personalizada",
-    description: "Recursos guardados en esta colección.",
-    icon: iconRef("collections", "custom"),
-    searchSource: "custom-collections",
   },
   config: {
     id: "config",

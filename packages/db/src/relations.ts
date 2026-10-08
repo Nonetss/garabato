@@ -10,7 +10,6 @@ export const relations = defineRelations(schema, (r) => ({
     invitationsSent: r.many.invitation(),
     apikeys: r.many.apikey(),
     comments: r.many.comments(),
-    collections: r.many.collection(),
     teams: r.many.team({
       from: r.user.id.through(r.teamMember.userId),
       to: r.team.id.through(r.teamMember.teamId),
@@ -116,19 +115,6 @@ export const relations = defineRelations(schema, (r) => ({
     author: r.one.user({
       from: r.comments.authorId,
       to: r.user.id,
-    }),
-  },
-  collection: {
-    owner: r.one.user({
-      from: r.collection.ownerId,
-      to: r.user.id,
-    }),
-    items: r.many.collectionItem(),
-  },
-  collectionItem: {
-    collection: r.one.collection({
-      from: r.collectionItem.collectionId,
-      to: r.collection.id,
     }),
   },
 }))

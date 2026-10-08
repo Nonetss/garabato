@@ -12,7 +12,7 @@ export interface SurfaceSearchLabelProps {
 
 /**
  * A search result's name preceded by its muted section trail
- * (`Colecciones › Favoritos`), so a sub-page or record reads in context
+ * (`Configuración › Apariencia`), so a sub-page or record reads in context
  * even outside its group, as in "Recientes".
  */
 export function SurfaceSearchLabel({ label, trail }: SurfaceSearchLabelProps) {

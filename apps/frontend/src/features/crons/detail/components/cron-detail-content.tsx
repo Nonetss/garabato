@@ -10,8 +10,6 @@ import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { Button } from "@/components/ui/button"
-import { FavoriteButton } from "@/features/collections/favorites"
-import { CollectionButton } from "@/features/collections/save"
 import { CronDetailMetadata } from "@/features/crons/detail/components/cron-detail-metadata"
 import { CronRunPulse } from "@/features/crons/detail/components/cron-run-pulse"
 import {
@@ -86,15 +84,6 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
   }
 
   const declaredInCode = job.source === "code"
-  const entity = {
-    entityType: "cron-job",
-    entityId: job.id,
-    metadata: {
-      title: job.name,
-      description: job.description ?? `Programa ${job.cronExpression}`,
-      href: `/crons/${job.id}`,
-    },
-  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -122,8 +111,6 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
         }
         action={
           <div className="flex flex-wrap items-center gap-2">
-            <FavoriteButton entity={entity} />
-            <CollectionButton entity={entity} />
             {isAdmin && !declaredInCode ? (
               <Button
                 type="button"

@@ -30,8 +30,8 @@ function useSyncEntityIconCache() {
 }
 
 /**
- * Persists an entity's icon. Callers decide how to report errors: the
- * collection dialog keeps itself open, `EntityIconPicker` shows a toast.
+ * Persists an entity's icon. Callers decide how to report errors: a form
+ * dialog can keep itself open, `EntityIconPicker` shows a toast.
  */
 export function useSetEntityIcon() {
   const sync = useSyncEntityIconCache()

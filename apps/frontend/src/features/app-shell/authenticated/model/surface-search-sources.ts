@@ -164,21 +164,6 @@ export const surfaceSearchSources = {
         })),
     })
   ),
-  "custom-collections": defineSearchSource(
-    "Colecciones personalizadas",
-    ({ enabled }) =>
-      orpc.v1.collection.list.queryOptions({
-        enabled,
-        select: (collections) =>
-          collections
-            .filter((collection) => collection.kind === "custom")
-            .map((collection) => ({
-              params: { id: collection.id },
-              label: collection.name ?? "Colección sin nombre",
-              description: collection.description ?? undefined,
-            })),
-      })
-  ),
 } satisfies Record<SurfaceSearchSourceId, SurfaceSearchSourceShape>
 
 export interface SearchSourceSurface {
@@ -190,8 +175,8 @@ export interface SearchSourceSurface {
 
 /**
  * Labels of the concrete-path surfaces a record's route sits under
- * (`/crons/[id]` → "Crons"; `/collections/custom/[id]` → "Colecciones",
- * "Personalizadas"). Shown before the record's label and matched like it, so
+ * (`/crons/[id]` → "Crons"; a deeper route lists every section above it,
+ * outermost first). Shown before the record's label and matched like it, so
  * typing a section's name lists its records.
  */
 function getRecordTrail(surface: AppSurface): string[] {
