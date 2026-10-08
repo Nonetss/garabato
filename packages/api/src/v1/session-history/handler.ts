@@ -12,6 +12,20 @@ import {
 } from "#shared/pagination"
 import type { sessionHistoryInput } from "#v1/session-history/input"
 
+/**
+ * Drizzle's relational API rejects `where: undefined`, so the first page
+ * returns an empty filter instead.
+ */
+function keysetFilter(cursor: { timestamp: Date; id: string } | undefined) {
+  if (!cursor) return {}
+  return {
+    OR: [
+      { createdAt: { lt: cursor.timestamp } },
+      { createdAt: { eq: cursor.timestamp }, id: { lt: cursor.id } },
+    ],
+  }
+}
+
 export const sessionHistoryHandler = {
   list: async ({
     context,
@@ -26,14 +40,7 @@ export const sessionHistoryHandler = {
     const [rows, countRows] = await Promise.all([
       db.query.session.findMany({
         with: { user: true },
-        where: cursor
-          ? {
-              OR: [
-                { createdAt: { lt: cursor.timestamp } },
-                { createdAt: { eq: cursor.timestamp }, id: { lt: cursor.id } },
-              ],
-            }
-          : undefined,
+        where: keysetFilter(cursor),
         orderBy: { createdAt: "desc", id: "desc" },
         limit: input.limit + 1,
       }),

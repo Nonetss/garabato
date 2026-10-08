@@ -32,6 +32,12 @@ async function assertAssignableRole(organizationId: string, role: string) {
   }
 }
 
+/** Drizzle's relational API rejects `where: undefined`. */
+function teamFilter(organizationId: string | undefined) {
+  if (!organizationId) return {}
+  return { organizationId }
+}
+
 function toUserSummary(user: {
   id: string
   name: string
@@ -397,9 +403,7 @@ export const organizationHandler = {
     input: z.infer<typeof organizationInput.listTeams>
   }) => {
     const rows = await db.query.team.findMany({
-      where: input.organizationId
-        ? { organizationId: input.organizationId }
-        : undefined,
+      where: teamFilter(input.organizationId),
       with: { teamMembers: true },
       orderBy: { createdAt: "desc" },
     })
