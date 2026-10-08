@@ -7,7 +7,8 @@ export const certificateLabels = {
   importDescription:
     "Sube el archivo .p12 o .pfx de tu certificado. Se guarda cifrado y nunca se muestra ni se descarga.",
   file: "Archivo del certificado",
-  fileHint: "Formato PKCS#12 (.p12 o .pfx), como lo exporta tu navegador.",
+  filePrompt: "Arrastra el certificado aquí o haz clic para elegirlo",
+  fileRequirements: "PKCS#12 (.p12 o .pfx), como lo exporta tu navegador",
   fileRequired: "Elige el archivo .p12 o .pfx del certificado",
   fileTooLarge: "El archivo es demasiado grande para ser un certificado",
   password: "Contraseña del certificado",

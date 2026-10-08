@@ -4,6 +4,8 @@ export const documentLabels = {
   uploadDescription:
     "El PDF se guarda cifrado. Debe ocupar como máximo 20 MB y no estar protegido con contraseña.",
   file: "Archivo PDF",
+  filePrompt: "Arrastra el PDF aquí o haz clic para elegirlo",
+  fileRequirements: "PDF · hasta 20 MB · sin contraseña",
   fileRequired: "Elige un archivo PDF",
   fileTooLarge: "El PDF ocupa más de 20 MB",
   fileNotPdf: "Ese archivo no es un PDF",

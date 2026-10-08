@@ -1,12 +1,16 @@
-import { type ChangeEvent, type SyntheticEvent, useState } from "react"
+import { getIcon } from "@/lib/icon-registry"
+
+const CertificateIcon = getIcon("navigation", "certificates")
+
+import { type SyntheticEvent, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import {
   type DialogFieldDescriptor,
   DialogFields,
 } from "@/components/shared/form/dialog-fields"
 import { FormField } from "@/components/shared/form/field-label"
+import { FileDropField } from "@/components/shared/form/file-drop-field"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { Input } from "@/components/ui/input"
 import { certificateLabels } from "@/features/certificates/overview/definitions/certificate-labels"
 import { useCertificateImport } from "@/features/certificates/overview/hooks/use-certificates"
 import {
@@ -84,8 +88,8 @@ export function ImportCertificateDialog({
     onOpenChange(next)
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFile(event.target.files?.[0] ?? null)
+  const handleFileChange = (next: File | null) => {
+    setFile(next)
     setSubmitError(null)
   }
 
@@ -125,16 +129,16 @@ export function ImportCertificateDialog({
       isPending={importCertificate.isPending}
       submitLabel={certificateLabels.importSubmit}
     >
-      <FormField
-        label={certificateLabels.file}
-        htmlFor={FILE_INPUT_ID}
-        hint={certificateLabels.fileHint}
-      >
-        <Input
+      <FormField label={certificateLabels.file} htmlFor={FILE_INPUT_ID}>
+        <FileDropField
           id={FILE_INPUT_ID}
-          type="file"
           accept=".p12,.pfx,application/x-pkcs12"
-          onChange={handleFileChange}
+          file={file}
+          onFileChange={handleFileChange}
+          prompt={certificateLabels.filePrompt}
+          requirements={certificateLabels.fileRequirements}
+          fileIcon={CertificateIcon}
+          disabled={importCertificate.isPending}
         />
       </FormField>
       <DialogFields form={form} fields={fields} />

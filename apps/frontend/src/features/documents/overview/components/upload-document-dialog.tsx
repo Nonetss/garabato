@@ -1,8 +1,12 @@
-import { type ChangeEvent, type SyntheticEvent, useState } from "react"
+import { getIcon } from "@/lib/icon-registry"
+
+const DocumentIcon = getIcon("navigation", "documents")
+
+import { type SyntheticEvent, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
+import { FileDropField } from "@/components/shared/form/file-drop-field"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { Input } from "@/components/ui/input"
 import {
   documentLabels,
   pdfFileProblem,
@@ -40,8 +44,8 @@ export function UploadDocumentDialog({
     onOpenChange(next)
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFile(event.target.files?.[0] ?? null)
+  const handleFileChange = (next: File | null) => {
+    setFile(next)
     setSubmitError(null)
   }
 
@@ -80,11 +84,15 @@ export function UploadDocumentDialog({
       submitLabel={documentLabels.uploadSubmit}
     >
       <FormField label={documentLabels.file} htmlFor={FILE_INPUT_ID}>
-        <Input
+        <FileDropField
           id={FILE_INPUT_ID}
-          type="file"
           accept=".pdf,application/pdf"
-          onChange={handleFileChange}
+          file={file}
+          onFileChange={handleFileChange}
+          prompt={documentLabels.filePrompt}
+          requirements={documentLabels.fileRequirements}
+          fileIcon={DocumentIcon}
+          disabled={upload.isPending}
         />
       </FormField>
       {submitError ? (
