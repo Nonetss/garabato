@@ -1,0 +1,9 @@
+---
+import { SignaturesPage } from "@/features/signatures"
+import Layout from "@/layouts/Layout.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Layout title={appSurfaces.signatures.title} scrollToTop>
+  <SignaturesPage client:only="react" />
+</Layout>
