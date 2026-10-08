@@ -41,6 +41,12 @@ describe("getSiteNavItems", () => {
     expect(hrefs).toContain("/certificates")
   })
 
+  test("keeps config out of the navbar but keeps its section sidebar", () => {
+    const hrefs = getSiteNavItems(true).map((item) => item.href)
+    expect(hrefs).not.toContain("/config")
+    expect(getSidebarSection("/config/appearance")).toBe("/config")
+  })
+
   test("filters admin-only sections by role", () => {
     const userHrefs = getSiteNavItems(false).map((item) => item.href)
     const adminHrefs = getSiteNavItems(true).map((item) => item.href)

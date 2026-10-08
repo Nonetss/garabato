@@ -44,6 +44,11 @@ export interface SurfaceNavConfig {
    * rejoin the row at `xl+`.
    */
   primary?: boolean
+  /**
+   * `false` keeps the section out of the navbar (desktop and mobile) while
+   * its section sidebar, overview cards and surface search keep working.
+   */
+  navbar?: false
 }
 
 export interface AppSurface {
@@ -183,7 +188,8 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     label: "Configuración",
     description: "Gestiona la configuración de la aplicación.",
     icon: iconRef("config", "config"),
-    nav: { primary: false },
+    // Reachable by URL and from the surface search, not from the navbar.
+    nav: { primary: false, navbar: false },
     children: {
       "config-profile": {
         path: "/config/profile",
@@ -326,10 +332,16 @@ export function getChildSurfaces(id: SurfaceId): AppSurface[] {
   return appSurfaceList.filter((surface) => surface.parentId === id)
 }
 
-/** Top-level surfaces that carry navigation placement, filtered by admin visibility. */
+/**
+ * Top-level surfaces shown in the navbar, filtered by admin visibility.
+ * Sections with `nav.navbar: false` are left out.
+ */
 export function getNavigableSurfaces(isAdmin: boolean): AppSurface[] {
   return appSurfaceList.filter(
-    (surface) => surface.nav && (!surface.adminOnly || isAdmin)
+    (surface) =>
+      surface.nav &&
+      surface.nav.navbar !== false &&
+      (!surface.adminOnly || isAdmin)
   )
 }
 
