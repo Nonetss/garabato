@@ -124,3 +124,18 @@ de las apps (`apps/backend/Dockerfile`, `apps/frontend/Dockerfile` y sus
 Se autentica con el `GITHUB_TOKEN` del workflow, así que no hay que configurar
 ningún secreto. El CI **no** ejecuta lint, tipos ni tests: eso se valida en
 local antes de hacer push.
+
+En el remoto de Gitea corre `.gitea/workflows/docker-build.yml`, el
+equivalente para Gitea Actions (Gitea ignora `.github/workflows` si existe
+`.gitea/workflows`, y GitHub ignora `.gitea/`). Aplica las mismas reglas de
+cambios y etiquetas, pero:
+
+- Cada job de la matriz detecta por su cuenta si su imagen cambió y, si no,
+  se salta el build.
+- Construye con `docker build` sobre el daemon del propio runner (la caché de
+  capas es local, no de registry) y sube al registro de contenedores de Gitea
+  como `<host-gitea>/<owner>/<repo>-<app>`.
+- Necesita un secreto `TOKEN` en el repo con un token de acceso con permiso
+  `write:package`.
+
+Si cambian las reglas de qué reconstruir, hay que tocar los dos workflows.

@@ -1,0 +1,103 @@
+name: Docker Image CI
+
+# Gitea runs this file and ignores .github/workflows whenever .gitea/workflows
+# exists; GitHub ignores this directory. Both pipelines coexist that way.
+on:
+  push:
+    branches:
+      - "main"
+
+env:
+  IMAGE_TAG: ${{ github.ref_name }}
+  # The Dockerfiles use RUN --mount=type=cache, which requires BuildKit.
+  DOCKER_BUILDKIT: 1
+
+# A newer push to the same branch cancels the running build, so an older run
+# can never finish last and leave the branch tag pointing at stale code.
+concurrency:
+  group: docker-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  # Fixed matrix with per-job change detection: Gitea can't reliably build a
+  # matrix from a previous job's outputs, so each job decides on its own
+  # whether its image needs a rebuild.
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # All jobs share one runner host; concurrent builds saturate its CPU
+      # (vite minification especially).
+      max-parallel: 2
+      matrix:
+        include:
+          - name: backend
+            paths: "apps/backend/ packages/ package.json bun.lock bunfig.toml"
+          - name: frontend
+            paths: "apps/frontend/ packages/ package.json bun.lock bunfig.toml"
+          - name: gateway
+            paths: "apps/gateway/"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes for ${{ matrix.name }}
+        id: changes
+        env:
+          BEFORE: ${{ github.event.before }}
+          PATHS: ${{ matrix.paths }}
+        run: |
+          # The workflow itself and .dockerignore rebuild everything.
+          COMMON=".gitea/workflows/docker-build.yml .dockerignore"
+
+          # New branch or force push: there is no usable base, so build.
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "No usable base commit, building"
+            echo "build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only "$BEFORE" "$GITHUB_SHA")
+          echo "Changed files:"; echo "$CHANGED"
+
+          for p in $COMMON $PATHS; do
+            if echo "$CHANGED" | grep -q "^$p"; then
+              echo "build=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "Nothing affects ${{ matrix.name }}, skipping"
+          echo "build=false" >> "$GITHUB_OUTPUT"
+
+      - name: Login to Gitea Registry
+        if: steps.changes.outputs.build == 'true'
+        env:
+          REGISTRY_PASS: ${{ secrets.TOKEN }}
+        run: |
+          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
+          echo "$REGISTRY_PASS" | docker login "$REGISTRY_DOMAIN" -u "${{ github.actor }}" --password-stdin
+
+      # Plain `docker build` against the runner's own daemon, no ephemeral
+      # buildx builder: on the persistent self-hosted runner both the layer
+      # cache and the RUN --mount=type=cache (bun install) survive between
+      # runs, so an unchanged install layer is reused from local disk.
+      - name: Build and push ${{ matrix.name }}
+        if: steps.changes.outputs.build == 'true'
+        run: |
+          REGISTRY_DOMAIN=$(echo "${{ github.server_url }}" | sed -e 's|^[^/]*//||' -e 's|/.*$||')
+          IMAGE_ID=$(echo "$REGISTRY_DOMAIN/${{ github.repository }}-${{ matrix.name }}" | tr '[:upper:]' '[:lower:]')
+          SHA=$(echo "${{ github.sha }}" | cut -c1-8)
+
+          echo "Building ${{ matrix.name }} image: $IMAGE_ID — tag: $IMAGE_TAG sha: $SHA"
+
+          docker build . \
+            -f "apps/${{ matrix.name }}/Dockerfile" \
+            -t "$IMAGE_ID:latest" \
+            -t "$IMAGE_ID:$IMAGE_TAG" \
+            -t "$IMAGE_ID:$IMAGE_TAG-$SHA"
+
+          for TAG in latest "$IMAGE_TAG" "$IMAGE_TAG-$SHA"; do
+            docker push "$IMAGE_ID:$TAG"
+          done
