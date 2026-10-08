@@ -74,6 +74,13 @@ context: |
   cross-package paths to a tsconfig: other workspaces are imported by
   their package name (@nonete/<pkg>).
 
+rules:
+  tasks:
+    - Every task group that adds or changes a procedure, API helper, cron
+      module, frontend src/lib helper, src/hooks hook or components/shared
+      component ends with a task that writes its unit tests (stack skill,
+      references/testing.md) and runs bun run test.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:
