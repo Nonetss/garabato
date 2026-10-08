@@ -1,39 +1,19 @@
-# stack
+# Garabato
 
-**A project template.** A Turborepo monorepo with an Astro frontend and a
-Hono/oRPC backend (TypeScript, Bun) behind a Caddy gateway, on PostgreSQL,
-ready to be cloned as the starting point of a new project. It derives from
-the original `stack` template and keeps its packages (`@nonete/*`),
-conventions and visual system, so code can move between projects unchanged. It
-leaves out the original's Python services, gRPC and agent chat.
+Sign PDFs with your own digital certificates. Drop a file on the home page,
+place the visible signature, sign and download. Certificates are stored
+encrypted, and the PDFs live encrypted in object storage.
 
-A new project starts with a working foundation (auth, admin panel, typed API,
-cron scheduler, comments, entity icons, activity log, Docker) before any
-product code exists. Those features are there because they come with the
-template, not because every product needs them: use what fits, and remove
-what doesn't on purpose.
+Garabato is built on the `stack` template: a Turborepo monorepo with an Astro
+frontend and a Hono/oRPC backend (TypeScript, Bun) behind a Caddy gateway, on
+PostgreSQL. It keeps the template's packages (`@nonete/*`), conventions and
+visual system, so code can move between the two repos unchanged. The
+foundation that came with the template (auth, admin panel, typed API, cron
+scheduler, comments, entity icons, activity log, Docker) is still here; the
+product on top of it is document signing.
 
 The code is in English; the UI copy and the API error messages users see are
 in Spanish.
-
-## Start a new project from this template
-
-Clone the template under your project's name and detach it from the template
-repository, so the new project gets its own history from here on:
-
-```bash
-git clone https://github.com/Nonetss/stack.git my-project
-cd my-project
-git remote rm origin
-```
-
-Then point it at the new project's repository, if it already has one, and
-set it up as described in [Getting Started](#getting-started):
-
-```bash
-git remote add origin <your-repo-url>
-git push -u origin main
-```
 
 ## How it fits together
 
@@ -49,16 +29,24 @@ git push -u origin main
   like production and Vite's many unbundled modules share one connection.
 - **The backend owns the database.** On startup it applies the committed
   migrations, seeds the admin user and starts the cron scheduler.
+- **Documents live in object storage.** PDFs and certificate material are
+  encrypted before they are written. The store is any S3-compatible endpoint
+  (`S3_*` in `.env`), or the bundled MinIO.
 - **Shared packages are raw TypeScript.** `packages/*` have no build step;
   apps import their source directly.
 
 ## Features
 
+- **Document signing**: a PDF library with thumbnails (`/documents`), a viewer
+  that places the visible signature, versions and a signature history
+  (`/documents/[id]`), and digital certificates stored encrypted
+  (`/certificates`). The home page (`/`) is a drop zone that opens the
+  document ready to sign
 - **Astro + TailwindCSS**: SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI), light/dark/system theme
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
 - **Better Auth**: email/password (plus optional OIDC), sessions, global admin role, organizations and teams with access control, API keys
 - **Drizzle + PostgreSQL**: schema per domain; committed migrations applied automatically when the backend starts
-- **Cron scheduler**: persistent jobs that run cron-eligible API procedures, managed at `/crons`
+- **Cron scheduler**: persistent jobs that run cron-eligible API procedures. The pages stay at `/crons`, out of the navbar, the home page and the search, for later use
 - **Comments and entity icons**: threaded comments and custom icons over any resource
 - **Activity log**: pino logs shipped to Loki and browsable at `/admin/logs`
 - **PWA**: installable, with a web manifest and a service worker
@@ -72,16 +60,18 @@ Every page except login and signup requires a session.
 
 | Route | What it is |
 |---|---|
-| `/` | Home |
+| `/` | Drop a PDF and open it ready to sign |
+| `/documents`, `/documents/[id]` | The library, then the viewer: place the signature, sign, versions and signature history |
+| `/certificates` | Import and keep the digital certificates used to sign |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
 | `/config/profile`, `/config/appearance` | Profile settings and theme |
-| `/crons`, `/crons/[id]` | Cron jobs: list, create and edit, run history with live updates, comments on runs |
+| `/crons`, `/crons/[id]` | Cron jobs, kept and reachable by URL, out of the navbar and the search |
 | `/admin/*` | Admin only: users, sessions, organizations, teams, API keys, Better Auth plugins and the activity log |
 | `/scalar` | Interactive API docs (admin session) |
 
-The navbar search (`⌘K` / `Ctrl+K`) jumps to any page and, once you type, to
-individual records such as cron jobs.
+The navbar search (`⌘K` / `Ctrl+K`) jumps to any page in the navigation and,
+once you type, to individual documents.
 
 ## The API
 
@@ -96,8 +86,8 @@ individual records such as cron jobs.
 
 Each feature lives in `packages/api/src/v1/<feature>/` split into `input.ts`,
 `output.ts`, `handler.ts` and `router.ts`. The v1 features are `health`,
-`private`, `authConfig`, `apiKey`, `organization`, `plugins`,
-`sessionHistory`, `logs`, `cron`, `comment` and `entityIcon`.
+`document`, `certificate`, `private`, `authConfig`, `apiKey`, `organization`,
+`plugins`, `sessionHistory`, `logs`, `cron`, `comment` and `entityIcon`.
 
 Every procedure is built from one of five builders, which decide who may call
 it: `publicProcedure`, `protectedProcedure` (any signed-in user),
@@ -117,12 +107,15 @@ HTTP). Callers authenticate with the session cookie, a Bearer token or an
   `ADMIN_PASSWORD` (idempotent by email).
 - **Organizations** carry their own roles and permissions, checked by
   `permissionProcedure`.
+- **Documents and certificates belong to the signed-in user.** Another user's
+  document or certificate answers as not found.
 
 ## Cron jobs
 
 `packages/cron` is an in-process scheduler that runs inside the backend. A job
 calls an API procedure that is marked cron-eligible, with a payload, on a cron
-expression, impersonating the user who owns it.
+expression, impersonating the user who owns it. Signing documents does not use
+it today; the pages stay available by URL.
 
 - **Code-declared jobs**: a procedure can declare its own schedule in its
   `cronMeta`. They are synced on startup, run as the seeded admin and are
@@ -143,10 +136,10 @@ page views are also shipped to Loki and become browsable at `/admin/logs`.
 
 ## Project Structure
 
-![The stack monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus doc/, openspec/ and scripts/](doc/diagrams/project-structure.svg)
+![The monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus doc/, openspec/ and scripts/](doc/diagrams/project-structure.svg)
 
 ```txt
-stack/
+garabato/
 ├── apps/
 │   ├── frontend/       # Astro app (TypeScript, Bun)
 │   ├── backend/        # Hono + oRPC API and cron scheduler (TypeScript, Bun)
@@ -177,8 +170,8 @@ package's `package.json` `imports`) inside a package, and `@/…` inside an app.
 
 ## Getting Started
 
-Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for Loki and the
-containerized stacks) and a PostgreSQL database for development (see
+Requirements: [Bun](https://bun.sh) 1.4.2, `openssl`, Docker (for Loki, MinIO
+and the containerized stacks) and a PostgreSQL database for development (see
 [Database](#database)).
 
 ```bash
@@ -198,6 +191,8 @@ that matter most:
 | `DATABASE_URL` | PostgreSQL connection |
 | `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET` | Better Auth base URL (the public origin, like `CORS_ORIGIN`) and signing secret |
 | `CORS_ORIGIN` | The public origin the browser uses |
+| `CERTIFICATE_ENCRYPTION_KEY` | Master key that encrypts stored signing certificates. Losing it makes them unrecoverable |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Object store for the encrypted PDFs |
 | `BACKEND_URL` | Where the frontend reaches the backend |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The admin seeded on startup |
 | `OIDC_*` | Optional OIDC sign-in |
@@ -316,7 +311,7 @@ over https for sign-in to work.
 - `bun run check`: Biome format + lint
 - `bun run format`: Biome format only
 - `bun run check-types`: TypeScript (tsc / astro check)
-- `bun run test`: the `packages/api` unit tests (`bun test`, no database or network needed)
+- `bun run test`: the unit suites (`bun test` in `packages/api`, `packages/cron` and `apps/frontend`)
 - `bun run tailwind:check`: Tailwind class linting (`tailwint`)
 
 There are no git hooks.
@@ -361,8 +356,8 @@ configuration, the API, auth, the frontend, cron jobs, Docker and the
 conventions, with diagrams. The rest of this section lists the reference
 material it builds on.
 
-Every capability (auth, admin, crons, logging, Docker, …) has a
-spec under `openspec/specs/`; finished changes are kept in
+Every capability (auth, admin, documents, certificates, crons, logging,
+Docker, …) has a spec under `openspec/specs/`; finished changes are kept in
 `openspec/changes/archive/`. Read those for the authoritative description of
 expected behavior before changing code in an area you're unfamiliar with;
 `openspec validate --specs --strict` checks they stay well-formed.
