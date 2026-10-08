@@ -1,8 +1,20 @@
 import { describe, expect, test } from "bun:test"
-import { createVault, VaultError, vault } from "#v1/certificate/vault"
+import {
+  additionalData,
+  createVault,
+  VaultError,
+  type VaultScope,
+  vault,
+} from "#shared/vault"
 
-const id = "00000000-0000-4000-8000-0000000000c1"
-const otherId = "00000000-0000-4000-8000-0000000000c2"
+const id: VaultScope = {
+  kind: "certificate",
+  id: "00000000-0000-4000-8000-0000000000c1",
+}
+const otherId: VaultScope = {
+  kind: "certificate",
+  id: "00000000-0000-4000-8000-0000000000c2",
+}
 const payload = new TextEncoder().encode("PKCS#12 bytes")
 
 async function rejection(promise: Promise<unknown>) {
@@ -84,6 +96,29 @@ describe("vault", () => {
     expect(await rejection(vault.unwrapDataKey(id, wrapped))).toBeInstanceOf(
       VaultError
     )
+  })
+
+  test("keeps the AAD certificates were sealed with before scopes", () => {
+    // Certificates stored by certificate-management used exactly this string;
+    // changing it would make every stored certificate unreadable.
+    expect(new TextDecoder().decode(additionalData(id, "p12"))).toBe(
+      "certificate:00000000-0000-4000-8000-0000000000c1:p12"
+    )
+  })
+
+  test("binds document versions to their document and number", async () => {
+    const document: VaultScope = { kind: "document", id: id.id }
+    const dataKey = vault.newDataKey()
+    const sealed = await vault.seal(dataKey, document, "v1", payload)
+
+    expect(await vault.open(dataKey, document, "v1", sealed)).toEqual(payload)
+    expect(
+      await rejection(vault.open(dataKey, document, "v2", sealed))
+    ).toBeInstanceOf(VaultError)
+    // Same id, other kind: a document object never opens as a certificate.
+    expect(
+      await rejection(vault.open(dataKey, id, "v1", sealed))
+    ).toBeInstanceOf(VaultError)
   })
 
   test("rejects a master key that is not 32 bytes", () => {

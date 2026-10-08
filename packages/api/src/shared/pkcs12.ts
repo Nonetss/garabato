@@ -173,15 +173,35 @@ function keyAlgorithmOf(key: KeyObject): KeyAlgorithm {
   throw new Pkcs12Error("unsupported-key")
 }
 
-/**
- * Opens a PKCS#12 file and returns the public metadata of the certificate
- * that matches its only private key. Throws `Pkcs12Error` when the password
- * is wrong or the file is not a usable signing certificate.
- */
-export function readPkcs12(
-  bytes: Uint8Array,
-  password: string
-): CertificateMetadata {
+// Bun reports EC curves with OpenSSL names; WebCrypto wants NIST ones.
+const WEBCRYPTO_CURVES = new Map([
+  ["prime256v1", "P-256"],
+  ["secp384r1", "P-384"],
+  ["secp521r1", "P-521"],
+])
+
+type SigningAlgorithm =
+  | { name: "RSASSA-PKCS1-v1_5"; hash: "SHA-256" }
+  | { name: "ECDSA"; namedCurve: string }
+
+function signingAlgorithmOf(key: KeyObject): SigningAlgorithm {
+  if (key.asymmetricKeyType === "rsa") {
+    return { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }
+  }
+  const curve = WEBCRYPTO_CURVES.get(key.asymmetricKeyDetails?.namedCurve ?? "")
+  if (key.asymmetricKeyType === "ec" && curve) {
+    return { name: "ECDSA", namedCurve: curve }
+  }
+  throw new Pkcs12Error("unsupported-key")
+}
+
+function derOfCertificate(certificate: X509Certificate) {
+  return new Uint8Array(certificate.raw)
+}
+
+// Opens the file and checks it holds exactly one key, a certificate matching
+// it that may sign, and a supported key type.
+function unwrapSigningIdentity(bytes: Uint8Array, password: string) {
   const p12 = decode(bytes, password)
 
   const keys = privateKeys(p12)
@@ -189,13 +209,20 @@ export function readPkcs12(
   if (!key) throw new Pkcs12Error("no-key")
   if (keys.length > 1) throw new Pkcs12Error("several-keys")
 
-  const certificate = certificates(p12).find((candidate) =>
-    candidate.checkPrivateKey(key)
-  )
+  const all = certificates(p12)
+  const certificate = all.find((candidate) => candidate.checkPrivateKey(key))
   if (!certificate) throw new Pkcs12Error("no-matching-certificate")
   const keyAlgorithm = keyAlgorithmOf(key)
   if (!allowsSigning(certificate)) throw new Pkcs12Error("not-for-signing")
 
+  const chain = all.filter((candidate) => candidate !== certificate)
+  return { key, keyAlgorithm, certificate, chain }
+}
+
+function metadataOf(
+  certificate: X509Certificate,
+  keyAlgorithm: KeyAlgorithm
+): CertificateMetadata {
   const subject = nameFields(certificate.subject)
   return {
     commonName: commonNameOf(certificate.subject),
@@ -210,5 +237,57 @@ export function readPkcs12(
     keyAlgorithm,
     notBefore: certificate.validFromDate,
     notAfter: certificate.validToDate,
+  }
+}
+
+/**
+ * Opens a PKCS#12 file and returns the public metadata of the certificate
+ * that matches its only private key. Throws `Pkcs12Error` when the password
+ * is wrong or the file is not a usable signing certificate.
+ */
+export function readPkcs12(
+  bytes: Uint8Array,
+  password: string
+): CertificateMetadata {
+  const { certificate, keyAlgorithm } = unwrapSigningIdentity(bytes, password)
+  return metadataOf(certificate, keyAlgorithm)
+}
+
+export type SigningIdentity = {
+  metadata: CertificateMetadata
+  /** Non-extractable WebCrypto key, SHA-256 RSASSA-PKCS1-v1_5 or ECDSA. */
+  privateKey: CryptoKey
+  /** DER of the signer certificate. */
+  certificate: Uint8Array<ArrayBuffer>
+  /** DER of the other certificates in the file (the issuer chain). */
+  chain: Uint8Array<ArrayBuffer>[]
+}
+
+/**
+ * Like `readPkcs12`, and also returns what signing needs: the private key as
+ * a WebCrypto key plus the signer certificate and its chain. The key never
+ * leaves this process and is not extractable.
+ */
+export async function openSigningKey(
+  bytes: Uint8Array,
+  password: string
+): Promise<SigningIdentity> {
+  const { key, keyAlgorithm, certificate, chain } = unwrapSigningIdentity(
+    bytes,
+    password
+  )
+  const pkcs8 = new Uint8Array(key.export({ format: "der", type: "pkcs8" }))
+  const privateKey = await crypto.subtle.importKey(
+    "pkcs8",
+    pkcs8,
+    signingAlgorithmOf(key),
+    false,
+    ["sign"]
+  )
+  return {
+    metadata: metadataOf(certificate, keyAlgorithm),
+    privateKey,
+    certificate: derOfCertificate(certificate),
+    chain: chain.map(derOfCertificate),
   }
 }

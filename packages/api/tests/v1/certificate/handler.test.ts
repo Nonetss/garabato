@@ -12,6 +12,7 @@ import {
   NOW,
   stepArgs,
 } from "@nonete/db/testing"
+import { type VaultScope, vault } from "#shared/vault"
 import {
   P12_PASSWORD,
   type P12Fixture,
@@ -21,12 +22,15 @@ import { userContext } from "#tests/fixtures/context"
 import { fakeDb } from "#tests/fixtures/db"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { certificateHandler } from "#v1/certificate/handler"
-import { vault } from "#v1/certificate/vault"
 
 const context = userContext()
 const USER_ID = "user-id"
 const ID = "00000000-0000-4000-8000-0000000000c1"
 const DAY_MS = 24 * 60 * 60 * 1000
+
+function scope(id: string): VaultScope {
+  return { kind: "certificate", id }
+}
 
 function row(overrides: Partial<CertificateRow> = {}) {
   return certificateRow({ id: ID, userId: USER_ID, ...overrides })
@@ -36,8 +40,13 @@ function row(overrides: Partial<CertificateRow> = {}) {
 async function sealedRow(overrides: Partial<CertificateRow> = {}) {
   const dataKey = vault.newDataKey()
   return row({
-    encryptedDataKey: await vault.wrapDataKey(ID, dataKey),
-    encryptedP12: await vault.seal(dataKey, ID, "p12", await p12Fixture("rsa")),
+    encryptedDataKey: await vault.wrapDataKey(scope(ID), dataKey),
+    encryptedP12: await vault.seal(
+      dataKey,
+      scope(ID),
+      "p12",
+      await p12Fixture("rsa")
+    ),
     ...overrides,
   })
 }
@@ -84,10 +93,10 @@ async function openSealed(
   purpose: "p12" | "password"
 ) {
   const dataKey = await vault.unwrapDataKey(
-    id,
+    scope(id),
     bytes(field(values, "encryptedDataKey"))
   )
-  return vault.open(dataKey, id, purpose, bytes(field(values, column)))
+  return vault.open(dataKey, scope(id), purpose, bytes(field(values, column)))
 }
 
 function writtenId(values: object) {

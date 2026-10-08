@@ -1,14 +1,16 @@
 import { describe, expect, test } from "bun:test"
+import { X509Certificate } from "node:crypto"
+import {
+  openSigningKey,
+  Pkcs12Error,
+  type Pkcs12FailureKind,
+  readPkcs12,
+} from "#shared/pkcs12"
 import {
   P12_PASSWORD,
   type P12Fixture,
   p12Fixture,
 } from "#tests/fixtures/certificate-files"
-import {
-  Pkcs12Error,
-  type Pkcs12FailureKind,
-  readPkcs12,
-} from "#v1/certificate/pkcs12"
 
 async function read(name: P12Fixture, password = P12_PASSWORD) {
   return readPkcs12(await p12Fixture(name), password)
@@ -91,4 +93,61 @@ describe("readPkcs12", () => {
       expect(await failureOf(name)).toBe(kind)
     }
   )
+})
+
+describe("openSigningKey", () => {
+  // Signs a probe with the returned key and verifies it with the returned
+  // certificate's public key: proves key and certificate belong together.
+  async function probe(name: "rsa" | "ec") {
+    const identity = await openSigningKey(await p12Fixture(name), P12_PASSWORD)
+    const algorithm = identity.privateKey.algorithm
+    const params =
+      algorithm.name === "ECDSA"
+        ? { name: "ECDSA", hash: "SHA-256" }
+        : { name: "RSASSA-PKCS1-v1_5" }
+    const data = new TextEncoder().encode("probe")
+    const signature = await crypto.subtle.sign(
+      params,
+      identity.privateKey,
+      data
+    )
+    const publicKey = new X509Certificate(identity.certificate).publicKey
+    const verifyKey = await crypto.subtle.importKey(
+      "spki",
+      new Uint8Array(publicKey.export({ format: "der", type: "spki" })),
+      algorithm,
+      false,
+      ["verify"]
+    )
+    return {
+      identity,
+      verified: await crypto.subtle.verify(params, verifyKey, signature, data),
+    }
+  }
+
+  test("returns a usable RSA key with its certificate and chain", async () => {
+    const { identity, verified } = await probe("rsa")
+
+    expect(verified).toBe(true)
+    expect(identity.metadata.keyAlgorithm).toBe("RSA")
+    expect(identity.privateKey.extractable).toBe(false)
+    expect(identity.chain).toHaveLength(1)
+  })
+
+  test("returns a usable EC key", async () => {
+    const { identity, verified } = await probe("ec")
+
+    expect(verified).toBe(true)
+    expect(identity.metadata.keyAlgorithm).toBe("EC")
+  })
+
+  test("rejects a wrong password like readPkcs12", async () => {
+    const error = await openSigningKey(await p12Fixture("rsa"), "wrong").then(
+      () => undefined,
+      (thrown: unknown) => thrown
+    )
+
+    expect(error).toBeInstanceOf(Pkcs12Error)
+    if (error instanceof Pkcs12Error) expect(error.kind).toBe("wrong-password")
+  })
 })

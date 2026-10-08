@@ -5,39 +5,22 @@ import type { z } from "zod"
 
 import type { Context } from "#context"
 import { errors } from "#errors"
+import { requireUserId } from "#shared/caller"
+import {
+  certificateScope,
+  openCertificateFile,
+  rejectPkcs12,
+} from "#shared/certificate-secrets"
 import { toIso } from "#shared/dates"
+import { isUniqueViolation } from "#shared/db-errors"
 import { assertFound } from "#shared/not-found"
+import { type CertificateMetadata, readPkcs12 } from "#shared/pkcs12"
+import { vault } from "#shared/vault"
 import type { certificateInput } from "#v1/certificate/input"
 import type { CertificateSummary } from "#v1/certificate/output"
-import {
-  type CertificateMetadata,
-  Pkcs12Error,
-  type Pkcs12FailureKind,
-  readPkcs12,
-} from "#v1/certificate/pkcs12"
-import { VaultError, vault } from "#v1/certificate/vault"
 
 const EXPIRING_WINDOW_MS = 30 * 24 * 60 * 60 * 1000
 const NOT_FOUND_MESSAGE = "Certificado no encontrado"
-
-const PKCS12_MESSAGES = {
-  "wrong-password": "La contraseña del certificado no es correcta",
-  "invalid-file":
-    "El archivo no es un certificado PKCS#12 (.p12 o .pfx) válido",
-  "no-key": "El archivo no contiene la clave privada del certificado",
-  "several-keys":
-    "El archivo contiene más de una clave privada; exporta solo el certificado que quieras usar",
-  "no-matching-certificate":
-    "La clave privada del archivo no corresponde a ningún certificado incluido",
-  "unsupported-key":
-    "El tipo de clave del certificado no está soportado (solo RSA y EC)",
-  "not-for-signing": "Este certificado no permite firmar documentos",
-} satisfies Record<Pkcs12FailureKind, string>
-
-function requireUserId(context: Context) {
-  if (!context.user) throw errors.UNAUTHORIZED()
-  return context.user.id
-}
 
 function statusOf(notAfter: Date, now: Date): CertificateSummary["status"] {
   const remaining = notAfter.getTime() - now.getTime()
@@ -70,10 +53,7 @@ function readOrReject(bytes: Uint8Array, password: string) {
   try {
     return readPkcs12(bytes, password)
   } catch (error) {
-    if (error instanceof Pkcs12Error) {
-      throw errors.BAD_REQUEST({ message: PKCS12_MESSAGES[error.kind] })
-    }
-    throw error
+    rejectPkcs12(error)
   }
 }
 
@@ -84,14 +64,6 @@ function aliasFor(alias: string | undefined, metadata: CertificateMetadata) {
 
 function encode(password: string) {
   return new TextEncoder().encode(password)
-}
-
-// Matches PostgreSQL's unique_violation, raw or wrapped by Drizzle.
-function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== "object" || error === null) return false
-  if ("code" in error && error.code === "23505") return true
-  if ("cause" in error) return isUniqueViolation(error.cause)
-  return false
 }
 
 function ownedActive(userId: string, id: string) {
@@ -107,28 +79,6 @@ async function loadOwned(userId: string, id: string) {
     where: { id, userId, deletedAt: { isNull: true } },
   })
   return assertFound(row, NOT_FOUND_MESSAGE)
-}
-
-// Unwraps the row's data key and opens its PKCS#12 file. A row that is not
-// deleted always holds both; failing to open them is a server fault.
-async function openFile(row: Certificate) {
-  if (!row.encryptedDataKey || !row.encryptedP12) {
-    throw errors.INTERNAL_SERVER_ERROR({
-      message: "Active certificate has no sealed file",
-    })
-  }
-  try {
-    const dataKey = await vault.unwrapDataKey(row.id, row.encryptedDataKey)
-    const p12 = await vault.open(dataKey, row.id, "p12", row.encryptedP12)
-    return { dataKey, p12 }
-  } catch (error) {
-    if (error instanceof VaultError) {
-      throw errors.INTERNAL_SERVER_ERROR({
-        message: "Stored certificate could not be decrypted",
-      })
-    }
-    throw error
-  }
 }
 
 async function updateOwned(
@@ -196,7 +146,12 @@ export const certificateHandler = {
     const id = crypto.randomUUID()
     const dataKey = vault.newDataKey()
     const encryptedPassword = input.rememberPassword
-      ? await vault.seal(dataKey, id, "password", encode(input.password))
+      ? await vault.seal(
+          dataKey,
+          certificateScope(id),
+          "password",
+          encode(input.password)
+        )
       : null
 
     try {
@@ -207,8 +162,16 @@ export const certificateHandler = {
           userId,
           alias: aliasFor(input.alias, metadata),
           ...metadata,
-          encryptedDataKey: await vault.wrapDataKey(id, dataKey),
-          encryptedP12: await vault.seal(dataKey, id, "p12", bytes),
+          encryptedDataKey: await vault.wrapDataKey(
+            certificateScope(id),
+            dataKey
+          ),
+          encryptedP12: await vault.seal(
+            dataKey,
+            certificateScope(id),
+            "p12",
+            bytes
+          ),
           encryptedPassword,
         })
         .returning()
@@ -249,13 +212,13 @@ export const certificateHandler = {
   }) => {
     const userId = requireUserId(context)
     const current = await loadOwned(userId, input.id)
-    const { dataKey, p12 } = await openFile(current)
+    const { dataKey, p12 } = await openCertificateFile(current)
     readOrReject(p12, input.password)
 
     const row = await updateOwned(userId, input.id, {
       encryptedPassword: await vault.seal(
         dataKey,
-        current.id,
+        certificateScope(current.id),
         "password",
         encode(input.password)
       ),
