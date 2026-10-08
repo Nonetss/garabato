@@ -111,11 +111,16 @@ export function createFakeDb(): FakeDb {
     }
   )
 
-  const root = new Proxy(
+  const root: object = new Proxy(
     {},
     {
       get(_, prop) {
         if (prop === "query") return query
+        // A transaction runs its callback against the same fake, so its
+        // chains are queued and recorded like any other.
+        if (prop === "transaction") {
+          return (callback: (tx: object) => unknown) => callback(root)
+        }
         if (typeof prop !== "string" || !isBuilderOp(prop)) return undefined
         return (...args: unknown[]) => chain(prop, [{ method: prop, args }])
       },

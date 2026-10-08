@@ -2,6 +2,9 @@
 import type {
   certificates,
   comments,
+  documentSignatures,
+  documents,
+  documentVersions,
   entityIcons,
   member,
   organization,
@@ -17,6 +20,9 @@ export type UserRow = typeof user.$inferSelect
 export type SessionRow = typeof session.$inferSelect
 export type CommentRow = typeof comments.$inferSelect
 export type CertificateRow = typeof certificates.$inferSelect
+export type DocumentRow = typeof documents.$inferSelect
+export type DocumentVersionRow = typeof documentVersions.$inferSelect
+export type DocumentSignatureRow = typeof documentSignatures.$inferSelect
 export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
@@ -134,6 +140,60 @@ export function certificateRow(
     deletedAt: null,
     createdAt: NOW,
     updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+// `encryptedDataKey` holds a placeholder: a test that reads objects overrides
+// it with a data key wrapped by the vault for the row's id.
+export function documentRow(overrides: Partial<DocumentRow> = {}): DocumentRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000d1",
+    userId: "user-1",
+    name: "contrato.pdf",
+    pageCount: 3,
+    encryptedDataKey: Buffer.from("wrapped-data-key"),
+    deletedAt: null,
+    createdAt: NOW,
+    updatedAt: NOW,
+    ...overrides,
+  }
+}
+
+export function documentVersionRow(
+  overrides: Partial<DocumentVersionRow> = {}
+): DocumentVersionRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000e1",
+    documentId: "00000000-0000-4000-8000-0000000000d1",
+    number: 1,
+    objectKey: "documents/00000000-0000-4000-8000-0000000000d1/v1",
+    sizeBytes: 1024,
+    sha256: "0".repeat(64),
+    createdBy: "user-1",
+    createdAt: NOW,
+    ...overrides,
+  }
+}
+
+export function documentSignatureRow(
+  overrides: Partial<DocumentSignatureRow> = {}
+): DocumentSignatureRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000f1",
+    documentId: "00000000-0000-4000-8000-0000000000d1",
+    versionId: "00000000-0000-4000-8000-0000000000e2",
+    certificateId: "00000000-0000-4000-8000-0000000000c1",
+    userId: "user-1",
+    signedAt: NOW,
+    visible: true,
+    pages: [0],
+    rect: { x: 0.6, y: 0.8, width: 0.3, height: 0.1 },
+    reason: null,
+    location: null,
+    sha256Before: "0".repeat(64),
+    sha256After: "1".repeat(64),
+    ipAddress: null,
     ...overrides,
   }
 }
