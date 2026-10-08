@@ -84,7 +84,7 @@ Read only the references the task needs. A task crossing layers reads several (a
 - Frontend-internal imports use `@/`, never relative paths.
 - Product text uses `Text` (`components/shared/brand/typography.tsx`) with a semantic role and tone, or `textVariants({ role, tone })` on a component's `className`; never hand-built `text-xs text-muted-foreground` or `font-* text-label uppercase tracking-*` strings.
 - In-page layouts (grids, list rows, form, metadata and filter field grids) respond to their container with `@container` + `@md:`/`@xl:`…; viewport variants (`sm:`, `lg:`) are only for app chrome, overlay sizes and page padding (`references/frontend/container-queries.md`).
-- Icon-only controls are named visually with `Hint` (`components/shared/feedback/hint.tsx`), never with a native `title` attribute; the control keeps its `aria-label`.
+- Icon-only controls are named visually with `Hint` (`components/shared/feedback/hint.tsx`), never with a native `title` attribute; the control keeps its `aria-label`. A plain icon-only button is an `IconButton` (`components/shared/form/icon-button.tsx`), which does both; a pending action shows `Spinner` (`components/ui/spinner.tsx`), never a hand-spun loading icon.
 - Route identity (title, label, description, icon, nav placement) is declared once in `apps/frontend/src/lib/app-surfaces.ts`, never hardcoded.
 - A `*-page.tsx` holds only the provider boundary around `<XContent />`; the surface lives in `*-content.tsx`.
 

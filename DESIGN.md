@@ -422,6 +422,8 @@ The typographic heading one level below `PageHero`, for a section inside a page,
 ### List Row
 
 - **Container:** single `rounded-xl border bg-card/40 divide-y` — one container per page, never row-as-card. `SoftCardList` is that container as a component (`as="ul"` when children are `<li>`); reach for it instead of re-typing the class string.
+- **Compact row (`SoftCardListItem`):** the row of a short `SoftCardList as="ul"` inside a section or sheet (organization members, invitations, roles and teams, team members, document versions and signatures, a certificate's signatures). It owns the layout — optional `leading` avatar or icon tile, a `title`-role name over a muted `compact` `description` with tabular digits and an optional `note` line, and a `trailing` slot for an `IconButton`, a select or a count, `gap-3` throughout. `density="dense"` (`px-3 py-2.5`) for sheets and admin sections, `default` (`px-4 py-3`) for page sections; `truncate` clips the title and description to one line when the row sits beside controls. Resource lists with status, metadata and actions use `EntityList` instead.
+- **Bounded scroll (`ScrollPanel`):** an admin list long enough to need its own scroll (users, sessions, activity log) sits in one `ScrollPanel`: the same soft card filling the rest of the page (`flex-1 min-h-0`), scrolling inside so the hero and filters stay in view, with `divided` for rows rendered straight into it, `scrollRef` as `useInfiniteScroll`'s root and an optional hairline `footer` for pagination.
 - **Row:** `hover:bg-muted/40`, **no** `translate` or shadow. Disabled rows: `opacity-60`.
 - **Status dot:** `size-1.5` left margin; `bg-primary` for active/running, `bg-border` for inactive/paused, `bg-destructive` for failed, `bg-foreground` for success (neutral — never green), `bg-muted-foreground/40` for skipped. Rendered through `StatusDot` (see below), never an ad-hoc `span`.
 - **Entrance:** `dash-enter` with `style={{ "--dash-delay":`${index * 40}ms`}}`. Cap stagger at ~40ms/item; for huge lists, drop the stagger rather than slow it down.
@@ -466,6 +468,7 @@ The bubble that names an icon-only control, in place of the browser's native `ti
 - **Placement:** `top` by default; `bottom` for navbar/header actions; `left` for controls on the right edge.
 - **Where:** icon-only row actions, kebab menus, compact comments toggles, copy, back-to-top, navbar actions and the sidebar toggle; also a status tag's explanation (e.g. a ban reason). Not on labelled buttons, obvious inline `×` clear buttons, or touch-only controls.
 - **Rule:** the control keeps its `aria-label`; the bubble is the visual name, not the accessible one.
+- **Icon button (`IconButton`):** the composition as one component — a ghost `icon-sm` `type="button"` named by `label` (bubble and accessible name), with `accessibleLabel` when the accessible name carries the entity (`Eliminar Contratos` under an "Eliminar etiqueta" bubble) and `pending` to swap the glyph for a decorative `Spinner` while the action runs. Every icon-only action that is a plain button uses it (`CopyButton` is built on it); menu, popover and dialog triggers keep wrapping their own trigger in `Hint`.
 
 ### Active Filter Chips (`FilterChips`)
 
@@ -506,7 +509,7 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 - **Frame:** `DialogContent` with `p-0`, `gap-0`, `sm:max-w-lg`, scrollable up to `calc(100vh - 2rem)`.
 - **Header:** `border-b px-6 py-5`, `gap-1.5`, `DialogTitle` (the `headline` recipe, built into the primitive), `DialogDescription` in the `compact` role with relaxed leading.
 - **Body:** `space-y-4 px-6 py-5` with `FormField` children. Long sections separated with `border-t`.
-- **Footer:** `border-t px-6 py-4`, `Button variant="outline"` cancel + `Button` submit with optional pending spinner (`Loader2 size-4 animate-spin`).
+- **Footer:** `border-t px-6 py-4`, `Button variant="outline"` cancel + `Button` submit with an optional pending `Spinner`.
 - **Destructive submit:** `submitVariant="destructive"` on the footer button, no other color shift in the dialog.
 
 ### Form Field / Field Label (`FormField`, `FieldLabel`)
@@ -537,6 +540,7 @@ Dense, precise inputs for small finite values (currently the cron schedule build
 - **Outline:** hairline `border`, transparent background, `text-foreground`. Hover: `bg-muted/40`.
 - **Ghost:** flat, hover: `bg-muted/40`.
 - **Destructive:** the editorial ink ramp above.
+- **Busy:** a pending action shows `Spinner` (`components/ui/spinner`, the registry's `status.loading` icon, `size-4 animate-spin`) — never a hand-built spinning icon. Standalone, it announces "Cargando" (`role="status"`); inside a control or card whose text already says it is busy ("Entrando…", a "Cargando…" title) it is `decorative`.
 
 ### Inputs / Fields (shadcn `Input`)
 

@@ -2,13 +2,21 @@
 
 An icon-only control is named visually with `Hint` (`apps/frontend/src/components/shared/feedback/hint.tsx`): the `components/ui/tooltip` bubble with an arrow, opened on hover or keyboard focus after 300ms. Never with a native `title` attribute, whose browser tooltip carries no design.
 
+A plain icon-only button uses `IconButton` (`components/shared/form/icon-button.tsx`), which is that composition as one component: `label` is both the bubble and the `aria-label`.
+
 ```tsx
-<Hint label="Editar nombre">
-  <Button variant="ghost" size="icon-sm" aria-label="Editar nombre">
-    <Pencil aria-hidden="true" />
-  </Button>
-</Hint>
+<IconButton label="Editar nombre" icon={Pencil} onClick={openEditName} />
+
+// The accessible name carries the entity; the bubble stays generic.
+<IconButton
+  label="Eliminar etiqueta"
+  accessibleLabel={`Eliminar ${tag.name}`}
+  icon={DeleteIcon}
+  onClick={() => onDelete(tag)}
+/>
 ```
+
+It defaults to a ghost `icon-sm` `type="button"`; `pending` swaps the glyph for a decorative `Spinner` and sets `aria-busy`. Wrap `Hint` by hand only around what `IconButton` can't be: a menu, popover or dialog trigger, a non-button element, or a control that is icon-only in one mode only.
 
 ## Rules
 
