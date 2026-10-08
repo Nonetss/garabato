@@ -1,0 +1,112 @@
+## ADDED Requirements
+
+### Requirement: A single root env file
+
+The repo SHALL be configured from one `.env` file at the repo root. Every workspace SHALL read it in native dev and in its CLI tasks: the backend and the TS packages (through `@nonete/env`), the frontend's Astro server and dev proxy, and the Drizzle CLI. No workspace SHALL read an `apps/<app>/.env` or `packages/<pkg>/.env`, and no workspace SHALL use varlock, a per-app `.env.schema` or a generated `env.ts`. A variable already present in the process environment SHALL take precedence over the file.
+
+#### Scenario: One value reaches every service
+
+- **WHEN** `LOKI_URL` is set only in the root `.env` and `bun run dev:local` starts the backend and the frontend
+- **THEN** both of them SHALL read that same `LOKI_URL`
+
+#### Scenario: Per-app files are ignored
+
+- **WHEN** an `apps/backend/.env` exists with a different `DATABASE_URL` from the root `.env`
+- **THEN** the backend and the Drizzle CLI SHALL use the root `.env` value
+
+#### Scenario: The process environment wins
+
+- **WHEN** `LOG_LEVEL=debug` is exported in the shell and the root `.env` sets `LOG_LEVEL=info`
+- **THEN** the services started from that shell SHALL use `debug`
+
+#### Scenario: No file in a container
+
+- **WHEN** a production image starts with its variables provided by compose and no `.env` file inside the image
+- **THEN** the service SHALL start using those variables and its defaults
+
+### Requirement: Validated server environment
+
+`@nonete/env/server` SHALL validate the server variables with t3-env and zod and export them as a typed `env` object: `DATABASE_URL` (required), `BETTER_AUTH_SECRET` (required, at least 32 characters), `BETTER_AUTH_URL` (required URL), `CORS_ORIGIN` (required URL), `NODE_ENV` (`development` | `production` | `test`, default `development`), `LOG_LEVEL` (`fatal` | `error` | `warn` | `info` | `debug` | `trace`, default `info`), and the optional `LOKI_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (at least 8 characters), `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL`. Empty strings SHALL be treated as unset. Validation SHALL be skipped when `SKIP_ENV_VALIDATION` is set. `@nonete/env/web` SHALL validate the client variable `PUBLIC_SERVER_URL`.
+
+#### Scenario: Missing required variable
+
+- **WHEN** the backend starts without `BETTER_AUTH_SECRET` and without `SKIP_ENV_VALIDATION`
+- **THEN** environment validation SHALL fail and the backend SHALL NOT start
+
+#### Scenario: Defaults apply
+
+- **WHEN** neither `NODE_ENV` nor `LOG_LEVEL` is set
+- **THEN** `env.NODE_ENV` SHALL be `development` and `env.LOG_LEVEL` SHALL be `info`
+
+#### Scenario: Build without secrets
+
+- **WHEN** a production image is built with `SKIP_ENV_VALIDATION=1` and no runtime variables
+- **THEN** the build SHALL NOT fail on environment validation
+
+### Requirement: One example documents every variable
+
+The repo SHALL ship a single `.env.example` at the root that lists every variable any workspace, compose file or script reads, grouped by concern. Each entry SHALL say whether it is required and what it defaults to. Optional variables SHALL be commented out. No `apps/*/.env.example` SHALL exist. The documented variables SHALL be `NODE_ENV`, `LOG_LEVEL`, `SKIP_ENV_VALIDATION`, `DATABASE_URL` (local default `postgresql://postgres:postgres@localhost:5432/better`), `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `CORS_ORIGIN`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL`, `BACKEND_URL`, `LOKI_URL`, `PUBLIC_SERVER_URL`, `GATEWAY_HTTP_PORT`, `BACKEND_HTTP_UPSTREAM`, `FRONTEND_HTTP_UPSTREAM`, `POSTGRES_PASSWORD` and `FRONTEND_PORT`.
+
+#### Scenario: Example covers the code
+
+- **WHEN** a variable is read by `packages/env/src/server.ts`, `packages/env/src/web.ts`, the `astro:env` schema, the Caddyfile, a compose file or a script
+- **THEN** the root `.env.example` SHALL list it
+
+#### Scenario: Fresh checkout
+
+- **WHEN** a developer copies `.env.example` to `.env` and fills in the required values
+- **THEN** `bun run dev:local` SHALL have every value it needs from that one file
+
+### Requirement: One name per meaning
+
+Each configuration concept SHALL have exactly one variable name, used by every reader, compose file, script and document:
+
+- `BACKEND_URL` — where a service reaches the backend over HTTP (frontend SSR session lookups and the frontend dev proxy). The backend's `BETTER_AUTH_URL` remains Better Auth's own base URL and SHALL NOT be used by other services to locate the backend.
+- `CORS_ORIGIN` — the public origin the browser uses, including in the production `.env`.
+- `NODE_ENV` — the runtime environment (`development`, `production`, `test`).
+
+The names `SERVER_URL`, `ENVIRONMENT` and `BACKEND_PROXY_TARGET` SHALL NOT be read or set anywhere in the repo.
+
+#### Scenario: Frontend locates the backend
+
+- **WHEN** the frontend renders a page server-side or proxies `/rpc` in dev
+- **THEN** it SHALL reach the backend at `BACKEND_URL`
+
+#### Scenario: Retired names are gone
+
+- **WHEN** the repo (excluding archived OpenSpec changes) is searched for the retired names
+- **THEN** no code, compose file, script, `.env.example` or current document SHALL reference them
+
+### Requirement: Compose files read the root env file
+
+Every compose file (`compose.yml`, `compose.dev.yml`, `compose.prod.yml`) SHALL load the root `.env` for the app services and SHALL override only container-network addresses (service hostnames, `BACKEND_URL`, `BETTER_AUTH_URL`, `LOKI_URL`), values fixed by the compose file itself (such as the `CORS_ORIGIN` of the port it publishes) and `NODE_ENV`, always using the unified names.
+
+#### Scenario: Production overrides use unified names
+
+- **WHEN** `compose.prod.yml` starts the stack from a `.env` written by `scripts/bootstrap.sh`
+- **THEN** the backend SHALL receive the public origin as `CORS_ORIGIN` from `.env` and `NODE_ENV=production`
+- **AND** the frontend SHALL receive its internal backend address as `BACKEND_URL`
+
+### Requirement: Scripts generate the unified file
+
+`scripts/setup-dev.sh` SHALL write only the root `.env`, copying `.env.example` and replacing its placeholder secrets with values generated by `openssl` (`BETTER_AUTH_SECRET`) and enabling the admin seed (`ADMIN_EMAIL`, `ADMIN_NAME`, a generated `ADMIN_PASSWORD`). It SHALL preserve an existing `.env` unless run with `--force`, SHALL create the file with mode `600`, and SHALL warn (never delete) about leftover `apps/*/.env` files that are no longer read. `scripts/bootstrap.sh` SHALL write a root `.env` using only the unified names.
+
+#### Scenario: Dev setup
+
+- **WHEN** `scripts/setup-dev.sh` runs on a fresh checkout
+- **THEN** it SHALL create the root `.env` with generated secrets and SHALL NOT create any `apps/*/.env`
+
+#### Scenario: Existing file preserved
+
+- **WHEN** `scripts/setup-dev.sh` runs and a root `.env` already exists, without `--force`
+- **THEN** the existing file SHALL be left unchanged
+
+#### Scenario: Stale per-app files
+
+- **WHEN** `scripts/setup-dev.sh` runs and `apps/web/.env` exists
+- **THEN** it SHALL print a warning naming that file and SHALL NOT delete it
+
+#### Scenario: Production bootstrap
+
+- **WHEN** `scripts/bootstrap.sh` generates a deployment `.env`
+- **THEN** the public URL SHALL be written as `CORS_ORIGIN` and no retired name SHALL appear in it
