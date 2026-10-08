@@ -15,7 +15,12 @@ const placeholders = {
   CORS_ORIGIN: "http://localhost:4321",
 }
 
-/** Optional vars that switch on external integrations or skip validation. */
+/**
+ * Optional vars that switch on external integrations or skip validation.
+ * Set to "" rather than deleted: `@nonete/env/server` loads the root `.env`
+ * with dotenv, which refills unset vars but never overrides a set one, and
+ * `emptyStringAsUndefined` then reads "" as unset.
+ */
 const cleared = [
   "SKIP_ENV_VALIDATION",
   "LOKI_URL",
@@ -28,4 +33,4 @@ const cleared = [
 ]
 
 Object.assign(process.env, placeholders)
-for (const name of cleared) delete process.env[name]
+for (const name of cleared) process.env[name] = ""
