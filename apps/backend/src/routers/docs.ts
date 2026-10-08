@@ -32,7 +32,7 @@ const generateSpec = () =>
     base: {
       servers: [{ url: "/api" }],
       info: {
-        title: "Stack API",
+        title: "Garabato API",
         version: "1.0.0",
         summary:
           "Advanced base template for modern APIs — robust authentication with Better Auth, a scalable Hono and oRPC architecture, API key management, generated OpenAPI docs and Docker ready for production deployments. Built to get new projects off the ground in record time.",
@@ -41,7 +41,7 @@ const generateSpec = () =>
           email: "amorenolopezbarajas@pm.me",
           url: "https://github.com/Nonetss",
         },
-        description: "Stack API description",
+        description: "Garabato API description",
       },
       security: [{ ApiKey: [] }, { BearerAuth: [] }],
       components: {

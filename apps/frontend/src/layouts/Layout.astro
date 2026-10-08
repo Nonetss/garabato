@@ -93,14 +93,14 @@ const isAdmin = isAdminUser(user)
       <NavbarGuest
         client:only="react"
         transition:persist="navbar-guest"
-        nameApp="STACK"
+        nameApp="GARABATO"
       />
     ) : (
       <NavbarAuthenticated
         client:only="react"
         transition:persist="navbar-auth"
         user={user}
-        nameApp="STACK"
+        nameApp="GARABATO"
         isAdmin={isAdmin}
       />
     )}
