@@ -78,6 +78,6 @@
 ## 11. Verificación final
 
 - [x] 11.1 `bun install --frozen-lockfile`, `bun run check`, `bun run check-types`, `bun run test` y `bun run build` en verde desde un checkout limpio
-- [ ] 11.2 Recorrido manual en dev nativo: signup, login, home, perfil, apariencia (cambio de tema sin parpadeo), admin (usuarios, sesiones, organizaciones, equipos, API keys, plugins, logs), crons (crear, ejecutar y ver el historial en vivo), colecciones, favoritos, comentarios e iconos de entidad
+- [x] 11.2 Recorrido manual en dev nativo: signup, login, home, perfil, apariencia (cambio de tema sin parpadeo), admin (usuarios, sesiones, organizaciones, equipos, API keys, plugins, logs), crons (crear, ejecutar y ver el historial en vivo), colecciones, favoritos, comentarios e iconos de entidad
 - [x] 11.3 Comprobar que la PWA es instalable (manifest e iconos válidos y service worker registrado)
 - [x] 11.4 `openspec validate adopt-stack-foundation` sin errores
