@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "imports": {
+    "#tests/*": "./tests/*.ts",
     "#*": "./src/*.ts"
   },
   "exports": {
@@ -13,7 +14,8 @@
   },
   "scripts": {
     "build": "true",
-    "check-types": "tsc -b"
+    "check-types": "tsc -b",
+    "test": "bun test"
   },
   "dependencies": {
     "@nonete/db": "workspace:*",
@@ -24,6 +26,7 @@
   "devDependencies": {
     "@nonete/config": "workspace:*",
     "@types/bun": "catalog:",
+    "pino": "catalog:",
     "typescript": "catalog:"
   }
 }
