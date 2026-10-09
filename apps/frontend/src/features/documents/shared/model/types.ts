@@ -66,6 +66,9 @@ export type SignatureRecord = {
   documentDeleted: boolean
   versionId: string
   versionNumber: number
+  /** The version it produced has been deleted: the record stays, but the
+   *  document no longer counts it as one of its signatures. */
+  versionDeleted: boolean
   certificateId: string
   certificateAlias: string
   certificateHolder: string
@@ -86,7 +89,9 @@ export type SignatureRecord = {
 }
 
 export type DocumentDetail = DocumentSummary & {
+  /** Live versions, oldest first. */
   versions: DocumentVersion[]
+  /** Every record, deleted versions included; newest first. */
   signatures: SignatureRecord[]
 }
 

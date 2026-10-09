@@ -29,6 +29,7 @@ export const TRAIL_TYPES = [
   "document.downloaded",
   "document.renamed",
   "document.moved",
+  "document.versionDeleted",
   "document.deleted",
   "certificate.imported",
   "certificate.renamed",
@@ -55,8 +56,8 @@ type TrailCommon = {
     holder: string
     deleted: boolean
   } | null
-  /** The version the action produced or delivered. */
-  version: { id: string; number: number } | null
+  /** The version the action produced, delivered or deleted. */
+  version: { id: string; number: number; deleted: boolean } | null
 }
 
 export type TrailEntry =
@@ -69,6 +70,7 @@ export type TrailEntry =
         | "document.uploaded"
         | "document.pagesEdited"
         | "document.downloaded"
+        | "document.versionDeleted"
         | "document.deleted"
       details: null
     })

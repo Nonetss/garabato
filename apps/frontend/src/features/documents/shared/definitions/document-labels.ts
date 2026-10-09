@@ -19,6 +19,12 @@ export function versionLabel(
   return joinFacts([`v${version.number}`, versionKindLabels[version.kind]])
 }
 
+/** `v2`, or `v2 (eliminada)` once the version has been deleted. */
+export function versionNumberLabel(number: number, deleted: boolean) {
+  if (!deleted) return `v${number}`
+  return `v${number} (eliminada)`
+}
+
 // `1 página`, `3 páginas`.
 export const documentLabels = {
   upload: "Subir PDF",
@@ -185,4 +191,15 @@ export const documentLabels = {
   },
   moveUp: "Subir",
   moveDown: "Bajar",
+  // Versions: viewing an earlier one and deleting the latest.
+  viewVersion: (label: string) => `Ver ${label}`,
+  viewingVersion: (label: string) => `Estás viendo la ${label}`,
+  viewCurrent: "Ver la actual",
+  currentVersion: "actual",
+  deleteVersion: "Eliminar versión",
+  deleteVersionTitle: (number: number) => `Eliminar la versión ${number}`,
+  deleteVersionDescription: (number: number, previous: number) =>
+    `La versión ${number} dejará de existir y la versión ${previous} volverá a ser la actual. El borrado queda registrado en tus trazas.`,
+  deleteSignedVersionWarning:
+    "Esta versión es la que produjo una firma: se elimina el PDF firmado, pero el registro de la firma y sus trazas se conservan.",
 } as const

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import {
   SoftCardList,
   SoftCardListItem,
@@ -54,5 +54,42 @@ describe("SoftCardListItem", () => {
       "08/10/2026",
       "Motivo: conforme",
     ])
+  })
+
+  test("makes a selectable row a button named by its title", () => {
+    const chosen: string[] = []
+    render(
+      <SoftCardList as="ul">
+        <SoftCardListItem
+          title="v2 · firmada"
+          selected
+          onSelect={() => chosen.push("v2")}
+          trailing={<button type="button">Descargar</button>}
+        />
+        <SoftCardListItem
+          title="v1 · original"
+          onSelect={() => chosen.push("v1")}
+        />
+      </SoftCardList>
+    )
+
+    const shown = screen.getByRole("button", { name: "v2 · firmada" })
+    const other = screen.getByRole("button", { name: "v1 · original" })
+    expect(shown.getAttribute("aria-current")).toBe("true")
+    expect(other.getAttribute("aria-current")).toBeNull()
+
+    fireEvent.click(other)
+    fireEvent.click(screen.getByRole("button", { name: "Descargar" }))
+    expect(chosen).toEqual(["v1"])
+  })
+
+  test("keeps a plain title when the row is not selectable", () => {
+    render(
+      <SoftCardList as="ul">
+        <SoftCardListItem title="Ana López" />
+      </SoftCardList>
+    )
+
+    expect(screen.queryByRole("button")).toBeNull()
   })
 })

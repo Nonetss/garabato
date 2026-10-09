@@ -13,7 +13,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { timestampDetail } from "@/features/documents/shared/public"
+import {
+  timestampDetail,
+  versionNumberLabel,
+} from "@/features/documents/shared/public"
 import {
   deletedAware,
   placementLabel,
@@ -57,7 +60,9 @@ const signatureFields: MetadataFieldDescriptor<SignatureLogRecord>[] = [
     key: "version",
     label: "Versión",
     value: (record) => (
-      <span className="tabular-nums">v{record.versionNumber}</span>
+      <span className="tabular-nums">
+        {versionNumberLabel(record.versionNumber, record.versionDeleted)}
+      </span>
     ),
   },
   {

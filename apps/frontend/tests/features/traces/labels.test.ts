@@ -13,6 +13,7 @@ import {
   traceDescription,
   traceSubject,
   traceTone,
+  traceVersionLabel,
 } from "@/features/traces/overview/model/labels"
 import type { TrailEntry } from "@/features/traces/overview/model/types"
 
@@ -26,7 +27,11 @@ const common = {
   ipAddress: null,
   document: { id: DOC_ID, name: "contrato.pdf", deleted: false },
   certificate: null,
-  version: { id: "00000000-0000-4000-8000-0000000000e1", number: 3 },
+  version: {
+    id: "00000000-0000-4000-8000-0000000000e1",
+    number: 3,
+    deleted: false,
+  },
 }
 
 const certificate = {
@@ -118,6 +123,34 @@ describe("traceDescription", () => {
     )
   })
 
+  test("names a version deletion and marks deleted versions elsewhere", () => {
+    const deletedVersion = { ...common.version, deleted: true }
+    expect(
+      traceDescription({
+        ...common,
+        type: "document.versionDeleted",
+        details: null,
+        version: deletedVersion,
+      })
+    ).toBe("Se eliminó la versión 3; la anterior vuelve a ser la actual")
+    expect(
+      traceDescription({
+        ...common,
+        type: "document.downloaded",
+        details: null,
+        version: deletedVersion,
+      })
+    ).toBe("Descargada la versión 3 (eliminada)")
+    expect(
+      traceVersionLabel({
+        ...common,
+        type: "document.pagesEdited",
+        details: null,
+        version: deletedVersion,
+      })
+    ).toBe("v3 (eliminada)")
+  })
+
   test("names the certificate, version and placement of a signature", () => {
     expect(
       traceDescription({
@@ -132,6 +165,7 @@ describe("traceDescription", () => {
           documentDeleted: false,
           versionId: "00000000-0000-4000-8000-0000000000e2",
           versionNumber: 2,
+          versionDeleted: false,
           certificateId: CERT_ID,
           certificateAlias: certificate.alias,
           certificateHolder: certificate.holder,
@@ -171,6 +205,9 @@ describe("labels", () => {
       "Certificado importado"
     )
     expect(TRAIL_TYPE_LABELS["document.signed"]).toBe("Documento firmado")
+    expect(TRAIL_TYPE_LABELS["document.versionDeleted"]).toBe(
+      "Versión eliminada"
+    )
   })
 })
 
@@ -178,6 +215,7 @@ describe("traceTone", () => {
   test("marks signatures and deletions", () => {
     expect(traceTone("document.signed")).toBe("primary")
     expect(traceTone("certificate.deleted")).toBe("destructive")
+    expect(traceTone("document.versionDeleted")).toBe("destructive")
     expect(traceTone("document.downloaded")).toBe("muted")
   })
 })

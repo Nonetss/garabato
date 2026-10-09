@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import { versionLabel } from "@/features/documents/shared/definitions/document-labels"
+import {
+  versionLabel,
+  versionNumberLabel,
+} from "@/features/documents/shared/definitions/document-labels"
 
 describe("versionLabel", () => {
   test("names each version by its number and origin", () => {
@@ -15,5 +18,12 @@ describe("versionLabel", () => {
     expect(versionLabel({ number: 3, kind: "signature" })).toBe(
       "v3\u00A0· firmada"
     )
+  })
+})
+
+describe("versionNumberLabel", () => {
+  test("marks a deleted version", () => {
+    expect(versionNumberLabel(2, false)).toBe("v2")
+    expect(versionNumberLabel(2, true)).toBe("v2 (eliminada)")
   })
 })

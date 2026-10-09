@@ -8,6 +8,7 @@ import { emptyHistoryMessage } from "@/features/documents/detail/model/signature
 import {
   type SignatureRecord,
   timestampLine,
+  versionNumberLabel,
 } from "@/features/documents/shared"
 import { formatDateTime, formatPages, joinFacts } from "@/lib/format"
 
@@ -64,7 +65,7 @@ export function SignatureHistory({
               includeYear: true,
               includeSeconds: true,
             }),
-            `v${record.versionNumber}`,
+            versionNumberLabel(record.versionNumber, record.versionDeleted),
             placementLabel(record),
           ])}
           note={signatureNote(record)}

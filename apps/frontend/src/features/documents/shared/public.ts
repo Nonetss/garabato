@@ -1,3 +1,4 @@
+export { versionNumberLabel } from "@/features/documents/shared/definitions/document-labels"
 export {
   timestampDetail,
   timestampLine,

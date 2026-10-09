@@ -1,4 +1,6 @@
+import { useQueryClient } from "@tanstack/react-query"
 import type {
+  DocumentDetail,
   DocumentSummary,
   EditPagesInput,
   MergeDocumentsInput,
@@ -17,6 +19,7 @@ const documentKey = (id: string) =>
 const downloadKey = (id: string) =>
   orpc.v1.document.download.key({ input: { id } })
 const signaturesKey = orpc.v1.document.signatures.key()
+const traceListKey = orpc.v1.trace.list.key()
 // Folder and tag counts follow the documents they hold.
 const foldersKey = orpc.v1.documentFolder.list.queryKey()
 const tagsKey = orpc.v1.documentTag.list.queryKey()
@@ -243,6 +246,30 @@ export const useDocumentMerge = () =>
     error: "No se pudieron unir los documentos",
     invalidate: [documentsListKey, foldersKey],
   })
+
+/**
+ * Deletes the current version: the previous one becomes current again. The
+ * page swaps in the returned document, and everything that showed the
+ * deleted version (thumbnails, counts, signature lists, the trail) refreshes.
+ */
+export const useDocumentVersionDelete = (id: string) => {
+  const queryClient = useQueryClient()
+  return useOrpcMutation<DocumentDetail, { versionId: string }>({
+    mutationFn: ({ versionId }) =>
+      orpc.v1.document.deleteLatestVersion.call({ id, versionId }),
+    success: "Versión eliminada",
+    error: "No se pudo eliminar la versión",
+    onSuccess: (document) => {
+      queryClient.setQueryData(documentKey(id), document)
+    },
+    invalidate: [
+      downloadKey(id),
+      documentsListKey,
+      signaturesKey,
+      traceListKey,
+    ],
+  })
+}
 
 export const useDocumentSign = (id: string) =>
   useOrpcMutation<{ signature: SignatureRecord }, SignInput>({

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Certificate } from "@/features/certificates/overview/model/types"
+import { versionNumberLabel } from "@/features/documents/shared/public"
 import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { formatDateTime, joinFacts } from "@/lib/format"
 import { orpc } from "@/lib/orpc"
@@ -23,6 +24,7 @@ type SignatureEntry = {
   documentName: string
   documentDeleted: boolean
   versionNumber: number
+  versionDeleted: boolean
   signedAt: string
   visible: boolean
   pages: number[]
@@ -69,7 +71,7 @@ function SignatureList({ certificateId }: { certificateId: string }) {
           title={<DocumentName entry={entry} />}
           description={joinFacts([
             formatDateTime(entry.signedAt, { includeYear: true }),
-            `v${entry.versionNumber}`,
+            versionNumberLabel(entry.versionNumber, entry.versionDeleted),
             placementLabel(entry),
           ])}
         />

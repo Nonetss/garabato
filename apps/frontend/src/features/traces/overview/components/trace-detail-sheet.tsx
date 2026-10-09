@@ -16,6 +16,7 @@ import {
   folderLabel,
   TRAIL_TYPE_LABELS,
   traceSubject,
+  traceVersionLabel,
 } from "@/features/traces/overview/model/labels"
 import type { TrailEntry } from "@/features/traces/overview/model/types"
 import { formatDateTime, joinFacts } from "@/lib/format"
@@ -105,7 +106,7 @@ const fields: MetadataFieldDescriptor<TrailEntry>[] = [
     key: "version",
     label: "Versión",
     value: (entry) => (
-      <span className="tabular-nums">v{entry.version?.number}</span>
+      <span className="tabular-nums">{traceVersionLabel(entry)}</span>
     ),
     hidden: (entry) => entry.version === null,
   },

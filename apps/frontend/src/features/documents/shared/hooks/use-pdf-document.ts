@@ -10,7 +10,9 @@ GlobalWorkerOptions.workerSrc = workerUrl
 
 type PdfState =
   | { status: "loading" }
-  | { status: "ready"; pdf: PDFDocumentProxy }
+  // `file` is the one `pdf` was parsed from: right after the input changes,
+  // the previous file's pdf is still `ready` until the new one loads.
+  | { status: "ready"; pdf: PDFDocumentProxy; file: File }
   | { status: "error" }
 
 /** Parses a PDF file with pdf.js for rendering; destroys it on change. */
@@ -26,7 +28,7 @@ export function usePdfDocument(file: File | undefined): PdfState {
       const loading = getDocument({ data })
       try {
         const pdf = await loading.promise
-        if (!cancelled) setState({ status: "ready", pdf })
+        if (!cancelled) setState({ status: "ready", pdf, file })
       } catch {
         if (!cancelled) setState({ status: "error" })
       }

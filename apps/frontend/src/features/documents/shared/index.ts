@@ -49,6 +49,7 @@ export {
   useDocumentsSetPinned,
   useDocumentsUpdateTags,
   useDocumentUpload,
+  useDocumentVersionDelete,
 } from "@/features/documents/shared/hooks/use-documents"
 export { usePdfDocument } from "@/features/documents/shared/hooks/use-pdf-document"
 export {
@@ -87,4 +88,5 @@ export {
   pathOf,
   timestampDetail,
   timestampLine,
+  versionNumberLabel,
 } from "@/features/documents/shared/public"

@@ -62,6 +62,36 @@ export interface SoftCardListItemProps {
   density?: SoftCardListItemDensity
   /** Truncate the title and description to one line each instead of wrapping. */
   truncate?: boolean
+  /**
+   * Makes the whole row a button that calls this (the trailing controls stay
+   * their own buttons). Its accessible name is the title.
+   */
+  onSelect?: () => void
+  /** Marks the row as the chosen one (`aria-current` on its button). */
+  selected?: boolean
+}
+
+/**
+ * The title, or, on a selectable row, a button around it whose `::after`
+ * stretches over the row so the whole row answers the pointer.
+ */
+function RowTitle({
+  title,
+  onSelect,
+  selected,
+}: Pick<SoftCardListItemProps, "title" | "onSelect"> & { selected: boolean }) {
+  if (!onSelect) return title
+  const current = selected ? "true" : undefined
+  return (
+    <button
+      type="button"
+      aria-current={current}
+      onClick={onSelect}
+      className="cursor-pointer text-left outline-none after:absolute after:inset-0 focus-visible:after:ring-2 focus-visible:after:ring-ring/50 focus-visible:after:ring-inset"
+    >
+      {title}
+    </button>
+  )
 }
 
 const itemPadding: Record<SoftCardListItemDensity, string> = {
@@ -82,15 +112,24 @@ export function SoftCardListItem({
   trailing,
   density = "default",
   truncate = false,
+  onSelect,
+  selected = false,
 }: SoftCardListItemProps) {
   const lineClass = truncate ? "truncate" : undefined
 
   return (
-    <li className={cn("flex items-center gap-3", itemPadding[density])}>
+    <li
+      className={cn(
+        "flex items-center gap-3",
+        itemPadding[density],
+        onSelect && "relative transition-colors hover:bg-accent/40",
+        selected && "bg-accent/60 hover:bg-accent/60"
+      )}
+    >
       {leading}
       <div className="min-w-0 flex-1 space-y-0.5">
         <Text as="p" variant="title" className={lineClass}>
-          {title}
+          <RowTitle title={title} onSelect={onSelect} selected={selected} />
         </Text>
         {description ? (
           <Text
@@ -108,8 +147,12 @@ export function SoftCardListItem({
           </Text>
         ) : null}
       </div>
+      {/* `relative` keeps the trailing controls above a selectable row's
+          stretched button. */}
       {trailing ? (
-        <div className="flex shrink-0 items-center gap-3">{trailing}</div>
+        <div className="relative flex shrink-0 items-center gap-3">
+          {trailing}
+        </div>
       ) : null}
     </li>
   )

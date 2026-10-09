@@ -10,6 +10,7 @@ export const TRAIL_TYPE_ICONS = {
   "document.downloaded": getIcon("actions", "download"),
   "document.renamed": getIcon("actions", "edit"),
   "document.moved": getIcon("actions", "move"),
+  "document.versionDeleted": getIcon("actions", "restore"),
   "document.deleted": getIcon("actions", "delete"),
   "certificate.imported": getIcon("navigation", "certificates"),
   "certificate.renamed": getIcon("actions", "edit"),

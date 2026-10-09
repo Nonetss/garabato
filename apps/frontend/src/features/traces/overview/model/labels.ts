@@ -1,3 +1,4 @@
+import { versionNumberLabel } from "@/features/documents/shared/public"
 import {
   deletedAware,
   placementLabel,
@@ -18,6 +19,7 @@ export const TRAIL_TYPE_LABELS: Record<TrailType, string> = {
   "document.downloaded": "Documento descargado",
   "document.renamed": "Documento renombrado",
   "document.moved": "Documento movido",
+  "document.versionDeleted": "Versión eliminada",
   "document.deleted": "Documento eliminado",
   "certificate.imported": "Certificado importado",
   "certificate.renamed": "Certificado renombrado",
@@ -44,9 +46,17 @@ export function traceSubject(entry: TrailEntry) {
   return joinFacts(names)
 }
 
+// `3`, or `3 (eliminada)` once the version has been deleted.
 function versionNumber(entry: TrailEntry) {
   if (entry.version === null) return "?"
+  if (entry.version.deleted) return `${entry.version.number} (eliminada)`
   return String(entry.version.number)
+}
+
+/** The entry's version as the detail shows it: `v3`, `v3 (eliminada)`. */
+export function traceVersionLabel(entry: TrailEntry) {
+  if (entry.version === null) return ""
+  return versionNumberLabel(entry.version.number, entry.version.deleted)
 }
 
 // "a.pdf, b.pdf y c.pdf"; past three names, "a.pdf, b.pdf y 3 más".
@@ -70,7 +80,10 @@ export function traceDescription(entry: TrailEntry) {
     case "document.signed":
       return joinFacts([
         `Firmado con ${certificateAlias(entry)}`,
-        `v${entry.signature.versionNumber}`,
+        versionNumberLabel(
+          entry.signature.versionNumber,
+          entry.signature.versionDeleted
+        ),
         placementLabel(entry.signature),
       ])
     case "document.uploaded":
@@ -86,6 +99,8 @@ export function traceDescription(entry: TrailEntry) {
       return `${entry.details.from} → ${entry.details.to}`
     case "document.moved":
       return `${folderLabel(entry.details.from)} → ${folderLabel(entry.details.to)}`
+    case "document.versionDeleted":
+      return `Se eliminó la versión ${entry.version?.number ?? "?"}; la anterior vuelve a ser la actual`
     case "document.deleted":
       return "Borrado junto con sus versiones; sus firmas siguen registradas"
     case "certificate.imported":
@@ -105,7 +120,11 @@ export function traceTone(
   type: TrailType
 ): "primary" | "destructive" | "muted" {
   if (type === "document.signed") return "primary"
-  if (type === "document.deleted" || type === "certificate.deleted") {
+  if (
+    type === "document.deleted" ||
+    type === "document.versionDeleted" ||
+    type === "certificate.deleted"
+  ) {
     return "destructive"
   }
   return "muted"
