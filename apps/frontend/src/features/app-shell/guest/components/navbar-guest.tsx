@@ -14,7 +14,7 @@ export function NavbarGuest({ nameApp }: NavbarGuestProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 z-40 w-full border-b bg-background/80 backdrop-blur transition-shadow duration-300 supports-backdrop-filter:bg-background/60",
+        "fixed inset-x-0 top-0 z-40 border-b pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] bg-background/80 backdrop-blur transition-shadow duration-300 supports-backdrop-filter:bg-background/60",
         scrolled ? "border-border shadow-sm" : "border-border/40"
       )}
     >

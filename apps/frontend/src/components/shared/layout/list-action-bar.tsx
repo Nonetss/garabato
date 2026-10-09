@@ -50,7 +50,7 @@ export function ListActionBar({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background/95 px-4 pt-3 backdrop-blur-sm transition-transform duration-200 ease-out md:hidden",
+        "fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t bg-background/95 pt-3 pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur-sm transition-transform duration-200 ease-out md:hidden",
         "pb-[calc(0.75rem+env(safe-area-inset-bottom))]",
         visible ? "translate-y-0" : "translate-y-full",
         className

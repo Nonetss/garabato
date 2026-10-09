@@ -600,6 +600,11 @@
     line-height: var(--line-height-body);
     position: relative;
     isolation: isolate;
+    /* `viewport-fit=cover` lets the page run under a landscape phone's
+       notch and rounded corners; keep content clear of them. Fixed chrome
+       (navbar, bottom bars) pads itself the same way. */
+    padding-inline: env(safe-area-inset-left, 0px)
+      env(safe-area-inset-right, 0px);
     letter-spacing: var(--tracking-normal);
   }
   /* Layout chrome islands (navbar, toaster) mount as direct body children;
