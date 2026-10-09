@@ -85,7 +85,12 @@ function TimelineItem({
             </Text>
           </span>
           {description !== "" && (
-            <Text as="span" variant="meta" tone="muted" className="wrap-break-word">
+            <Text
+              as="span"
+              variant="meta"
+              tone="muted"
+              className="wrap-break-word"
+            >
               {description}
             </Text>
           )}
