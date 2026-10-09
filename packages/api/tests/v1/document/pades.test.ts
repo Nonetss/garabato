@@ -7,6 +7,7 @@ import {
   lastSignatureWidgets,
   verifySignatures,
 } from "#tests/fixtures/pdf-signatures"
+import { createFakeTsa, FAKE_TSA_TIME } from "#tests/fixtures/tsa"
 import type { VisibleAppearance } from "#v1/document/pades/appearance"
 import {
   AppearanceError,
@@ -14,6 +15,7 @@ import {
   type SignPdfOptions,
   signPdf,
 } from "#v1/document/pades/sign"
+import { TimestampError } from "#v1/document/pades/timestamp"
 
 const A4 = { width: 595.28, height: 841.89 }
 const RECT = { x: 0.1, y: 0.2, width: 0.3, height: 0.1 }
@@ -33,6 +35,7 @@ async function options(
     reason: "Conformidad",
     location: "Madrid",
     appearance,
+    timestamper: null,
   }
 }
 
@@ -48,6 +51,45 @@ function expectRect(actual: number[], expected: number[]) {
     expect(actual[index]).toBeCloseTo(value, 2)
   }
 }
+
+describe("signPdf timestamps", () => {
+  test("a B-B signature has no unsigned attributes and no token", async () => {
+    const signed = await signPdf(
+      await pdfFixture("plain"),
+      await options("rsa")
+    )
+
+    const [signature] = await verifySignatures(signed.bytes)
+    expect(signature?.unsignedAttributeTypes).toEqual([])
+    expect(signed.timestamp).toBeNull()
+  })
+
+  test("a B-T signature carries a token over its signature value", async () => {
+    const tsa = createFakeTsa()
+    const signed = await signPdf(await pdfFixture("plain"), {
+      ...(await options("rsa")),
+      timestamper: tsa.timestamper,
+    })
+
+    const [signature] = await verifySignatures(signed.bytes)
+    expect(signature?.intact).toBe(true)
+    expect(signature?.unsignedAttributeTypes).toEqual([
+      "1.2.840.113549.1.9.16.2.14",
+    ])
+    expect(signature?.timestampImprint).toEqual(signature?.signatureValueDigest)
+    expect(signed.timestamp?.time).toEqual(FAKE_TSA_TIME)
+  })
+
+  test("a failing TSA stops the signature", async () => {
+    const tsa = createFakeTsa()
+    tsa.setMode("unreachable")
+    const error = await signPdf(await pdfFixture("plain"), {
+      ...(await options("rsa")),
+      timestamper: tsa.timestamper,
+    }).catch((caught: unknown) => caught)
+    expect(error).toBeInstanceOf(TimestampError)
+  })
+})
 
 describe("signPdf", () => {
   test("adds a valid PAdES B-B signature as an incremental update", async () => {

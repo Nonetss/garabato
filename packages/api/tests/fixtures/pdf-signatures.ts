@@ -11,6 +11,7 @@ import {
 import * as pkijs from "pkijs"
 
 const OID_SIGNING_CERTIFICATE_V2 = "1.2.840.113549.1.9.16.2.47"
+const OID_SIGNATURE_TIME_STAMP_TOKEN = "1.2.840.113549.1.9.16.2.14"
 const BYTE_RANGE = /\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g
 
 export type VerifiedSignature = {
@@ -23,6 +24,29 @@ export type VerifiedSignature = {
   signedLength: number
   hasSigningCertificateV2: boolean
   signerSubject: string
+  /** OIDs of the SignerInfo's unsigned attributes (the B-T token's, if any). */
+  unsignedAttributeTypes: string[]
+  /** SHA-256 the embedded timestamp token is over; null without a token. */
+  timestampImprint: Uint8Array | null
+  /** SHA-256 of the SignerInfo's signature value, what a B-T token covers. */
+  signatureValueDigest: Uint8Array
+}
+
+/** The message imprint of the signature-time-stamp token, if present. */
+function timestampImprintOf(signerInfo: pkijs.SignerInfo | undefined) {
+  const attribute = signerInfo?.unsignedAttrs?.attributes.find(
+    (entry) => entry.type === OID_SIGNATURE_TIME_STAMP_TOKEN
+  )
+  const value = attribute?.values[0]
+  if (!value) return null
+  const token = new pkijs.ContentInfo({ schema: value })
+  const tokenData = new pkijs.SignedData({ schema: token.content })
+  const eContent = tokenData.encapContentInfo.eContent
+  if (!eContent) return null
+  const tstInfo = pkijs.TSTInfo.fromBER(eContent.getValue())
+  return new Uint8Array(
+    tstInfo.messageImprint.hashedMessage.valueBlock.valueHexView
+  )
 }
 
 async function verifyCms(
@@ -69,7 +93,11 @@ export async function verifySignatures(
     const contentInfo = pkijs.ContentInfo.fromBER(der)
     const signedData = new pkijs.SignedData({ schema: contentInfo.content })
     const verified = await verifyCms(signedData, signed)
-    const attributes = signedData.signerInfos[0]?.signedAttrs?.attributes ?? []
+    const signerInfo = signedData.signerInfos[0]
+    const attributes = signerInfo?.signedAttrs?.attributes ?? []
+    const signatureValue = new Uint8Array(
+      signerInfo?.signature.valueBlock.valueHexView ?? []
+    )
     const signer = verified.signer
     results.push({
       subFilter: dict.match(/\/SubFilter\s*\/([\w.]+)/)?.[1] ?? "",
@@ -82,6 +110,12 @@ export async function verifySignatures(
       signerSubject: signer
         ? new X509Certificate(new Uint8Array(signer.toSchema().toBER())).subject
         : "",
+      unsignedAttributeTypes:
+        signerInfo?.unsignedAttrs?.attributes.map((entry) => entry.type) ?? [],
+      timestampImprint: timestampImprintOf(signerInfo),
+      signatureValueDigest: new Uint8Array(
+        await crypto.subtle.digest("SHA-256", signatureValue)
+      ),
     })
   }
   return results

@@ -1,4 +1,8 @@
 export {
+  timestampDetail,
+  timestampLine,
+} from "@/features/documents/shared/definitions/signature-timestamp"
+export {
   buildFolderIndex,
   childrenOf,
   descendantIdsOf,

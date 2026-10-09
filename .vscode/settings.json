@@ -26,7 +26,6 @@
     "editor.defaultFormatter": "ms-azuretools.vscode-containers"
   },
   "files.exclude": {
-    ".claude": true,
     "**/node_modules": true,
     "**/.astro": true,
     "**/dist": true,

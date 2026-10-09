@@ -1,6 +1,7 @@
 import { Signer } from "@signpdf/utils"
 import * as asn1js from "asn1js"
 import * as pkijs from "pkijs"
+import type { Timestamper, TimestampToken } from "#v1/document/pades/timestamp"
 
 // pkijs finds Bun's WebCrypto on its own (`self.crypto`), so no engine is set.
 
@@ -8,6 +9,7 @@ const OID_DATA = "1.2.840.113549.1.7.1"
 const OID_CONTENT_TYPE = "1.2.840.113549.1.9.3"
 const OID_MESSAGE_DIGEST = "1.2.840.113549.1.9.4"
 const OID_SIGNING_CERTIFICATE_V2 = "1.2.840.113549.1.9.16.2.47"
+const OID_SIGNATURE_TIME_STAMP_TOKEN = "1.2.840.113549.1.9.16.2.14"
 
 export type SignerIdentity = {
   privateKey: CryptoKey
@@ -49,16 +51,41 @@ async function signingCertificateV2(certificate: pkijs.Certificate) {
 
 /**
  * Produces the detached CAdES signature of the PDF byte ranges that
- * SubFilter ETSI.CAdES.detached (PAdES B-B) expects. The claimed signing
- * time lives in the signature dictionary's /M, so there is no CMS
- * signing-time attribute.
+ * SubFilter ETSI.CAdES.detached expects. The claimed signing time lives in
+ * the signature dictionary's /M, so there is no CMS signing-time attribute.
+ * With a `timestamper` the signature also carries an RFC 3161 token over its
+ * signature value (PAdES B-T); without one it is B-B. The token used is kept
+ * in `timestamp` for the signature record.
  */
 export class PadesSigner extends Signer {
   private readonly identity: SignerIdentity
+  private readonly timestamper: Timestamper | null
+  timestamp: TimestampToken | null = null
 
-  constructor(identity: SignerIdentity) {
+  constructor(identity: SignerIdentity, timestamper: Timestamper | null) {
     super()
     this.identity = identity
+    this.timestamper = timestamper
+  }
+
+  /** Adds the signature-time-stamp unsigned attribute (CAdES, B-T). */
+  private async addTimestamp(
+    signerInfo: pkijs.SignerInfo,
+    timestamper: Timestamper
+  ) {
+    const timestamp = await timestamper(
+      new Uint8Array(signerInfo.signature.valueBlock.valueHexView)
+    )
+    signerInfo.unsignedAttrs = new pkijs.SignedAndUnsignedAttributes({
+      type: 1,
+      attributes: [
+        new pkijs.Attribute({
+          type: OID_SIGNATURE_TIME_STAMP_TOKEN,
+          values: [timestamp.token.toSchema()],
+        }),
+      ],
+    })
+    this.timestamp = timestamp
   }
 
   async sign(pdfBuffer: Buffer): Promise<Buffer> {
@@ -106,6 +133,10 @@ export class PadesSigner extends Signer {
     })
 
     await signedData.sign(this.identity.privateKey, 0, "SHA-256")
+    const signerInfo = signedData.signerInfos[0]
+    if (this.timestamper && signerInfo) {
+      await this.addTimestamp(signerInfo, this.timestamper)
+    }
 
     const contentInfo = new pkijs.ContentInfo({
       contentType: pkijs.ContentInfo.SIGNED_DATA,

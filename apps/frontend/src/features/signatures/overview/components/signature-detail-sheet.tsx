@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { timestampDetail } from "@/features/documents/shared/public"
 import {
   deletedAware,
   placementLabel,
@@ -75,6 +76,13 @@ const signatureFields: MetadataFieldDescriptor<SignatureLogRecord>[] = [
     key: "placement",
     label: "Firma",
     value: (record) => placementLabel(record),
+  },
+  {
+    key: "timestamp",
+    label: "Sello de tiempo",
+    value: (record) => (
+      <span className="tabular-nums">{timestampDetail(record)}</span>
+    ),
   },
   {
     key: "reason",
