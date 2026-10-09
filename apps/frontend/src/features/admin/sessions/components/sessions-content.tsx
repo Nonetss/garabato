@@ -140,14 +140,9 @@ function SessionRow({
               key: "expiresAt",
               label: "Caduca",
               value: ({ session, isActive }) => (
-                <span
-                  className={cn(
-                    textVariants({ role: "data" }),
-                    isActive ? "text-muted-foreground" : "text-foreground"
-                  )}
-                >
+                <Text variant="data" tone={isActive ? "muted" : "default"}>
                   {formatDateTime(session.expiresAt, { includeYear: true })}
-                </span>
+                </Text>
               ),
             },
             {

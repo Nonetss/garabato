@@ -4,7 +4,7 @@ const ChevronDown = getIcon("controls", "expand")
 
 import type { CSSProperties } from "react"
 import { useState } from "react"
-import { Text, textVariants } from "@/components/shared/brand/typography"
+import { Text } from "@/components/shared/brand/typography"
 import { JsonView } from "@/components/shared/data-display/json-view"
 import { StatusDot } from "@/components/shared/data-display/status-dot"
 import type { ActivityLogEntry } from "@/features/admin/logs/model/types"
@@ -83,15 +83,13 @@ export function LogRow({
           {typeLabel[entry.type] ?? entry.type}
         </Text>
 
-        <span
-          className={cn(
-            textVariants({ role: "data" }),
-            "w-8 shrink-0 text-right",
-            isError ? "text-destructive" : "text-muted-foreground"
-          )}
+        <Text
+          variant="data"
+          tone={isError ? "destructive" : "muted"}
+          className="w-8 shrink-0 text-right"
         >
           {entry.statusCode ?? "—"}
-        </span>
+        </Text>
 
         <Text
           variant="data"
@@ -111,23 +109,22 @@ export function LogRow({
 
       {open ? (
         <div className="border-t px-4 py-3 sm:px-5">
-          <dl
-            className={cn(
-              textVariants({ role: "compact" }),
-              "mb-3 grid grid-cols-2 gap-x-5 gap-y-2 sm:hidden"
-            )}
-          >
+          <dl className="mb-3 grid grid-cols-2 gap-x-5 gap-y-2 sm:hidden">
             <div>
-              <dt className="text-muted-foreground">Usuario</dt>
-              <dd className="mt-0.5 truncate">
+              <Text as="dt" variant="compact" tone="muted">
+                Usuario
+              </Text>
+              <Text as="dd" variant="compact" className="mt-0.5 truncate">
                 <LogRowUser userId={entry.userId} />
-              </dd>
+              </Text>
             </div>
             <div>
-              <dt className="text-muted-foreground">Fecha</dt>
-              <dd className="mt-0.5 font-mono tabular-nums">
+              <Text as="dt" variant="compact" tone="muted">
+                Fecha
+              </Text>
+              <Text as="dd" variant="data" className="mt-0.5">
                 {formatDateTime(entry.timestamp, { includeSeconds: true })}
-              </dd>
+              </Text>
             </div>
           </dl>
           <JsonView

@@ -558,11 +558,14 @@ export function DocumentsContent() {
                       }
                       onCheckedChange={selection.toggleAll}
                     />
-                    <label htmlFor={SELECT_ALL_ID}>
-                      <Text variant="compact" tone="muted">
-                        {documentLabels.selectAll}
-                      </Text>
-                    </label>
+                    <Text
+                      as="label"
+                      htmlFor={SELECT_ALL_ID}
+                      variant="compact"
+                      tone="muted"
+                    >
+                      {documentLabels.selectAll}
+                    </Text>
                   </div>
                 ) : null}
               </div>
