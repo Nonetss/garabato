@@ -1,4 +1,4 @@
-import { type DragEvent, useRef, useState, useSyncExternalStore } from "react"
+import { type DragEvent, useRef, useState } from "react"
 import {
   type DocumentFolder,
   type DocumentSummary,
@@ -6,6 +6,7 @@ import {
   type FolderDropTargetProps,
   type FolderIndex,
 } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 
 /** Private type, so files dragged in from the desktop are never a move. */
 const MOVE_TYPE = "application/x-garabato-move"
@@ -20,16 +21,6 @@ export type DragSourceProps = {
   onDragStart?: (event: DragEvent<HTMLElement>) => void
   onDragEnd?: () => void
 }
-
-const finePointer = "(pointer: fine)"
-
-function subscribe(onChange: () => void) {
-  const query = window.matchMedia(finePointer)
-  query.addEventListener("change", onChange)
-  return () => query.removeEventListener("change", onChange)
-}
-
-const isFinePointer = () => window.matchMedia(finePointer).matches
 
 function targetKey(folderId: string | null) {
   if (folderId === null) return ROOT
@@ -59,7 +50,7 @@ export function useLibraryDrag({
   onMoveDocuments: (ids: string[], folderId: string | null) => void
   onMoveFolder: (id: string, parentId: string | null) => void
 }) {
-  const enabled = useSyncExternalStore(subscribe, isFinePointer, () => false)
+  const enabled = useFinePointer()
   // The payload lives here: `dataTransfer` can't be read until the drop.
   const payload = useRef<Payload | null>(null)
   const [over, setOver] = useState<string | null>(null)
