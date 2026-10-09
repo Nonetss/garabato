@@ -508,7 +508,7 @@ export function DocumentsContent() {
           libraryEmpty ? null : (
             <div className="space-y-3">
               <ResourceFilters
-                columns={2}
+                columns={3}
                 filters={filterDescriptors}
                 onClear={clearFilters}
                 hideMobileActionBar={selection.count > 0}
