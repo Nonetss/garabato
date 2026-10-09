@@ -23,6 +23,7 @@ export const user = pgTable("user", {
   banned: boolean("banned").default(false),
   banReason: text("ban_reason"),
   banExpires: timestamp("ban_expires"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
 })
 
 export type User = typeof user.$inferSelect
@@ -98,6 +99,30 @@ export const verification = pgTable(
 
 export type Verification = typeof verification.$inferSelect
 export type NewVerification = typeof verification.$inferInsert
+
+// Better Auth's `twoFactor` plugin (TOTP secret and backup codes, both stored
+// encrypted by the plugin). One row per user who has started enrolment.
+export const twoFactor = pgTable(
+  "two_factor",
+  {
+    id: text("id").primaryKey(),
+    secret: text("secret").notNull(),
+    backupCodes: text("backup_codes").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    verified: boolean("verified").default(true),
+    failedVerificationCount: integer("failed_verification_count").default(0),
+    lockedUntil: timestamp("locked_until"),
+  },
+  (table) => [
+    index("twoFactor_secret_idx").on(table.secret),
+    index("twoFactor_userId_idx").on(table.userId),
+  ]
+)
+
+export type TwoFactor = typeof twoFactor.$inferSelect
+export type NewTwoFactor = typeof twoFactor.$inferInsert
 
 export const organization = pgTable(
   "organization",

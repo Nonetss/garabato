@@ -87,6 +87,7 @@ export function userRow(overrides: Partial<UserRow> = {}): UserRow {
     banned: false,
     banReason: null,
     banExpires: null,
+    twoFactorEnabled: false,
     ...overrides,
   }
 }
