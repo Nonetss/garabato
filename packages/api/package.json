@@ -1,5 +1,6 @@
 {
   "name": "@nonete/api",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "imports": {
     "#tests/*": "./tests/*.ts",
