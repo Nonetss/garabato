@@ -222,7 +222,7 @@ export function SignatureDetailSheet({
 }: SignatureDetailSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-lg">
+      <SheetContent className="w-full gap-0 overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="wrap-break-word">
             {record?.documentName ?? "Firma"}
