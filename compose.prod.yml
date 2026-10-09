@@ -130,52 +130,48 @@ services:
   #
   # Document store: pgsty/silo, a MinIO build (its entrypoint maps `server`
   # to the `silo` binary). Its root credentials are the backend's S3
-  # credentials from .env. The S3 API stays on the Docker network; only the
-  # console is published, on the host's loopback (reach it through an SSH
-  # tunnel).
+  # credentials from .env. It publishes no port: the S3 API stays on the
+  # Docker network, and MinIO is administered with `mc` inside it
+  # (`docker exec garabato-minio mc ...`).
+  #
+  # The container creates S3_BUCKET itself (Bun's S3 client cannot create
+  # buckets): it starts the server in the background, runs an idempotent
+  # `mc mb` once it answers, then marks itself ready for the healthcheck.
+  # The trap forwards compose's stop signal to the server.
   minio:
     image: pgsty/silo:latest
     container_name: garabato-minio
     profiles:
       - minio
-    command: [ "server", "/data", "--console-address", ":9001" ]
+    entrypoint: [ "sh", "-c" ]
+    command:
+      - |
+        rm -f /tmp/minio-bucket-ready
+        /usr/bin/docker-entrypoint.sh server /data --console-address :9001 &
+        pid=$$!
+        trap 'kill -TERM "$$pid"; wait "$$pid"; exit $$?' TERM INT
+        until mc alias set local http://127.0.0.1:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 && mc mb --ignore-existing "local/$$S3_BUCKET"; do
+          kill -0 "$$pid" 2>/dev/null || exit 1
+          sleep 1
+        done
+        touch /tmp/minio-bucket-ready
+        wait "$$pid"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
     expose:
       - "9000"
-    ports:
-      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
+    # Healthy only once the server is live and the bucket exists.
     healthcheck:
-      test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:9000/minio/health/live" ]
+      test: [ "CMD-SHELL", "test -f /tmp/minio-bucket-ready && curl -fsS -o /dev/null http://localhost:9000/minio/health/live" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     restart: unless-stopped
-    networks:
-      - garabato
-
-  # One-shot: creates S3_BUCKET once MinIO is healthy (idempotent), then
-  # exits. Bun's S3 client cannot create buckets.
-  minio-init:
-    image: pgsty/silo:latest
-    container_name: garabato-minio-init
-    profiles:
-      - minio
-    entrypoint: [ "sh", "-c" ]
-    command:
-      - mc alias set local http://minio:9000 "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY" && mc mb --ignore-existing "local/$$S3_BUCKET"
-    environment:
-      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
-      S3_BUCKET: ${S3_BUCKET}
-    depends_on:
-      minio:
-        condition: service_healthy
-    restart: "no"
     networks:
       - garabato
 

@@ -1,7 +1,6 @@
 # Production-like stack built from this checkout: `bun run docker:up`.
-# The gateway is the only publicly published service; the app is on
-# http://localhost:${FRONTEND_PORT:-4444}. MinIO's console listens on
-# 127.0.0.1:9001 only.
+# The gateway is the only service that publishes a port; the app is on
+# http://localhost:${FRONTEND_PORT:-4444}.
 name: stack
 
 services:
@@ -55,8 +54,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
+      minio:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "bun", "-e", "fetch('http://localhost:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" ]
       interval: 10s
@@ -130,46 +129,46 @@ services:
 
   # Document store: pgsty/silo, a MinIO build (its entrypoint maps `server`
   # to the `silo` binary). Its root credentials are the backend's S3
-  # credentials from .env. The S3 API stays on the Docker network; only the
-  # console is published, on the host's loopback (reach it through an SSH
-  # tunnel).
+  # credentials from .env. It publishes no port: the S3 API stays on the
+  # Docker network, and MinIO is administered with `mc` inside it
+  # (`docker exec stack-minio mc ...`).
+  #
+  # The container creates S3_BUCKET itself (Bun's S3 client cannot create
+  # buckets): it starts the server in the background, runs an idempotent
+  # `mc mb` once it answers, then marks itself ready for the healthcheck.
+  # The trap forwards compose's stop signal to the server.
   minio:
     image: pgsty/silo:latest
     container_name: stack-minio
-    command: [ "server", "/data", "--console-address", ":9001" ]
+    entrypoint: [ "sh", "-c" ]
+    command:
+      - |
+        rm -f /tmp/minio-bucket-ready
+        /usr/bin/docker-entrypoint.sh server /data --console-address :9001 &
+        pid=$$!
+        trap 'kill -TERM "$$pid"; wait "$$pid"; exit $$?' TERM INT
+        until mc alias set local http://127.0.0.1:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 && mc mb --ignore-existing "local/$$S3_BUCKET"; do
+          kill -0 "$$pid" 2>/dev/null || exit 1
+          sleep 1
+        done
+        touch /tmp/minio-bucket-ready
+        wait "$$pid"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
     expose:
       - "9000"
-    ports:
-      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
+    # Healthy only once the server is live and the bucket exists.
     healthcheck:
-      test: [ "CMD", "curl", "-fsS", "-o", "/dev/null", "http://localhost:9000/minio/health/live" ]
+      test: [ "CMD-SHELL", "test -f /tmp/minio-bucket-ready && curl -fsS -o /dev/null http://localhost:9000/minio/health/live" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
     restart: unless-stopped
-
-  # One-shot: creates S3_BUCKET once MinIO is healthy (idempotent), then
-  # exits. Bun's S3 client cannot create buckets.
-  minio-init:
-    image: pgsty/silo:latest
-    container_name: stack-minio-init
-    entrypoint: [ "sh", "-c" ]
-    command:
-      - mc alias set local http://minio:9000 "$$S3_ACCESS_KEY_ID" "$$S3_SECRET_ACCESS_KEY" && mc mb --ignore-existing "local/$$S3_BUCKET"
-    environment:
-      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
-      S3_BUCKET: ${S3_BUCKET}
-    depends_on:
-      minio:
-        condition: service_healthy
-    restart: "no"
 
 volumes:
   db_data:
