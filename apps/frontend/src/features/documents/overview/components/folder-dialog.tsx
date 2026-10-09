@@ -135,9 +135,10 @@ export function FolderDialog({
     ? documentLabels.editFolderTitle
     : documentLabels.newFolder
   const submitLabel = editing ? documentLabels.save : documentLabels.create
-  const iconHint = editing
-    ? documentLabels.folderIconSavedHint
-    : documentLabels.folderIconHint
+  // Editing saves the icon on pick, unlike the name: say so under the row.
+  const nameHint = editing
+    ? `${documentLabels.folderNameHint} ${documentLabels.folderIconSavedHint}`
+    : documentLabels.folderNameHint
 
   return (
     <FormDialog
@@ -153,27 +154,23 @@ export function FolderDialog({
       <FormField
         label={documentLabels.folderName}
         htmlFor={NAME_ID}
-        hint={documentLabels.folderNameHint}
+        hint={nameHint}
       >
-        <Input
-          id={NAME_ID}
-          value={name}
-          onChange={(event) => {
-            setName(event.target.value)
-            setSubmitError(null)
-          }}
-          maxLength={100}
-          aria-invalid={submitError !== null}
-          required
-          autoFocus
-        />
-      </FormField>
-      <FormField label={documentLabels.folderIcon} htmlFor={ICON_ID}>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {iconField()}
-          <Text as="p" variant="meta" tone="muted">
-            {iconHint}
-          </Text>
+          <Input
+            id={NAME_ID}
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value)
+              setSubmitError(null)
+            }}
+            maxLength={100}
+            aria-invalid={submitError !== null}
+            className="min-w-0 flex-1"
+            required
+            autoFocus
+          />
         </div>
       </FormField>
       {submitError ? (

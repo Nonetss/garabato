@@ -68,7 +68,6 @@ export const documentLabels = {
   folderName: "Nombre de la carpeta",
   folderIcon: "Icono",
   folderNameHint: "No puede repetirse dentro de la misma carpeta.",
-  folderIconHint: "Opcional. Se muestra junto al nombre en la biblioteca.",
   folderIconSavedHint: "El icono se guarda en cuanto lo eliges.",
   createIn: (path: string) => {
     if (path === "") return "Se creará en la raíz de Documentos."
