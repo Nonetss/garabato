@@ -56,7 +56,7 @@ The system SHALL let a user create a new document from 2 to 20 of their document
 
 ### Requirement: Signed documents cannot be rewritten
 
-Editing pages and merging SHALL refuse any document that has signature records in the platform or whose current version embeds a signature field holding a signature, with a conflict error whose Spanish message explains that rewriting the document would invalidate its signatures. For a merge, the message SHALL name the first signed document.
+Editing pages and merging SHALL refuse any document that has signature records on a live version in the platform or whose current version embeds a signature field holding a signature, with a conflict error whose Spanish message explains that rewriting the document would invalidate its signatures. Signature records whose version has been deleted SHALL NOT count. For a merge, the message SHALL name the first signed document.
 
 #### Scenario: Edit a signed document
 
@@ -67,6 +67,11 @@ Editing pages and merging SHALL refuse any document that has signature records i
 
 - **WHEN** a merge includes a document uploaded with a signature made elsewhere
 - **THEN** the system SHALL reject the request with a conflict error naming that document and SHALL store nothing
+
+#### Scenario: Signature undone by deleting its version
+
+- **WHEN** the owner signed a document, deleted the signed version, and the current version embeds no signature
+- **THEN** editing its pages SHALL be allowed and "Editar páginas" SHALL be enabled
 
 ### Requirement: Page editor on the document page
 

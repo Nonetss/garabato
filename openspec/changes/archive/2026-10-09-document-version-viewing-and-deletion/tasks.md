@@ -2,7 +2,7 @@
 
 - [x] 1.1 Add nullable `deletedAt: timestamp("deleted_at")` to `documentVersions` in `packages/db/src/schema/document/document.ts`, with a comment on the soft delete and why the row is kept
 - [x] 1.2 Append `"document.versionDeleted"` to `TRACE_TYPES` in `packages/db/src/schema/trace/trace.ts`
-- [ ] 1.3 Stop and ask the user to run `bun run db:generate` and apply the migration (the agent never generates, runs or edits migrations)
+- [x] 1.3 Stop and ask the user to run `bun run db:generate` and apply the migration (the agent never generates, runs or edits migrations)
 
 ## 2. API: live versions everywhere
 
@@ -55,4 +55,4 @@
 ## 9. Validation
 
 - [x] 9.1 `bun run check-types`, Biome, `bun run tailwind:check` and `bun run test` pass
-- [ ] 9.2 Ask the user to try it in the app (view v1, go back, delete the signed latest version, check `/traces`); no runtime probing by the agent
+- [x] 9.2 Ask the user to try it in the app (view v1, go back, delete the signed latest version, check `/traces`); no runtime probing by the agent
