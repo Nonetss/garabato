@@ -22,6 +22,7 @@ import {
 } from "@/features/documents/detail/components/pdf-viewer"
 import { SignPanel } from "@/features/documents/detail/components/sign-panel"
 import { SignatureHistory } from "@/features/documents/detail/components/signature-history"
+import { SignatureValidation } from "@/features/documents/detail/components/signature-validation"
 import { VersionList } from "@/features/documents/detail/components/version-list"
 import {
   type DocumentVersion,
@@ -101,6 +102,7 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   }
 
   const placing = signing && visible
+  const currentVersion = document.versions.at(-1)
   const signingStatus = documentSigningStatus(document)
 
   return (
@@ -195,6 +197,15 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
             <SectionHeading title="Firmas" count={document.signatures.length} />
             <SignatureHistory records={document.signatures} />
           </section>
+          {currentVersion ? (
+            <section className="space-y-3">
+              <SectionHeading title="Validez de las firmas" />
+              <SignatureValidation
+                documentId={document.id}
+                versionId={currentVersion.id}
+              />
+            </section>
+          ) : null}
         </aside>
       </div>
     </div>
