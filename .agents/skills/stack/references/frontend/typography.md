@@ -18,7 +18,7 @@ Product text goes through the `Text` component (`apps/frontend/src/components/sh
 
 | Role | Use for |
 |---|---|
-| `display` | The page title (`PageHero`) |
+| `display` | The page title: `PageHero`, and the `h1` of the sign-in and sign-up cards, which stand in for it |
 | `headline` | Tile and card titles (`SurfaceCard`), `StateCard` titles, dialog and sheet titles (built into the primitives) |
 | `title` | Name of a list row, picker result or selected entity, at body size |
 | `body` | Default prose |
@@ -41,4 +41,5 @@ Tones: `default`, `muted`, `primary`, `destructive`. `as` picks the element (`sp
 - `components/ui` primitives keep their own classes, because `ui` can't import `components/shared`; call sites style them through `className={textVariants(...)}`. Exception: `DialogTitle` and `SheetTitle` already carry the `headline` recipe as token utilities, so every dialog and sheet title matches without call-site classes — don't add `tracking-tight` or a size to them. `.astro` files can't render React without an island, so they keep the utilities.
 - **Numbers and facts**: build a count with `formatCount(n, "página", "páginas")` and a size with `formatFileSize` (both bind the number to its unit with a no-break space), and join a facts line with `joinFacts([...])` (the `·` stays on the line of the fact before it), all from `@/lib/format`. Never write `` `${n} páginas` `` or `.join(" · ")` by hand in product copy.
 - **Marks in copy**: quote names with «» and use `…`, not `"…"` or `...`.
+- **Rendered rich content** (Markdown or HTML whose elements carry no classes) goes inside a `.typeset` container (`apps/frontend/src/styles/typeset.css`, presets `.typeset-docs` / `.typeset-chat` in `global.css`), which styles bare `p`, `h1`–`h6`, lists, tables and code by element. Never wrap product UI in it: UI elements get their roles from `Text`. Plain-text user content (a comment body) is a single `Text` with `whitespace-pre-wrap`, not typeset.
 - **Adding a role** touches three places in the same change: the `--font-size-*` (and, if needed, `--line-height-*`) token plus `--text-<role>` in `global.css`, the role in `textVariants`, and the name in `typeRoles` in `lib/utils.ts`. Update this table too. (Roles built only from stock utilities, such as `title`, `data` and `compact`, have no token and no `typeRoles` entry.)
