@@ -98,7 +98,7 @@ A signature followed by changes other than signatures SHALL keep its verdict on 
 
 ### Requirement: Trusted roots
 
-The trusted roots SHALL be the root certificates bundled with the runtime (the Mozilla root store) plus a set of Spanish roots that issue personal signing certificates, kept as files in the repository: at least FNMT-RCM's `AC RAIZ FNMT-RCM` and the DNIe's `AC RAIZ DNIE 2`. Adding a root SHALL only require adding its file.
+The trusted roots SHALL be the root certificates bundled with the runtime (the Mozilla root store) plus a set of Spanish roots that issue personal signing certificates, kept in the repository as source and shipped inside the backend bundle: at least FNMT-RCM's `AC RAIZ FNMT-RCM` and the DNIe's `AC RAIZ DNIE 2`. Each bundled root SHALL record the issuer's official download URL and its SHA-256 fingerprint, which a test SHALL pin. Adding a root SHALL only require adding one entry with its certificate, source and fingerprint.
 
 #### Scenario: Personal certificate from FNMT
 

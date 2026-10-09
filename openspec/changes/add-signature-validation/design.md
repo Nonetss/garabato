@@ -31,7 +31,7 @@ See `proposal.md` for the motivation. The relevant current state:
 | `extract.ts` | Find the signatures and their raw parts |
 | `verify.ts` | Per-signature checks and verdicts |
 | `trust.ts` | Trust store and chain building |
-| `roots/*.pem` | Bundled Spanish roots |
+| `roots.ts` | Bundled Spanish roots (PEM, source URL, SHA-256) |
 
 - Everything is pure: it takes bytes (and, for trust, a check date) and returns plain data. No database, env or network.
 - The handler method `verifySignatures` in `src/v1/document/handler.ts` only:
@@ -75,7 +75,8 @@ Revision boundaries (for coverage) come from the `%%EOF` markers. A later revisi
 
 ### 4. Trust store
 
-- `trust.ts` builds the anchors once, lazily: `tls.rootCertificates` plus every `roots/*.pem`, read with `import.meta.dir` and parsed into `pkijs.Certificate`.
+- `trust.ts` builds the anchors once, at module load: `tls.rootCertificates` plus every entry of `roots.ts`, parsed into `pkijs.Certificate`. The roots are inlined in a module, not read from `.pem` files, because the backend ships as a tsdown bundle and the production image copies only `dist/`.
+- `checkTrust` and `validateSignatures` accept the anchors as an optional parameter, so tests can trust the throwaway test CA.
 - `pkijs.CertificateChainValidationEngine` runs with:
   - `trustedCerts`: the anchors;
   - `certs`: the embedded certificates;
