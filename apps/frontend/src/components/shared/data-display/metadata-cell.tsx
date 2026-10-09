@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Text, textVariants } from "@/components/shared/brand/typography"
+import { Text } from "@/components/shared/brand/typography"
 import { cn } from "@/lib/utils"
 
 /** Visual emphasis for the value row of a `MetadataCell`. */
@@ -42,14 +42,6 @@ export function MetadataCell(
   const { label, children, action, tone = "default", className } = props
   const asDl = props.as === "dl"
 
-  const valueClass = cn(
-    "mt-1.5",
-    textVariants({
-      role: "body",
-      tone: tone === "destructive" ? "destructive" : "default",
-    })
-  )
-
   if (asDl) {
     if (action) {
       return (
@@ -63,7 +55,9 @@ export function MetadataCell(
             <Text as="dt" variant="label" tone="muted">
               {label}
             </Text>
-            <dd className={valueClass}>{children}</dd>
+            <Text as="dd" variant="body" tone={tone} className="mt-1.5">
+              {children}
+            </Text>
           </div>
           {action}
         </div>
@@ -74,7 +68,9 @@ export function MetadataCell(
         <Text as="dt" variant="label" tone="muted">
           {label}
         </Text>
-        <dd className={valueClass}>{children}</dd>
+        <Text as="dd" variant="body" tone={tone} className="mt-1.5">
+          {children}
+        </Text>
       </div>
     )
   }
@@ -84,7 +80,9 @@ export function MetadataCell(
       <Text as="p" variant="label" tone="muted">
         {label}
       </Text>
-      <div className={valueClass}>{children}</div>
+      <Text as="div" variant="body" tone={tone} className="mt-1.5">
+        {children}
+      </Text>
       {action}
     </div>
   )

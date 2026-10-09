@@ -5,6 +5,7 @@ import {
   type FilterColumns,
   FilterField,
 } from "@/components/shared/form/collapsible-filters"
+import { NBSP } from "@/lib/format"
 
 afterEach(cleanup)
 
@@ -55,5 +56,34 @@ describe("CollapsibleFilters", () => {
 
     expect(grid?.className).toContain("@3xl:grid-cols-3")
     expect(grid?.className).not.toContain("@5xl:grid-cols-4")
+  })
+
+  test("binds the active count to its noun", () => {
+    render(
+      <CollapsibleFilters activeCount={3}>
+        <FilterField label="A">
+          <span>control</span>
+        </FilterField>
+      </CollapsibleFilters>
+    )
+
+    // The default normalizer folds the no-break space into a plain one.
+    const counter = screen.getByText(`3${NBSP}activos`, {
+      normalizer: (text) => text,
+    })
+
+    expect(counter).toBeDefined()
+  })
+
+  test("hides the counter while no filter is active", () => {
+    render(
+      <CollapsibleFilters>
+        <FilterField label="A">
+          <span>control</span>
+        </FilterField>
+      </CollapsibleFilters>
+    )
+
+    expect(screen.queryByText(/activo/)).toBeNull()
   })
 })

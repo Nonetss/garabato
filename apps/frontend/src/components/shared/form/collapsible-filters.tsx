@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { formatCount } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /**
@@ -102,7 +103,7 @@ export function CollapsibleFilters({
       >
         <AccordionItem value="filters" className="border-b-0">
           <AccordionTrigger className="min-h-11 py-2 hover:no-underline">
-            <span className="flex min-w-0 items-center gap-2 font-medium text-sm">
+            <Text variant="title" className="flex min-w-0 items-center gap-2">
               <SlidersHorizontal className="size-4 shrink-0 text-muted-foreground" />
               {title}
               {hasActive ? (
@@ -111,10 +112,10 @@ export function CollapsibleFilters({
                   tone="muted"
                   className="font-normal tabular-nums"
                 >
-                  {activeCount} {activeCount === 1 ? "activo" : "activos"}
+                  {formatCount(activeCount, "activo", "activos")}
                 </Text>
               ) : null}
-            </span>
+            </Text>
           </AccordionTrigger>
           <AccordionContent className="pb-2">
             <div className="@container space-y-3">

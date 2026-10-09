@@ -94,9 +94,9 @@ function DialogField<TValues extends object>({
             }
           />
           {descriptor.description ? (
-            <label htmlFor={id} className="text-sm">
+            <Text as="label" htmlFor={id} variant="body">
               {descriptor.description}
-            </label>
+            </Text>
           ) : null}
         </div>
       </FormField>
