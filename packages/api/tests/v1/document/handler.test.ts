@@ -21,6 +21,11 @@ import { type PdfFixture, pdfFixture } from "#tests/fixtures/document-files"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { fakeObjectStorage } from "#tests/fixtures/object-storage"
 import { verifySignatures } from "#tests/fixtures/pdf-signatures"
+import {
+  FAKE_TSA_TIME,
+  type FakeTsaMode,
+  fakeTimestampService,
+} from "#tests/fixtures/tsa"
 import { documentHandler, documentName, pdfName } from "#v1/document/handler"
 import { documentInput } from "#v1/document/input"
 
@@ -133,6 +138,7 @@ function signInput(overrides: Partial<SignInput> = {}): SignInput {
 beforeEach(() => {
   fakeDb.reset()
   fakeObjectStorage.reset()
+  fakeTimestampService.reset()
 })
 
 describe("documentName", () => {
@@ -849,6 +855,64 @@ describe("document.sign", () => {
       ipAddress: "203.0.113.7",
     })
   })
+
+  test("signs B-B and asks no TSA when none is configured", async () => {
+    await arrange({ remember: true })
+    queueCommit()
+
+    await documentHandler.sign({ context, input: signInput() })
+
+    expect(fakeTimestampService.tsa.requests).toEqual([])
+    expect(written("insert", 1)).toMatchObject({
+      timestampedAt: null,
+      timestampAuthority: null,
+    })
+  })
+
+  test("timestamps the signature with the configured TSA", async () => {
+    const { dataKey } = await arrange({ remember: true })
+    queueCommit()
+    fakeTimestampService.enable()
+
+    await documentHandler.sign({ context, input: signInput() })
+
+    const object = fakeObjectStorage.objects.get(`documents/${DOC_ID}/v2`)
+    const signedPdf = await vault.open(
+      dataKey,
+      DOC_SCOPE,
+      "v2",
+      bytesOf(object)
+    )
+    const [signature] = await verifySignatures(signedPdf)
+    expect(signature?.intact).toBe(true)
+    expect(signature?.timestampImprint).toEqual(signature?.signatureValueDigest)
+    expect(fakeTimestampService.tsa.requests).toHaveLength(1)
+    expect(field(written("insert", 1), "timestampedAt")).toEqual(FAKE_TSA_TIME)
+    expect(field(written("insert", 1), "timestampAuthority")).toEqual(
+      expect.any(String)
+    )
+  })
+
+  test.each([
+    ["unreachable", "SERVICE_UNAVAILABLE"],
+    ["http-error", "BAD_GATEWAY"],
+    ["rejected", "BAD_GATEWAY"],
+    ["wrong-nonce", "BAD_GATEWAY"],
+  ] satisfies [FakeTsaMode, string][])(
+    "stores nothing when the TSA is %s",
+    async (mode, code) => {
+      await arrange({ remember: true })
+      fakeTimestampService.enable()
+      fakeTimestampService.tsa.setMode(mode)
+
+      await expectErrorCode(
+        documentHandler.sign({ context, input: signInput() }),
+        code
+      )
+      expect(fakeDb.calls("insert")).toEqual([])
+      expect(fakeObjectStorage.objects.size).toBe(1)
+    }
+  )
 
   test("signs invisibly with a typed password", async () => {
     await arrange({ remember: false })

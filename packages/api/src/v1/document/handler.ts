@@ -34,6 +34,7 @@ import type { z } from "zod"
 import { type Context, getRequestLogger } from "#context"
 import { errors } from "#errors"
 import { objectStorage } from "#lib/object-storage"
+import { getTimestamper } from "#lib/timestamp"
 import { requireUserId } from "#shared/caller"
 import {
   openCertificateFile,
@@ -61,6 +62,7 @@ import type {
 import { AppearanceError } from "#v1/document/pades/appearance"
 import { EncryptedPdfError } from "#v1/document/pades/placeholder"
 import { signPdf } from "#v1/document/pades/sign"
+import { TimestampError } from "#v1/document/pades/timestamp"
 
 const NOT_FOUND_MESSAGE = "Documento no encontrado"
 const SOME_NOT_FOUND_MESSAGE = "Alguno de los documentos no existe"
@@ -174,6 +176,8 @@ function toRecord(row: SignatureJoin): SignatureRecord {
     sha256Before: signature.sha256Before,
     sha256After: signature.sha256After,
     ipAddress: signature.ipAddress,
+    timestampedAt: toIsoOrNull(signature.timestampedAt),
+    timestampAuthority: signature.timestampAuthority,
   }
 }
 
@@ -529,6 +533,20 @@ async function passwordFor(
 
 type SignInput = z.infer<typeof documentInput.sign>
 
+const TIMESTAMP_MESSAGE =
+  "No se pudo obtener el sello de tiempo de la autoridad configurada"
+
+/** A TSA that did not answer is unavailable; any other failure is its fault. */
+function timestampFailure(error: TimestampError) {
+  if (error.kind === "unreachable") {
+    return errors.SERVICE_UNAVAILABLE({
+      message: TIMESTAMP_MESSAGE,
+      cause: error,
+    })
+  }
+  return errors.BAD_GATEWAY({ message: TIMESTAMP_MESSAGE, cause: error })
+}
+
 function visibleAppearance(appearance: SignInput["appearance"]) {
   if (!appearance.visible) return undefined
   return {
@@ -555,8 +573,10 @@ async function signVersion(
       reason: input.reason,
       location: input.location,
       appearance: visibleAppearance(input.appearance),
+      timestamper: getTimestamper(),
     })
   } catch (error) {
+    if (error instanceof TimestampError) throw timestampFailure(error)
     if (error instanceof AppearanceError) {
       throw errors.BAD_REQUEST({
         message: "La posición de la firma no es válida para este documento",
@@ -943,6 +963,8 @@ export const documentHandler = {
               sha256Before: current.sha256,
               sha256After: version.sha256,
               ipAddress: clientIp(context),
+              timestampedAt: signed.timestamp?.time ?? null,
+              timestampAuthority: signed.timestamp?.authority ?? null,
             })
             .returning()
           if (!signature) {

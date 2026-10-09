@@ -2,6 +2,7 @@ import { mock } from "bun:test"
 
 import { fakeDb } from "#tests/fixtures/db"
 import { fakeObjectStorage } from "#tests/fixtures/object-storage"
+import { fakeTimestampService } from "#tests/fixtures/tsa"
 
 /**
  * Preloaded before every test file (`bunfig.toml`). Importing the procedure
@@ -38,6 +39,7 @@ const placeholders = {
 const cleared = [
   "SKIP_ENV_VALIDATION",
   "LOKI_URL",
+  "TSA_URL",
   "ADMIN_EMAIL",
   "ADMIN_PASSWORD",
   "ADMIN_NAME",
@@ -60,4 +62,9 @@ mock.module("@nonete/db", () => ({
 // Same for the document store: no unit test may reach an S3 endpoint.
 mock.module("#lib/object-storage", () => ({
   objectStorage: fakeObjectStorage.storage,
+}))
+
+// And for the TSA: signatures are B-B unless a test enables the fake TSA.
+mock.module("#lib/timestamp", () => ({
+  getTimestamper: fakeTimestampService.getTimestamper,
 }))

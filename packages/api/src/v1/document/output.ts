@@ -34,6 +34,16 @@ const signatureRecord = z.object({
   sha256Before: z.string(),
   sha256After: z.string(),
   ipAddress: z.string().nullable(),
+  timestampedAt: z
+    .string()
+    .nullable()
+    .describe(
+      "Time asserted by the RFC 3161 timestamp (PAdES B-T); null for B-B signatures"
+    ),
+  timestampAuthority: z
+    .string()
+    .nullable()
+    .describe("Name of the TSA that issued the timestamp; null for B-B"),
 })
 
 const signatureLogRecord = signatureRecord.extend({

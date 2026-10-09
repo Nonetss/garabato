@@ -22,8 +22,12 @@ import {
   type VisibleAppearance,
 } from "#v1/document/pades/appearance"
 
-/** Room for the CMS: certificate chain and signature with margin. */
-const SIGNATURE_BYTES = 16 * 1024
+/**
+ * Room for the CMS: certificate chain, signature and, for B-T, the TSA token
+ * with its own certificates (4–8 KiB), with margin. One size for B-B and B-T
+ * keeps the placeholder independent of configuration.
+ */
+const SIGNATURE_BYTES = 32 * 1024
 const PRINT_FLAG = 4
 const SIG_FLAGS_SIGNATURES_EXIST = 1
 const SIG_FLAGS_APPEND_ONLY = 2

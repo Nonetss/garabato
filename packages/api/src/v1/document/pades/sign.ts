@@ -5,6 +5,7 @@ import {
 } from "#v1/document/pades/appearance"
 import { addPlaceholder } from "#v1/document/pades/placeholder"
 import { PadesSigner, type SignerIdentity } from "#v1/document/pades/signer"
+import type { Timestamper } from "#v1/document/pades/timestamp"
 
 // The named class, not the default instance: the backend bundle imports this
 // CommonJS package in Node interop mode, where `default` is the whole
@@ -19,11 +20,14 @@ export type SignPdfOptions = {
   location?: string
   /** Omit for an invisible signature. */
   appearance?: VisibleAppearance
+  /** The TSA for a B-T signature; null signs B-B. */
+  timestamper: Timestamper | null
 }
 
 /**
- * Signs a PDF with a PAdES B-B signature appended as an incremental update.
- * Returns the signed bytes and the 0-based pages showing the stamp.
+ * Signs a PDF with a PAdES signature appended as an incremental update: B-T
+ * with a `timestamper`, B-B without. Returns the signed bytes, the 0-based
+ * pages showing the stamp and the timestamp token used (null for B-B).
  */
 export async function signPdf(pdf: Uint8Array, options: SignPdfOptions) {
   const placeholder = await addPlaceholder(pdf, {
@@ -34,11 +38,13 @@ export async function signPdf(pdf: Uint8Array, options: SignPdfOptions) {
     appearance: options.appearance,
     content: stampContent(options),
   })
-  const signed = await signpdf.sign(
-    placeholder.bytes,
-    new PadesSigner(options.identity)
-  )
-  return { bytes: new Uint8Array(signed), pages: placeholder.pages }
+  const signer = new PadesSigner(options.identity, options.timestamper)
+  const signed = await signpdf.sign(placeholder.bytes, signer)
+  return {
+    bytes: new Uint8Array(signed),
+    pages: placeholder.pages,
+    timestamp: signer.timestamp,
+  }
 }
 
 export { AppearanceError } from "#v1/document/pades/appearance"
