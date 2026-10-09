@@ -66,3 +66,36 @@ Que los usuarios creen sus propias organizaciones y equipos y compartan certific
 - El registro de firmas guarda quién firmó de verdad (el usuario) además del certificado usado, para saber quién usó un certificado compartido.
 - Aviso legal: compartir un certificado de persona física es dejar que otros firmen como esa persona. Tiene sentido sobre todo para certificados de representante o de sello de empresa. Se podría avisar al compartir uno personal, o limitar qué tipos se pueden compartir.
 - Más adelante se podría compartir también documentos con el mismo modelo de organización y equipo.
+
+## Enlaces para recibir y enviar PDF
+
+Intercambiar documentos con gente que no tiene cuenta, mediante una URL.
+
+Base común (la misma que en "Pedir una firma por enlace"):
+
+- Enlace con token único y caducidad. Se puede revocar antes de que caduque.
+- Protección opcional con contraseña (guardada como hash) o con un código por email. La contraseña se pasa a la otra persona por otro canal.
+- Límite de intentos con la contraseña, para que no se pueda adivinar a fuerza de probar.
+- Registro de accesos: cuándo, desde qué IP y con qué user agent se abrió, se subió o se descargó.
+- Desde la app se ven los enlaces activos, su estado y su historial.
+
+### Pedir que me suban un PDF
+
+- Creo una solicitud de subida: nombre o motivo, destinatario opcional (email), caducidad, número máximo de archivos y carpeta de destino.
+- La otra persona abre el enlace y sube el PDF sin crear cuenta. Se comprueba que es un PDF de verdad y que no pasa del tamaño máximo.
+- El documento aparece en mi cuenta como cualquier otro, marcado como recibido por enlace y con quién lo subió.
+- Aviso cuando llega. Puede ser de un solo uso (se cierra al subir) o admitir varias subidas hasta que caduque.
+- Se puede encadenar con la firma: me suben el PDF, lo firmo y se lo devuelvo por un enlace de envío.
+
+### Mandar un PDF con un enlace
+
+- Elijo un documento y genero un enlace de descarga, con contraseña opcional, caducidad y un número máximo de descargas.
+- Lo que se manda es una copia fija del PDF en ese momento (el documento firmado, por ejemplo), aunque luego cambie en la app.
+- La otra persona ve el PDF en el navegador o lo descarga. Opcionalmente ve también el resultado de validar las firmas.
+- Aviso cuando se descarga por primera vez.
+- Opcional: cifrar el propio PDF con la contraseña (cifrado estándar de PDF), para que siga protegido después de descargarlo. Ojo: cifrar un PDF ya firmado invalida sus firmas, así que solo vale para PDF sin firmar o hay que cifrar antes de firmar.
+
+Notas:
+
+- Las páginas públicas (sin sesión) conviene servirlas desde rutas separadas del resto de la app, con su propio límite de peticiones.
+- Los archivos subidos por desconocidos se guardan aparte hasta que se validan.
