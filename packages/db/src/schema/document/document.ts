@@ -100,7 +100,9 @@ export const documents = pgTable(
 export type DocumentVersionKind = "upload" | "merge" | "signature" | "pages"
 
 // Immutable versions: 1 is the upload or the merge, each signature or page
-// edit adds the next one.
+// edit adds the next one. Only the latest live version can be deleted, and
+// only softly: the row stays so the traces and signature records that name it
+// survive, and its number is never reused.
 export const documentVersions = pgTable(
   "document_versions",
   {
@@ -119,6 +121,9 @@ export const documentVersions = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    // Soft delete: a deleted version is no longer part of the document, and
+    // its object has been removed from storage.
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => [
     // Two signatures racing on the same version cannot both become `n + 1`.

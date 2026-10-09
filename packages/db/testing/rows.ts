@@ -224,6 +224,7 @@ export function documentVersionRow(
     sha256: "0".repeat(64),
     createdBy: "user-1",
     createdAt: NOW,
+    deletedAt: null,
     ...overrides,
   }
 }

@@ -25,6 +25,7 @@ export const TRACE_TYPES = [
   "document.downloaded",
   "document.renamed",
   "document.moved",
+  "document.versionDeleted",
   "document.deleted",
 ] as const
 
