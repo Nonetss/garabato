@@ -99,3 +99,23 @@ Notas:
 
 - Las páginas públicas (sin sesión) conviene servirlas desde rutas separadas del resto de la app, con su propio límite de peticiones.
 - Los archivos subidos por desconocidos se guardan aparte hasta que se validan.
+
+## Verificación por QR y trazabilidad
+
+Que cualquiera que tenga un documento de Garabato (en papel o en PDF) pueda comprobar con el móvil que es auténtico, que no se ha tocado y por qué manos ha pasado.
+
+- Al firmar (o al exportar) se puede estampar un código QR en el PDF, junto a la firma visible o en el pie de página, con un texto corto tipo "Verificable en garabato…/v/<código>".
+- El QR lleva a una página pública de verificación con un identificador opaco, no el id interno del documento.
+- La página muestra lo mínimo para verificar sin exponer el contenido: nombre del documento (opcional), hash SHA-256 de la versión, fecha, número de firmas y quién firmó con qué certificado (titular, emisor), y el resultado de validar las firmas.
+- Comprobar un archivo: la persona sube o arrastra el PDF que tiene y la página dice si coincide byte a byte con la versión registrada, si es una versión anterior o posterior del mismo documento, o si no coincide. Mejor calcular el hash en el navegador, para que el PDF no salga del dispositivo.
+- Papel: si solo tiene la copia impresa, ve los datos de la versión y, si el dueño lo permite, puede descargar el original para compararlo.
+- Trazabilidad: línea de tiempo de la versión con su origen (subida, unión, edición de páginas, cada firma) y el hash antes y después de cada paso, sacada de las versiones y del registro de firmas que ya existen.
+- El dueño decide qué se publica: solo "es auténtico", los datos de las firmas, la línea de tiempo o la descarga. Puede revocar el enlace del QR, y entonces la página dice que ya no está disponible.
+- Registro de consultas: cuándo y desde dónde se verificó, visible para el dueño.
+
+Notas:
+
+- El QR tiene que ir dentro de la actualización incremental que hace la firma, o antes de firmar. Añadirlo después a un PDF firmado invalida las firmas (igual que el cifrado).
+- Problema del huevo y la gallina: el hash de la versión con el QR no se conoce hasta que el QR está dentro. Por eso el QR apunta a un identificador del documento o de la solicitud, no al hash, y la página busca la versión.
+- Las páginas públicas van en rutas separadas, con límite de peticiones, como en "Enlaces para recibir y enviar PDF".
+- Encaja con un sello de tiempo (PAdES B-T) y, más adelante, con un sello de empresa del servidor, para que la verificación no dependa solo de que Garabato siga en pie.
