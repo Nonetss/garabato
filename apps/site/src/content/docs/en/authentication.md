@@ -8,7 +8,7 @@ Sign-in is handled by Better Auth. Every page except `/login` and `/signup` requ
 
 ## Accounts
 
-Email and password sign-in is always available. The `/signup` page is open: anyone who can reach the site can create an account, so keep the instance behind your own network or proxy rules if that is not what you want.
+Email and password sign-in is always available. By default the `/signup` page is open: anyone who can reach the site can create an account. To close it, set `DISABLE_SIGN_UP=true`. Then `/signup` shows that registration is closed, the sign-in page drops its link, and nobody can create an account through the API or through single sign-on either. Existing users keep signing in, and admins create new accounts from `/admin/users`.
 
 ## The admin role
 
@@ -42,6 +42,18 @@ https://sign.example.com/api/auth/oauth2/callback/oidc
 ```
 
 If any of the three variables is empty, SSO stays off and the app boots with email and password only.
+
+## Two-step verification
+
+Each user can protect their password sign-in with a code from an authenticator app (Google Authenticator, 1Password, Aegis or any TOTP app). It is optional and off by default.
+
+- **Turn it on** from the profile (`/me`): confirm your password, scan the QR code and enter the code the app shows. Keep the backup codes it displays: each one signs you in once if you lose the app.
+- **Sign in**: after the password, the sign-in page asks for the 6-digit code, or a backup code. Tick "trust this device" to skip the code in that browser for 30 days.
+- **Turn it off or get new backup codes** from the same row in the profile, again with your password.
+
+It applies to password sign-in only: single sign-on relies on your identity provider's own verification, and API keys are not affected.
+
+If a user loses both the app and the backup codes, an operator can turn it off in the database: set `two_factor_enabled` to `false` on their `user` row and delete their row in `two_factor`.
 
 ## API keys
 

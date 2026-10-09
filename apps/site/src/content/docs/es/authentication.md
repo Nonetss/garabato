@@ -8,7 +8,7 @@ El inicio de sesión lo gestiona Better Auth. Todas las páginas salvo `/login` 
 
 ## Cuentas
 
-El inicio de sesión con email y contraseña está siempre disponible. La página `/signup` está abierta: cualquiera que llegue a la web puede crearse una cuenta, así que deja la instancia detrás de tu propia red o de reglas en el proxy si no es lo que quieres.
+El inicio de sesión con email y contraseña está siempre disponible. Por defecto la página `/signup` está abierta: cualquiera que llegue a la web puede crearse una cuenta. Para cerrarla, define `DISABLE_SIGN_UP=true`. Entonces `/signup` indica que el registro está cerrado, la página de inicio de sesión quita su enlace y nadie puede crear una cuenta ni por la API ni con el inicio de sesión único. Los usuarios existentes siguen entrando, y los administradores crean las cuentas nuevas desde `/admin/users`.
 
 ## El rol de administrador
 
@@ -42,6 +42,18 @@ https://firma.example.com/api/auth/oauth2/callback/oidc
 ```
 
 Si falta cualquiera de las tres variables, el inicio de sesión único queda desactivado y la app arranca solo con email y contraseña.
+
+## Verificación en dos pasos
+
+Cada usuario puede proteger su acceso con contraseña con un código de una aplicación de autenticación (Google Authenticator, 1Password, Aegis o cualquier app TOTP). Es opcional y viene desactivada.
+
+- **Activarla** desde el perfil (`/me`): confirma tu contraseña, escanea el código QR e introduce el código que muestre la app. Guarda los códigos de respaldo que aparecen: cada uno te deja entrar una vez si pierdes la app.
+- **Entrar**: después de la contraseña, la página de inicio de sesión pide el código de 6 dígitos, o un código de respaldo. Marca "confiar en este dispositivo" para no tener que meter el código en ese navegador durante 30 días.
+- **Desactivarla o generar códigos de respaldo nuevos** desde la misma fila del perfil, otra vez con tu contraseña.
+
+Solo se aplica al acceso con contraseña: el inicio de sesión único depende de la verificación de tu proveedor de identidad, y las API keys no se ven afectadas.
+
+Si un usuario pierde la app y también los códigos de respaldo, un operador puede desactivarla en la base de datos: pon `two_factor_enabled` a `false` en su fila de `user` y borra su fila de `two_factor`.
 
 ## API keys
 

@@ -197,8 +197,13 @@ HTTP). Callers authenticate with the session cookie, a Bearer token or an
 
 - **Better Auth** (`packages/auth`) handles sign-up, sign-in and sessions, with
   the `admin`, `organization` (teams and dynamic access control) and
-  `api-key` plugins. Generic OIDC sign-in is enabled when its three env vars
-  are set.
+  `api-key` and `twoFactor` plugins. Generic OIDC sign-in is enabled when its
+  three env vars are set. `DISABLE_SIGN_UP=true` closes self-service sign-up
+  (email and OIDC); admins still create accounts.
+- **Two-step verification** (TOTP plus backup codes) is opt-in per user from
+  `/me` and guards password sign-in only. A user who lost both the app and the
+  backup codes is recovered in the database: set `user.two_factor_enabled` to
+  `false` and delete their `two_factor` row.
 - **Global admin**: users with the `admin` role see `/admin` and the API docs.
   The first admin is created on backend startup from `ADMIN_EMAIL` /
   `ADMIN_PASSWORD` (idempotent by email).
@@ -294,6 +299,7 @@ that matter most:
 | `BACKEND_URL` | Where the frontend reaches the backend |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | The admin seeded on startup |
 | `OIDC_*` | Optional OIDC sign-in |
+| `DISABLE_SIGN_UP` | `true` closes self-service sign-up (default `false`) |
 | `LOKI_URL` | Optional activity log shipping |
 
 `setup:dev` leaves an existing `.env` untouched unless you pass `--force`, and

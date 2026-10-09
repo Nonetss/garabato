@@ -31,6 +31,7 @@ Las lee el propio `compose.prod.yml`.
 | `S3_REGION` | no | Por defecto `us-east-1`; MinIO la ignora. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | sí | Credenciales del almacén. Con el MinIO incluido son también su usuario y contraseña root (al menos 8 caracteres). |
 | `TSA_URL` | no | Autoridad de sellado de tiempo RFC 3161. Si está definida, cada firma lleva su sello (PAdES B-T) y falla si la TSA no puede darlo; sin ella, las firmas son B-B. En producción usa una TSA de confianza, como un prestador cualificado de servicios de confianza. |
+| `DISABLE_SIGN_UP` | no | `true` cierra el registro (`/signup` y el primer acceso con inicio de sesión único); los administradores siguen creando cuentas. Por defecto `false`. Consulta [Usuarios e inicio de sesión](../authentication/). |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | no | El administrador que se crea al arrancar cuando están las tres. |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | no | Las tres juntas activan el inicio de sesión único. Consulta [Usuarios e inicio de sesión](../authentication/). |
 | `LOG_LEVEL` | no | `info` por defecto. |
@@ -42,5 +43,7 @@ Las lee el propio `compose.prod.yml`.
 | Qué | Límite |
 | --- | --- |
 | Subida de un PDF | 20 MiB, sin contraseña. |
+| Cuerpo de una petición | 25 MiB en cualquier ruta. |
+| Operaciones pesadas con documentos (subir, firmar, editar páginas, unir, comprobar firmas) | Por usuario, 2 a la vez y 30 por minuto; por encima la API responde 429. |
 | Certificado PKCS#12 | 100 KiB, `.p12` o `.pfx`. |
 | Motivo y lugar de la firma | 200 caracteres cada uno. |
