@@ -51,21 +51,6 @@ export {
   pdfFileProblem,
   saveFile,
 } from "@/features/documents/shared/model/files"
-export {
-  buildFolderIndex,
-  childrenOf,
-  descendantIdsOf,
-  type FolderIndex,
-  flattenTree,
-  folderPathLabel,
-  pathOf,
-} from "@/features/documents/shared/model/folder-tree"
-export {
-  DOCUMENT_FOLDER_ENTITY_TYPE,
-  FOLDER_PARAM,
-  folderHref,
-  folderIconRef,
-} from "@/features/documents/shared/model/library"
 export type {
   DocumentDetail,
   DocumentFolder,
@@ -77,3 +62,16 @@ export type {
   SignInput,
   StampRect,
 } from "@/features/documents/shared/model/types"
+export {
+  buildFolderIndex,
+  childrenOf,
+  DOCUMENT_FOLDER_ENTITY_TYPE,
+  descendantIdsOf,
+  FOLDER_PARAM,
+  type FolderIndex,
+  flattenTree,
+  folderHref,
+  folderIconRef,
+  folderPathLabel,
+  pathOf,
+} from "@/features/documents/shared/public"
