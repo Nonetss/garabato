@@ -6,14 +6,15 @@ import {
   type Certificate,
   certificates,
   type Document,
-  type DocumentSignature,
   type DocumentVersion,
   type DocumentVersionKind,
+  documentFolders,
   documentSignatures,
   documents,
   documentTagAssignments,
   documentTags,
   documentVersions,
+  type TraceFolderRef,
 } from "@nonete/db/schema"
 import {
   and,
@@ -42,6 +43,7 @@ import {
   openRememberedPassword,
   rejectPkcs12,
 } from "#shared/certificate-secrets"
+import { clientIp } from "#shared/client-ip"
 import { toIso, toIsoOrNull } from "#shared/dates"
 import { isUniqueViolation } from "#shared/db-errors"
 import { assertFound } from "#shared/not-found"
@@ -52,12 +54,12 @@ import {
 } from "#shared/pagination"
 import { openSigningKey } from "#shared/pkcs12"
 import { likePattern } from "#shared/search"
+import { recordTraces } from "#shared/trace"
 import { VaultError, type VaultScope, vault } from "#shared/vault"
 import { type documentInput, MAX_PDF_BYTES } from "#v1/document/input"
 import type {
   DocumentSummary,
   DocumentVersionOutput,
-  SignatureLogRecord,
   SignatureRecord,
   SignatureReportOutput,
   VerifySignaturesOutput,
@@ -72,6 +74,12 @@ import {
   PageListError,
   rewritePages,
 } from "#v1/document/pages"
+import {
+  type SignatureLogJoin,
+  signatureJoin,
+  toLogRecord,
+  toRecord,
+} from "#v1/document/signature-records"
 import {
   type SignatureReport,
   validateSignatures,
@@ -125,15 +133,6 @@ function downloadName(name: string, number: number, isCurrent: boolean) {
   return `${name.replace(/\.pdf$/i, "")} (v${number}).pdf`
 }
 
-// The first X-Forwarded-For entry: Caddy replaces any client-sent value.
-function clientIp(context: Context) {
-  const forwarded = context.headers.get("x-forwarded-for")
-  if (!forwarded) return null
-  const first = forwarded.split(",")[0]?.trim()
-  if (!first) return null
-  return first
-}
-
 async function loadPdf(bytes: Uint8Array) {
   try {
     return await PDFDocument.load(bytes, { updateMetadata: false })
@@ -165,64 +164,6 @@ function toVersion(row: DocumentVersion): DocumentVersionOutput {
     sizeBytes: row.sizeBytes,
     sha256: row.sha256,
     createdAt: toIso(row.createdAt),
-  }
-}
-
-type SignatureJoin = {
-  signature: DocumentSignature
-  documentName: string
-  documentDeletedAt: Date | null
-  versionNumber: number
-  certificateAlias: string
-  certificateHolder: string
-}
-
-function toRecord(row: SignatureJoin): SignatureRecord {
-  const { signature } = row
-  return {
-    id: signature.id,
-    documentId: signature.documentId,
-    documentName: row.documentName,
-    documentDeleted: row.documentDeletedAt !== null,
-    versionId: signature.versionId,
-    versionNumber: row.versionNumber,
-    certificateId: signature.certificateId,
-    certificateAlias: row.certificateAlias,
-    certificateHolder: row.certificateHolder,
-    signedAt: toIso(signature.signedAt),
-    visible: signature.visible,
-    pages: signature.pages,
-    rect: signature.rect,
-    reason: signature.reason,
-    location: signature.location,
-    sha256Before: signature.sha256Before,
-    sha256After: signature.sha256After,
-    ipAddress: signature.ipAddress,
-    timestampedAt: toIsoOrNull(signature.timestampedAt),
-    timestampAuthority: signature.timestampAuthority,
-  }
-}
-
-type SignatureLogJoin = SignatureJoin & {
-  certificateDeletedAt: Date | null
-  certificateTaxId: string | null
-  certificateIssuer: string
-  certificateSerialNumber: string
-  certificateFingerprint: string
-  certificateNotBefore: Date
-  certificateNotAfter: Date
-}
-
-function toLogRecord(row: SignatureLogJoin): SignatureLogRecord {
-  return {
-    ...toRecord(row),
-    certificateDeleted: row.certificateDeletedAt !== null,
-    certificateTaxId: row.certificateTaxId,
-    certificateIssuer: row.certificateIssuer,
-    certificateSerialNumber: row.certificateSerialNumber,
-    certificateFingerprint: row.certificateFingerprint,
-    certificateNotBefore: toIso(row.certificateNotBefore),
-    certificateNotAfter: toIso(row.certificateNotAfter),
   }
 }
 
@@ -298,14 +239,14 @@ function ownedActive(userId: string, id: string) {
   )
 }
 
-async function loadOwned(userId: string, id: string) {
-  const row = await db.query.documents.findFirst({
+type Executor = Pick<typeof db, "select" | "query">
+
+async function loadOwned(userId: string, id: string, executor: Executor = db) {
+  const row = await executor.query.documents.findFirst({
     where: { id, userId, deletedAt: { isNull: true } },
   })
   return assertFound(row, NOT_FOUND_MESSAGE)
 }
-
-type Executor = Pick<typeof db, "select" | "query">
 
 async function tagIdsOf(documentId: string) {
   const rows = await db
@@ -403,6 +344,12 @@ async function deleteDocuments(
     await tx
       .delete(documentTagAssignments)
       .where(inArray(documentTagAssignments.documentId, unique))
+    await recordTraces(
+      tx,
+      context,
+      userId,
+      unique.map((id) => ({ type: "document.deleted", documentId: id }))
+    )
     return unique
   })
 
@@ -425,35 +372,6 @@ async function versionsOf(documentId: string) {
     where: { documentId },
     orderBy: { number: "asc" },
   })
-}
-
-function signatureJoin() {
-  return db
-    .select({
-      signature: documentSignatures,
-      documentName: documents.name,
-      documentDeletedAt: documents.deletedAt,
-      versionNumber: documentVersions.number,
-      certificateAlias: certificates.alias,
-      certificateHolder: certificates.commonName,
-      certificateDeletedAt: certificates.deletedAt,
-      certificateTaxId: certificates.taxId,
-      certificateIssuer: certificates.issuerCommonName,
-      certificateSerialNumber: certificates.serialNumber,
-      certificateFingerprint: certificates.fingerprintSha256,
-      certificateNotBefore: certificates.notBefore,
-      certificateNotAfter: certificates.notAfter,
-    })
-    .from(documentSignatures)
-    .innerJoin(documents, eq(documents.id, documentSignatures.documentId))
-    .innerJoin(
-      documentVersions,
-      eq(documentVersions.id, documentSignatures.versionId)
-    )
-    .innerJoin(
-      certificates,
-      eq(certificates.id, documentSignatures.certificateId)
-    )
 }
 
 async function signaturesOfDocument(userId: string, documentId: string) {
@@ -648,6 +566,80 @@ async function signVersion(
   }
 }
 
+/** The trace of a new document: an upload, or a merge with its sources. */
+type CreationTrace =
+  | { type: "document.uploaded" }
+  | { type: "document.merged"; details: { sources: DocumentRef[] } }
+
+type DocumentRef = { id: string; name: string }
+
+/** A folder as a trace keeps it; the root when `id` is null. */
+function folderRef(
+  id: string | null,
+  names: Map<string, string>
+): TraceFolderRef {
+  if (id === null) return null
+  return { id, name: names.get(id) ?? "" }
+}
+
+/**
+ * Moves the caller's documents `ids` to `folderId` and traces each document
+ * whose folder changes, with the origin and destination as they are named now.
+ */
+async function moveDocuments(
+  context: Context,
+  userId: string,
+  ids: string[],
+  folderId: string | null
+) {
+  return db.transaction(async (tx) => {
+    const unique = await assertOwnedActive(tx, userId, ids)
+    if (folderId !== null) await assertOwnedFolder(tx, userId, folderId)
+    const before = await tx
+      .select({ id: documents.id, folderId: documents.folderId })
+      .from(documents)
+      .where(and(eq(documents.userId, userId), inArray(documents.id, unique)))
+    await tx
+      .update(documents)
+      .set({ folderId })
+      .where(and(eq(documents.userId, userId), inArray(documents.id, unique)))
+
+    const moved = before.filter((row) => row.folderId !== folderId)
+    if (moved.length === 0) return unique
+    const folderIds = new Set<string>()
+    for (const row of moved) {
+      if (row.folderId !== null) folderIds.add(row.folderId)
+    }
+    if (folderId !== null) folderIds.add(folderId)
+    const names = await folderNames(tx, userId, [...folderIds])
+    await recordTraces(
+      tx,
+      context,
+      userId,
+      moved.map((row) => ({
+        type: "document.moved",
+        documentId: row.id,
+        details: {
+          from: folderRef(row.folderId, names),
+          to: folderRef(folderId, names),
+        },
+      }))
+    )
+    return unique
+  })
+}
+
+async function folderNames(executor: Executor, userId: string, ids: string[]) {
+  if (ids.length === 0) return new Map<string, string>()
+  const rows = await executor
+    .select({ id: documentFolders.id, name: documentFolders.name })
+    .from(documentFolders)
+    .where(
+      and(eq(documentFolders.userId, userId), inArray(documentFolders.id, ids))
+    )
+  return new Map(rows.map((row) => [row.id, row.name]))
+}
+
 /**
  * Creates one of the caller's documents from `bytes` as version 1 of `kind`:
  * checks the PDF and the folder, seals the bytes under a new data key, stores
@@ -660,11 +652,13 @@ async function createDocument(
     folderId,
     bytes,
     kind,
+    trace,
   }: {
     name: string
     folderId: string | null
     bytes: Uint8Array<ArrayBuffer>
     kind: DocumentVersionKind
+    trace: CreationTrace
   }
 ) {
   const userId = requireUserId(context)
@@ -713,6 +707,9 @@ async function createDocument(
             message: "Document insert returned no row",
           })
         }
+        await recordTraces(tx, context, userId, [
+          { ...trace, documentId: id, versionId: versionRow.id },
+        ])
         return { document: documentRow, version: versionRow }
       })
   )
@@ -774,6 +771,28 @@ function currentVersions(versions: DocumentVersion[]) {
   return current
 }
 
+/** One of the caller's versions as a PDF file named after the document. */
+async function versionFile(
+  userId: string,
+  input: z.infer<typeof documentInput.download>
+) {
+  const document = await loadOwned(userId, input.id)
+  const versions = await versionsOf(document.id)
+  const current = versions.at(-1)
+  const version = assertFound(
+    pickVersion(versions, input.versionNumber),
+    "Versión no encontrada"
+  )
+  const dataKey = await unwrapDocumentKey(document)
+  const bytes = await readVersion(document, dataKey, version)
+  const file = new File(
+    [bytes],
+    downloadName(document.name, version.number, version === current),
+    { type: "application/pdf" }
+  )
+  return { file, document, version }
+}
+
 export const documentHandler = {
   upload: async ({
     context,
@@ -788,6 +807,7 @@ export const documentHandler = {
       folderId: input.folderId ?? null,
       bytes,
       kind: "upload",
+      trace: { type: "document.uploaded" },
     })
   },
 
@@ -892,21 +912,27 @@ export const documentHandler = {
     context: Context
     input: z.infer<typeof documentInput.download>
   }) => {
+    const { file } = await versionFile(requireUserId(context), input)
+    return file
+  },
+
+  exportVersion: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.download>
+  }) => {
     const userId = requireUserId(context)
-    const document = await loadOwned(userId, input.id)
-    const versions = await versionsOf(document.id)
-    const current = versions.at(-1)
-    const version = assertFound(
-      pickVersion(versions, input.versionNumber),
-      "Versión no encontrada"
-    )
-    const dataKey = await unwrapDocumentKey(document)
-    const bytes = await readVersion(document, dataKey, version)
-    return new File(
-      [bytes],
-      downloadName(document.name, version.number, version === current),
-      { type: "application/pdf" }
-    )
+    const { file, document, version } = await versionFile(userId, input)
+    await recordTraces(db, context, userId, [
+      {
+        type: "document.downloaded",
+        documentId: document.id,
+        versionId: version.id,
+      },
+    ])
+    return file
   },
 
   verifySignatures: async ({
@@ -942,12 +968,25 @@ export const documentHandler = {
     input: z.infer<typeof documentInput.rename>
   }) => {
     const userId = requireUserId(context)
-    const [row] = await db
-      .update(documents)
-      .set({ name: pdfName(input.name) })
-      .where(ownedActive(userId, input.id))
-      .returning()
-    const document = assertFound(row, NOT_FOUND_MESSAGE)
+    const document = await db.transaction(async (tx) => {
+      const previous = await loadOwned(userId, input.id, tx)
+      const [row] = await tx
+        .update(documents)
+        .set({ name: pdfName(input.name) })
+        .where(ownedActive(userId, input.id))
+        .returning()
+      const renamed = assertFound(row, NOT_FOUND_MESSAGE)
+      if (renamed.name !== previous.name) {
+        await recordTraces(tx, context, userId, [
+          {
+            type: "document.renamed",
+            documentId: renamed.id,
+            details: { from: previous.name, to: renamed.name },
+          },
+        ])
+      }
+      return renamed
+    })
     const versions = await versionsOf(document.id)
     const records = await signaturesOfDocument(userId, document.id)
     const tagIds = await tagIdsOf(document.id)
@@ -986,17 +1025,7 @@ export const documentHandler = {
     input: z.infer<typeof documentInput.move>
   }) => {
     const userId = requireUserId(context)
-    const ids = await db.transaction(async (tx) => {
-      const unique = await assertOwnedActive(tx, userId, input.ids)
-      if (input.folderId !== null) {
-        await assertOwnedFolder(tx, userId, input.folderId)
-      }
-      await tx
-        .update(documents)
-        .set({ folderId: input.folderId })
-        .where(and(eq(documents.userId, userId), inArray(documents.id, unique)))
-      return unique
-    })
+    const ids = await moveDocuments(context, userId, input.ids, input.folderId)
     return { ids, success: true }
   },
 
@@ -1222,6 +1251,13 @@ export const documentHandler = {
             .update(documents)
             .set({ pageCount, updatedAt: version.createdAt })
             .where(eq(documents.id, document.id))
+          await recordTraces(tx, context, userId, [
+            {
+              type: "document.pagesEdited",
+              documentId: document.id,
+              versionId: version.id,
+            },
+          ])
           return { version: toVersion(version), pageCount }
         })
       )
@@ -1287,6 +1323,15 @@ export const documentHandler = {
       folderId: input.folderId ?? null,
       bytes: merged,
       kind: "merge",
+      trace: {
+        type: "document.merged",
+        details: {
+          sources: owned.map((document) => ({
+            id: document.id,
+            name: document.name,
+          })),
+        },
+      },
     })
   },
 

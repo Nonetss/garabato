@@ -54,7 +54,7 @@ export const documentRouter = {
       openapi({
         summary: "Download a document version",
         description:
-          "Returns the PDF of the current version, or of `versionNumber`. Earlier versions are named with their number. Decrypted by the API; the object store never serves files directly.",
+          "Returns the PDF of the current version, or of `versionNumber`, for rendering. Earlier versions are named with their number. Decrypted by the API; the object store never serves files directly. A safe read: it leaves no trace. Use `exportVersion` when the user saves the file.",
         tags: ["Documents"],
         method: "GET",
       })
@@ -63,6 +63,22 @@ export const documentRouter = {
     .output(documentOutput.download)
     .handler(({ context, input }) =>
       documentHandler.download({ context, input })
+    ),
+
+  exportVersion: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Download a document version and trace it",
+        description:
+          "Returns the same PDF as `download` and records a `document.downloaded` trace for the version in the caller's trail. Meant for when the user saves the file.",
+        tags: ["Documents"],
+        method: "POST",
+      })
+    )
+    .input(documentInput.download)
+    .output(documentOutput.download)
+    .handler(({ context, input }) =>
+      documentHandler.exportVersion({ context, input })
     ),
 
   verifySignatures: protectedProcedure

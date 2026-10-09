@@ -105,6 +105,13 @@ function writtenId(values: object) {
   return id
 }
 
+// The trace rows the handler wrote: the last insert, an array of values.
+function traces() {
+  const call = fakeDb.calls("insert").at(-1)
+  if (!call) throw new Error("no trace insert")
+  return stepArgs(call, "values")[0]
+}
+
 async function rejection(promise: Promise<unknown>) {
   return promise.then(
     () => undefined,
@@ -203,7 +210,7 @@ describe("certificate.import", () => {
 
   test("stores metadata and the file sealed, without the password", async () => {
     fakeDb.queue("query.certificates.findFirst", undefined)
-    fakeDb.queue("insert", [row()])
+    fakeDb.queue("insert", [row()], [])
 
     const result = await certificateHandler.import({
       context,
@@ -226,11 +233,18 @@ describe("certificate.import", () => {
     expect(
       await openSealed(writtenId(values), values, "encryptedP12", "p12")
     ).toEqual(p12)
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        userId: USER_ID,
+        type: "certificate.imported",
+        certificateId: ID,
+      }),
+    ])
   })
 
   test("defaults the alias to the holder name", async () => {
     fakeDb.queue("query.certificates.findFirst", undefined)
-    fakeDb.queue("insert", [row()])
+    fakeDb.queue("insert", [row()], [])
 
     await certificateHandler.import({ context, input: await importInput() })
 
@@ -241,7 +255,7 @@ describe("certificate.import", () => {
 
   test("seals the password when asked to remember it", async () => {
     fakeDb.queue("query.certificates.findFirst", undefined)
-    fakeDb.queue("insert", [row()])
+    fakeDb.queue("insert", [row()], [])
 
     await certificateHandler.import({
       context,
@@ -325,8 +339,10 @@ describe("certificate.import", () => {
 })
 
 describe("certificate.rename", () => {
-  test("changes only the alias of an owned certificate", async () => {
+  test("changes only the alias of an owned certificate and traces it", async () => {
+    fakeDb.queue("query.certificates.findFirst", row())
     fakeDb.queue("update", [row({ alias: "Firma empresa" })])
+    fakeDb.queue("insert", [])
 
     const result = await certificateHandler.rename({
       context,
@@ -335,15 +351,36 @@ describe("certificate.rename", () => {
 
     expect(result.alias).toBe("Firma empresa")
     expect(written("update", "set")).toEqual({ alias: "Firma empresa" })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "certificate.renamed",
+        certificateId: ID,
+        details: { from: "Personal", to: "Firma empresa" },
+      }),
+    ])
+  })
+
+  test("traces nothing when the alias does not change", async () => {
+    fakeDb.queue("query.certificates.findFirst", row())
+    fakeDb.queue("update", [row()])
+
+    await certificateHandler.rename({
+      context,
+      input: { id: ID, alias: "Personal" },
+    })
+
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 
   test("answers NOT_FOUND when nothing owned matches", async () => {
-    fakeDb.queue("update", [])
+    fakeDb.queue("query.certificates.findFirst", undefined)
 
     await expectErrorCode(
       certificateHandler.rename({ context, input: { id: ID, alias: "X" } }),
       "NOT_FOUND"
     )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })
 
@@ -352,6 +389,7 @@ describe("certificate.rememberPassword", () => {
     const current = await sealedRow()
     fakeDb.queue("query.certificates.findFirst", current)
     fakeDb.queue("update", [row({ encryptedPassword: Buffer.from("x") })])
+    fakeDb.queue("insert", [])
 
     const result = await certificateHandler.rememberPassword({
       context,
@@ -366,6 +404,12 @@ describe("certificate.rememberPassword", () => {
       "password"
     )
     expect(new TextDecoder().decode(password)).toBe(P12_PASSWORD)
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "certificate.passwordRemembered",
+        certificateId: ID,
+      }),
+    ])
   })
 
   test("rejects a wrong password and keeps the previous state", async () => {
@@ -379,6 +423,7 @@ describe("certificate.rememberPassword", () => {
       "BAD_REQUEST"
     )
     expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 
   test("answers NOT_FOUND for another user's certificate", async () => {
@@ -415,6 +460,7 @@ describe("certificate.rememberPassword", () => {
 describe("certificate.forgetPassword", () => {
   test("erases the remembered password", async () => {
     fakeDb.queue("update", [row()])
+    fakeDb.queue("insert", [])
 
     const result = await certificateHandler.forgetPassword({
       context,
@@ -423,12 +469,29 @@ describe("certificate.forgetPassword", () => {
 
     expect(result.passwordRemembered).toBe(false)
     expect(written("update", "set")).toEqual({ encryptedPassword: null })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "certificate.passwordForgotten",
+        certificateId: ID,
+      }),
+    ])
+  })
+
+  test("answers NOT_FOUND for another user's certificate", async () => {
+    fakeDb.queue("update", [])
+
+    await expectErrorCode(
+      certificateHandler.forgetPassword({ context, input: { id: ID } }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })
 
 describe("certificate.delete", () => {
   test("shreds the sealed values and soft-deletes the row", async () => {
     fakeDb.queue("update", [row({ deletedAt: NOW })])
+    fakeDb.queue("insert", [])
 
     const result = await certificateHandler.delete({
       context,
@@ -442,6 +505,12 @@ describe("certificate.delete", () => {
       encryptedPassword: null,
       deletedAt: NOW,
     })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "certificate.deleted",
+        certificateId: ID,
+      }),
+    ])
   })
 
   test("answers NOT_FOUND when deleting twice", async () => {
@@ -451,5 +520,6 @@ describe("certificate.delete", () => {
       certificateHandler.delete({ context, input: { id: ID } }),
       "NOT_FOUND"
     )
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })

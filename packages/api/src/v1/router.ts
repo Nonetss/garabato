@@ -15,6 +15,7 @@ import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
+import { traceRouter } from "#v1/trace/router"
 
 export const appRouter = {
   authConfig: authConfigRouter,
@@ -31,6 +32,7 @@ export const appRouter = {
   plugins: pluginsRouter,
   cron: cronRouter,
   sessionHistory: sessionHistoryRouter,
+  trace: traceRouter,
   logs: logsRouter,
 }
 export type AppRouter = typeof appRouter

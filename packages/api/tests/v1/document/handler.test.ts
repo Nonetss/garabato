@@ -59,6 +59,13 @@ function written(op: "insert" | "update", index = 0) {
   return values
 }
 
+// The trace rows the handler wrote: the last insert, an array of values.
+function traces() {
+  const call = fakeDb.calls("insert").at(-1)
+  if (!call) throw new Error("no trace insert")
+  return stepArgs(call, "values")[0]
+}
+
 function field(values: object, key: string): unknown {
   return Object.entries(values).find(([name]) => name === key)?.[1]
 }
@@ -195,7 +202,7 @@ describe("document.upload", () => {
   test("stores version 1 encrypted and the rows in one transaction", async () => {
     const pdf = await pdfFixture("plain")
     fakeDb.queue("insert", [documentRow({ id: DOC_ID })])
-    fakeDb.queue("insert", [documentVersionRow({ sizeBytes: pdf.length })])
+    fakeDb.queue("insert", [documentVersionRow({ sizeBytes: pdf.length })], [])
 
     const result = await documentHandler.upload({
       context,
@@ -228,6 +235,14 @@ describe("document.upload", () => {
       bytesOf(field(document, "encryptedDataKey"))
     )
     expect(await vault.open(dataKey, scope, "v1", bytesOf(object))).toEqual(pdf)
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        userId: USER_ID,
+        type: "document.uploaded",
+        documentId: id,
+        versionId: V1_ID,
+      }),
+    ])
   })
 
   test.each([
@@ -278,7 +293,7 @@ describe("document.upload", () => {
 
   test("puts the document in the root when no folder is given", async () => {
     fakeDb.queue("insert", [documentRow({ id: DOC_ID })])
-    fakeDb.queue("insert", [documentVersionRow()])
+    fakeDb.queue("insert", [documentVersionRow()], [])
 
     const result = await documentHandler.upload({
       context,
@@ -292,7 +307,7 @@ describe("document.upload", () => {
   test("uploads into one of the caller's folders", async () => {
     fakeDb.queue("query.documentFolders.findFirst", documentFolderRow())
     fakeDb.queue("insert", [documentRow({ folderId: FOLDER_ID })])
-    fakeDb.queue("insert", [documentVersionRow()])
+    fakeDb.queue("insert", [documentVersionRow()], [])
 
     const result = await documentHandler.upload({
       context,
@@ -463,6 +478,7 @@ describe("document.download", () => {
     expect(file.name).toBe("contrato.pdf")
     expect(file.type).toBe("application/pdf")
     expect(new Uint8Array(await file.arrayBuffer())).toEqual(pdf)
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 
   test("names earlier versions with their number", async () => {
@@ -512,6 +528,55 @@ describe("document.download", () => {
       documentHandler.download({ context, input: { id: DOC_ID } }),
       "INTERNAL_SERVER_ERROR"
     )
+  })
+})
+
+describe("document.exportVersion", () => {
+  test("returns the version and traces the download", async () => {
+    const { dataKey, pdf, document, version } = await storedDocument()
+    const v2 = documentVersionRow({
+      id: "00000000-0000-4000-8000-0000000000e2",
+      number: 2,
+      objectKey: "documents/x/v2",
+    })
+    fakeObjectStorage.objects.set(
+      v2.objectKey,
+      await vault.seal(dataKey, DOC_SCOPE, "v2", Uint8Array.of(1))
+    )
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version, v2])
+    fakeDb.queue("insert", [])
+
+    const file = await documentHandler.exportVersion({
+      context,
+      input: { id: DOC_ID, versionNumber: 1 },
+    })
+
+    expect(file.name).toBe("contrato (v1).pdf")
+    expect(new Uint8Array(await file.arrayBuffer())).toEqual(pdf)
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        userId: USER_ID,
+        type: "document.downloaded",
+        documentId: DOC_ID,
+        versionId: V1_ID,
+      }),
+    ])
+  })
+
+  test("traces nothing for a missing version", async () => {
+    const { document, version } = await storedDocument()
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version])
+
+    await expectErrorCode(
+      documentHandler.exportVersion({
+        context,
+        input: { id: DOC_ID, versionNumber: 5 },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })
 
@@ -601,7 +666,9 @@ describe("document.verifySignatures", () => {
 describe("document.rename", () => {
   test("renames an owned document and returns its summary", async () => {
     const { document, version } = await storedDocument()
+    fakeDb.queue("query.documents.findFirst", document)
     fakeDb.queue("update", [{ ...document, name: "Contrato final.pdf" }])
+    fakeDb.queue("insert", [])
     fakeDb.queue("query.documentVersions.findMany", [version])
     fakeDb.queue("select", [], [])
 
@@ -611,6 +678,13 @@ describe("document.rename", () => {
     })
 
     expect(written("update")).toEqual({ name: "Contrato final.pdf" })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "document.renamed",
+        documentId: DOC_ID,
+        details: { from: "contrato.pdf", to: "Contrato final.pdf" },
+      }),
+    ])
     expect(result).toMatchObject({
       id: DOC_ID,
       name: "Contrato final.pdf",
@@ -620,8 +694,23 @@ describe("document.rename", () => {
     })
   })
 
+  test("traces nothing when the name does not change", async () => {
+    const { document, version } = await storedDocument()
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("update", [document])
+    fakeDb.queue("query.documentVersions.findMany", [version])
+    fakeDb.queue("select", [], [])
+
+    await documentHandler.rename({
+      context,
+      input: { id: DOC_ID, name: "contrato.pdf" },
+    })
+
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
   test("answers NOT_FOUND when nothing owned matches", async () => {
-    fakeDb.queue("update", [])
+    fakeDb.queue("query.documents.findFirst", undefined)
 
     await expectErrorCode(
       documentHandler.rename({
@@ -630,7 +719,8 @@ describe("document.rename", () => {
       }),
       "NOT_FOUND"
     )
-    expect(fakeDb.calls("query.documentVersions.findMany")).toEqual([])
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })
 
@@ -640,6 +730,7 @@ describe("document.delete", () => {
     fakeDb.queue("select", [{ id: DOC_ID }])
     fakeDb.queue("update", [{ id: document.id }])
     fakeDb.queue("delete", [])
+    fakeDb.queue("insert", [])
     fakeDb.queue("query.documentVersions.findMany", [version])
 
     const result = await documentHandler.delete({
@@ -655,6 +746,9 @@ describe("document.delete", () => {
     expect(field(written("update"), "deletedAt")).toBeInstanceOf(Date)
     expect(fakeDb.calls("delete")).toHaveLength(1)
     expect(fakeObjectStorage.objects.size).toBe(0)
+    expect(traces()).toEqual([
+      expect.objectContaining({ type: "document.deleted", documentId: DOC_ID }),
+    ])
   })
 
   test("still succeeds when an object cannot be removed", async () => {
@@ -662,6 +756,7 @@ describe("document.delete", () => {
     fakeDb.queue("select", [{ id: DOC_ID }])
     fakeDb.queue("update", [{ id: DOC_ID }])
     fakeDb.queue("delete", [])
+    fakeDb.queue("insert", [])
     fakeDb.queue("query.documentVersions.findMany", [version])
     fakeObjectStorage.failNext("deleteObject", errors.BAD_GATEWAY())
 
@@ -689,6 +784,7 @@ describe("document.deleteMany", () => {
     fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
     fakeDb.queue("update", [{ id: DOC_ID }, { id: DOC2_ID }])
     fakeDb.queue("delete", [])
+    fakeDb.queue("insert", [])
     fakeDb.queue("query.documentVersions.findMany", [])
 
     const result = await documentHandler.deleteMany({
@@ -698,6 +794,13 @@ describe("document.deleteMany", () => {
 
     expect(result).toEqual({ ids: [DOC_ID, DOC2_ID], success: true })
     expect(fakeDb.calls("delete")).toHaveLength(1)
+    expect(traces()).toEqual([
+      expect.objectContaining({ type: "document.deleted", documentId: DOC_ID }),
+      expect.objectContaining({
+        type: "document.deleted",
+        documentId: DOC2_ID,
+      }),
+    ])
   })
 
   test("deletes nothing when one of them isn't the caller's", async () => {
@@ -712,6 +815,7 @@ describe("document.deleteMany", () => {
     )
     expect(fakeDb.calls("update")).toEqual([])
     expect(fakeDb.calls("delete")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 
   test("rolls back when a concurrent delete took one of them", async () => {
@@ -730,10 +834,21 @@ describe("document.deleteMany", () => {
 })
 
 describe("document.move", () => {
-  test("moves a selection into one of the caller's folders", async () => {
+  const OTHER_FOLDER_ID = "00000000-0000-4000-8000-0000000000a2"
+
+  test("moves a selection into one of the caller's folders and traces each", async () => {
     fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
     fakeDb.queue("query.documentFolders.findFirst", documentFolderRow())
+    fakeDb.queue("select", [
+      { id: DOC_ID, folderId: null },
+      { id: DOC2_ID, folderId: OTHER_FOLDER_ID },
+    ])
     fakeDb.queue("update", [])
+    fakeDb.queue("select", [
+      { id: FOLDER_ID, name: "2026" },
+      { id: OTHER_FOLDER_ID, name: "2025" },
+    ])
+    fakeDb.queue("insert", [])
 
     const result = await documentHandler.move({
       context,
@@ -742,10 +857,51 @@ describe("document.move", () => {
 
     expect(result).toEqual({ ids: [DOC_ID, DOC2_ID], success: true })
     expect(written("update")).toEqual({ folderId: FOLDER_ID })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "document.moved",
+        documentId: DOC_ID,
+        details: { from: null, to: { id: FOLDER_ID, name: "2026" } },
+      }),
+      expect.objectContaining({
+        type: "document.moved",
+        documentId: DOC2_ID,
+        details: {
+          from: { id: OTHER_FOLDER_ID, name: "2025" },
+          to: { id: FOLDER_ID, name: "2026" },
+        },
+      }),
+    ])
   })
 
-  test("moves documents to the library root", async () => {
+  test("moves documents to the library root, tracing only those that change", async () => {
+    fakeDb.queue("select", [{ id: DOC_ID }, { id: DOC2_ID }])
+    fakeDb.queue("select", [
+      { id: DOC_ID, folderId: OTHER_FOLDER_ID },
+      { id: DOC2_ID, folderId: null },
+    ])
+    fakeDb.queue("update", [])
+    fakeDb.queue("select", [{ id: OTHER_FOLDER_ID, name: "2025" }])
+    fakeDb.queue("insert", [])
+
+    await documentHandler.move({
+      context,
+      input: { ids: [DOC_ID, DOC2_ID], folderId: null },
+    })
+
+    expect(written("update")).toEqual({ folderId: null })
+    expect(fakeDb.calls("query.documentFolders.findFirst")).toEqual([])
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        documentId: DOC_ID,
+        details: { from: { id: OTHER_FOLDER_ID, name: "2025" }, to: null },
+      }),
+    ])
+  })
+
+  test("traces nothing when every document is already there", async () => {
     fakeDb.queue("select", [{ id: DOC_ID }])
+    fakeDb.queue("select", [{ id: DOC_ID, folderId: null }])
     fakeDb.queue("update", [])
 
     await documentHandler.move({
@@ -753,8 +909,7 @@ describe("document.move", () => {
       input: { ids: [DOC_ID], folderId: null },
     })
 
-    expect(written("update")).toEqual({ folderId: null })
-    expect(fakeDb.calls("query.documentFolders.findFirst")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 
   test("moves nothing when one document isn't the caller's", async () => {
@@ -1181,6 +1336,7 @@ describe("document.editPages", () => {
       documentVersionRow({ id: V2_ID, number: 2, kind: "pages" }),
     ])
     fakeDb.queue("update", [])
+    fakeDb.queue("insert", [])
   }
 
   test("stores the reordered and rotated pages as version 2", async () => {
@@ -1217,6 +1373,13 @@ describe("document.editPages", () => {
     })
     expect(written("update", 0)).toMatchObject({ pageCount: 3 })
     expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v1`)).toBe(true)
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "document.pagesEdited",
+        documentId: DOC_ID,
+        versionId: V2_ID,
+      }),
+    ])
   })
 
   test("removes pages and updates the page count", async () => {
@@ -1404,7 +1567,7 @@ describe("document.merge", () => {
     fakeDb.queue("insert", [
       documentRow({ id: "00000000-0000-4000-8000-0000000000d9" }),
     ])
-    fakeDb.queue("insert", [documentVersionRow({ kind: "merge" })])
+    fakeDb.queue("insert", [documentVersionRow({ kind: "merge" })], [])
   }
 
   function storedObject(key: string) {
@@ -1454,6 +1617,19 @@ describe("document.merge", () => {
     expect(storedObject(contract.version.objectKey)).toEqual(contractObject)
     expect(storedObject(annex.version.objectKey)).toEqual(annexObject)
     expect(fakeDb.calls("update")).toEqual([])
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "document.merged",
+        documentId: id,
+        versionId: V1_ID,
+        details: {
+          sources: [
+            { id: DOC2_ID, name: "anexo.pdf" },
+            { id: DOC_ID, name: "contrato.pdf" },
+          ],
+        },
+      }),
+    ])
   })
 
   test("creates it in one of the caller's folders", async () => {

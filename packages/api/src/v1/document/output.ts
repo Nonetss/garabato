@@ -51,7 +51,7 @@ const signatureRecord = z.object({
     .describe("Name of the TSA that issued the timestamp; null for B-B"),
 })
 
-const signatureLogRecord = signatureRecord.extend({
+export const signatureLogRecord = signatureRecord.extend({
   certificateDeleted: z.boolean(),
   certificateTaxId: z.string().nullable(),
   certificateIssuer: z.string(),
@@ -63,7 +63,7 @@ const signatureLogRecord = signatureRecord.extend({
   certificateNotAfter: z.string(),
 })
 
-const signatureLogCertificate = z.object({
+export const signatureLogCertificate = z.object({
   id: z.uuid(),
   alias: z.string(),
   holder: z.string(),

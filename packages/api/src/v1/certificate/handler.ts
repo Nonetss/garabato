@@ -15,6 +15,7 @@ import { toIso } from "#shared/dates"
 import { isUniqueViolation } from "#shared/db-errors"
 import { assertFound } from "#shared/not-found"
 import { type CertificateMetadata, readPkcs12 } from "#shared/pkcs12"
+import { recordTraces } from "#shared/trace"
 import { vault } from "#shared/vault"
 import type { certificateInput } from "#v1/certificate/input"
 import type { CertificateSummary } from "#v1/certificate/output"
@@ -74,19 +75,23 @@ function ownedActive(userId: string, id: string) {
   )
 }
 
-async function loadOwned(userId: string, id: string) {
-  const row = await db.query.certificates.findFirst({
+/** `db` or a transaction. */
+type Executor = Pick<typeof db, "query" | "update">
+
+async function loadOwned(executor: Executor, userId: string, id: string) {
+  const row = await executor.query.certificates.findFirst({
     where: { id, userId, deletedAt: { isNull: true } },
   })
   return assertFound(row, NOT_FOUND_MESSAGE)
 }
 
 async function updateOwned(
+  executor: Executor,
   userId: string,
   id: string,
   values: Partial<Certificate>
 ) {
-  const [row] = await db
+  const [row] = await executor
     .update(certificates)
     .set(values)
     .where(ownedActive(userId, id))
@@ -112,7 +117,7 @@ export const certificateHandler = {
     context: Context
     input: z.infer<typeof certificateInput.get>
   }) => {
-    const row = await loadOwned(requireUserId(context), input.id)
+    const row = await loadOwned(db, requireUserId(context), input.id)
     return toSummary(row, new Date())
   },
 
@@ -155,31 +160,37 @@ export const certificateHandler = {
       : null
 
     try {
-      const [row] = await db
-        .insert(certificates)
-        .values({
-          id,
-          userId,
-          alias: aliasFor(input.alias, metadata),
-          ...metadata,
-          encryptedDataKey: await vault.wrapDataKey(
-            certificateScope(id),
-            dataKey
-          ),
-          encryptedP12: await vault.seal(
-            dataKey,
-            certificateScope(id),
-            "p12",
-            bytes
-          ),
-          encryptedPassword,
-        })
-        .returning()
-      if (!row) {
-        throw errors.INTERNAL_SERVER_ERROR({
-          message: "Certificate insert returned no row",
-        })
-      }
+      const row = await db.transaction(async (tx) => {
+        const [inserted] = await tx
+          .insert(certificates)
+          .values({
+            id,
+            userId,
+            alias: aliasFor(input.alias, metadata),
+            ...metadata,
+            encryptedDataKey: await vault.wrapDataKey(
+              certificateScope(id),
+              dataKey
+            ),
+            encryptedP12: await vault.seal(
+              dataKey,
+              certificateScope(id),
+              "p12",
+              bytes
+            ),
+            encryptedPassword,
+          })
+          .returning()
+        if (!inserted) {
+          throw errors.INTERNAL_SERVER_ERROR({
+            message: "Certificate insert returned no row",
+          })
+        }
+        await recordTraces(tx, context, userId, [
+          { type: "certificate.imported", certificateId: inserted.id },
+        ])
+        return inserted
+      })
       return toSummary(row, now)
     } catch (error) {
       // A concurrent import of the same certificate won the race.
@@ -197,8 +208,22 @@ export const certificateHandler = {
     context: Context
     input: z.infer<typeof certificateInput.rename>
   }) => {
-    const row = await updateOwned(requireUserId(context), input.id, {
-      alias: input.alias,
+    const userId = requireUserId(context)
+    const row = await db.transaction(async (tx) => {
+      const previous = await loadOwned(tx, userId, input.id)
+      const renamed = await updateOwned(tx, userId, input.id, {
+        alias: input.alias,
+      })
+      if (renamed.alias !== previous.alias) {
+        await recordTraces(tx, context, userId, [
+          {
+            type: "certificate.renamed",
+            certificateId: renamed.id,
+            details: { from: previous.alias, to: renamed.alias },
+          },
+        ])
+      }
+      return renamed
     })
     return toSummary(row, new Date())
   },
@@ -211,17 +236,24 @@ export const certificateHandler = {
     input: z.infer<typeof certificateInput.rememberPassword>
   }) => {
     const userId = requireUserId(context)
-    const current = await loadOwned(userId, input.id)
+    const current = await loadOwned(db, userId, input.id)
     const { dataKey, p12 } = await openCertificateFile(current)
     readOrReject(p12, input.password)
 
-    const row = await updateOwned(userId, input.id, {
-      encryptedPassword: await vault.seal(
-        dataKey,
-        certificateScope(current.id),
-        "password",
-        encode(input.password)
-      ),
+    const encryptedPassword = await vault.seal(
+      dataKey,
+      certificateScope(current.id),
+      "password",
+      encode(input.password)
+    )
+    const row = await db.transaction(async (tx) => {
+      const updated = await updateOwned(tx, userId, input.id, {
+        encryptedPassword,
+      })
+      await recordTraces(tx, context, userId, [
+        { type: "certificate.passwordRemembered", certificateId: updated.id },
+      ])
+      return updated
     })
     return toSummary(row, new Date())
   },
@@ -233,8 +265,15 @@ export const certificateHandler = {
     context: Context
     input: z.infer<typeof certificateInput.forgetPassword>
   }) => {
-    const row = await updateOwned(requireUserId(context), input.id, {
-      encryptedPassword: null,
+    const userId = requireUserId(context)
+    const row = await db.transaction(async (tx) => {
+      const updated = await updateOwned(tx, userId, input.id, {
+        encryptedPassword: null,
+      })
+      await recordTraces(tx, context, userId, [
+        { type: "certificate.passwordForgotten", certificateId: updated.id },
+      ])
+      return updated
     })
     return toSummary(row, new Date())
   },
@@ -248,11 +287,18 @@ export const certificateHandler = {
   }) => {
     // Crypto-shredding: without its data key nothing sealed for this row can
     // ever be opened again. The metadata stays for future signature records.
-    const row = await updateOwned(requireUserId(context), input.id, {
-      encryptedDataKey: null,
-      encryptedP12: null,
-      encryptedPassword: null,
-      deletedAt: new Date(),
+    const userId = requireUserId(context)
+    const row = await db.transaction(async (tx) => {
+      const deleted = await updateOwned(tx, userId, input.id, {
+        encryptedDataKey: null,
+        encryptedP12: null,
+        encryptedPassword: null,
+        deletedAt: new Date(),
+      })
+      await recordTraces(tx, context, userId, [
+        { type: "certificate.deleted", certificateId: deleted.id },
+      ])
+      return deleted
     })
     return { id: row.id, success: true }
   },
