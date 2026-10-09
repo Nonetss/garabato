@@ -10,7 +10,7 @@ Gives each user one log of every signature they have made, across all their docu
 
 The system SHALL return the caller's signature records across all their documents and certificates, newest signing time first, ties broken by record id descending, including records whose document or certificate has been deleted. The response SHALL be paginated by an opaque cursor: a page holds at most the requested limit (25 by default, at most 100), carries the cursor of the next page or none when there are no more records, and carries the total number of records that match the filters regardless of pagination. A malformed cursor SHALL be rejected with a bad-request error. Records of other users SHALL never be returned.
 
-Each record SHALL carry: the document id and name, whether the document is deleted, the version id and number the signature produced, the signing time, whether the signature is visible and the 0-based pages showing the stamp, the stamp rectangle, the reason and location, the SHA-256 of the document before and after signing, the client IP address when it was recorded, and the certificate's id, alias, holder name, tax identifier, issuer name, serial number, SHA-256 fingerprint, validity start and end, and whether it is deleted.
+Each record SHALL carry: the document id and name, whether the document is deleted, the version id and number the signature produced, the signing time, whether the signature is visible and the 0-based pages showing the stamp, the stamp rectangle, the reason and location, the SHA-256 of the document before and after signing, the client IP address when it was recorded, the time asserted by the timestamp authority and its name when the signature carries a timestamp (null otherwise), and the certificate's id, alias, holder name, tax identifier, issuer name, serial number, SHA-256 fingerprint, validity start and end, and whether it is deleted.
 
 #### Scenario: Records across documents and certificates
 
@@ -120,7 +120,7 @@ The signatures page SHALL offer, through the shared list filter experience, a te
 
 ### Requirement: Signature detail
 
-Choosing a row SHALL open a detail panel for that record without leaving the page, showing: the document name, linked to `/documents/[id]` unless the document is deleted; the version number; the signing date and time with seconds; invisible, or visible with its pages; the reason and location when present; the SHA-256 before and after signing and the certificate fingerprint, each copyable; the client IP when recorded; and the certificate's alias, holder, tax identifier, issuer, serial number and validity period, marked "eliminado" when deleted.
+Choosing a row SHALL open a detail panel for that record without leaving the page, showing: the document name, linked to `/documents/[id]` unless the document is deleted; the version number; the signing date and time with seconds; invisible, or visible with its pages; the reason and location when present; the SHA-256 before and after signing and the certificate fingerprint, each copyable; the client IP when recorded; the timestamp as "Sello de tiempo" with the time the TSA asserted, with seconds, and the TSA's name, or "Sin sello de tiempo" when the signature carries none; and the certificate's alias, holder, tax identifier, issuer, serial number and validity period, marked "eliminado" when deleted.
 
 #### Scenario: Detail of a visible signature
 
@@ -131,3 +131,8 @@ Choosing a row SHALL open a detail panel for that record without leaving the pag
 
 - **WHEN** the user opens a record whose document has been deleted
 - **THEN** the panel SHALL show the document name marked "eliminado" and SHALL not link to it
+
+#### Scenario: Detail of a timestamped signature
+
+- **WHEN** the user opens a record whose signature carries a timestamp from `FreeTSA`
+- **THEN** the panel SHALL show "Sello de tiempo" with the TSA's time and `FreeTSA`
