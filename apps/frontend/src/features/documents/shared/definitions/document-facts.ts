@@ -18,12 +18,18 @@ export function documentFacts(
 }
 
 /** Signed once any signature exists; the dot follows DESIGN.md (ink for ok,
- *  hairline for the neutral state). */
+ *  hairline for the neutral state). `embeddedSignatures` counts the
+ *  signatures found in the PDF itself, when the page has checked them: a PDF
+ *  uploaded already signed has none made in Garabato but is still signed. */
 export function documentSigningStatus(
-  document: Pick<DocumentSummary, "signatureCount">
+  document: Pick<DocumentSummary, "signatureCount">,
+  embeddedSignatures = 0
 ): { tone: StatusDotTone; label: string } {
-  if (document.signatureCount === 0) {
-    return { tone: "border", label: documentLabels.unsigned }
+  if (document.signatureCount > 0) {
+    return { tone: "foreground", label: documentLabels.signed }
   }
-  return { tone: "foreground", label: documentLabels.signed }
+  if (embeddedSignatures > 0) {
+    return { tone: "foreground", label: documentLabels.signedElsewhere }
+  }
+  return { tone: "border", label: documentLabels.unsigned }
 }

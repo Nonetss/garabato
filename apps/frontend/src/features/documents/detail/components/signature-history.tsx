@@ -3,6 +3,8 @@ import {
   SoftCardList,
   SoftCardListItem,
 } from "@/components/shared/data-display/soft-card-list"
+import { useEmbeddedSignatureCount } from "@/features/documents/detail/hooks/use-signature-validation"
+import { emptyHistoryMessage } from "@/features/documents/detail/model/signature-validation"
 import {
   type SignatureRecord,
   timestampLine,
@@ -32,12 +34,22 @@ function signatureNote(record: SignatureRecord) {
   ))
 }
 
-/** The document's signature records, newest first. */
-export function SignatureHistory({ records }: { records: SignatureRecord[] }) {
+/** The document's signature records made in Garabato, newest first. */
+export function SignatureHistory({
+  records,
+  documentId,
+  versionId,
+}: {
+  records: SignatureRecord[]
+  documentId: string
+  /** The current version, whose embedded signatures the empty state counts. */
+  versionId: string
+}) {
+  const embeddedSignatures = useEmbeddedSignatureCount(documentId, versionId)
   if (records.length === 0) {
     return (
       <Text as="p" variant="meta" tone="muted">
-        Este documento todavía no tiene firmas.
+        {emptyHistoryMessage(embeddedSignatures)}
       </Text>
     )
   }

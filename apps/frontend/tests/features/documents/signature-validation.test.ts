@@ -3,11 +3,13 @@ import {
   checkRows,
   checkTone,
   coverageSummary,
+  emptyHistoryMessage,
   type SignatureReport,
   signerName,
   verdictLabel,
   verdictTone,
 } from "@/features/documents/detail/model/signature-validation"
+import { documentSigningStatus } from "@/features/documents/shared/definitions/document-facts"
 
 function report(overrides: Partial<SignatureReport> = {}): SignatureReport {
   return {
@@ -70,5 +72,30 @@ describe("signature validation labels", () => {
     expect(signerName(report({ signer }))).toBe(signer.holder)
     expect(signerName(report())).toBe("Signature1")
     expect(signerName(report({ fieldName: "" }))).toBe("Firma sin identificar")
+  })
+})
+
+describe("signing state with embedded signatures", () => {
+  test("a document signed in Garabato is signed", () => {
+    expect(documentSigningStatus({ signatureCount: 1 }, 2).label).toBe(
+      "Firmado"
+    )
+  })
+
+  test("a PDF uploaded already signed is signed elsewhere, not unsigned", () => {
+    expect(documentSigningStatus({ signatureCount: 0 }, 1)).toEqual({
+      tone: "foreground",
+      label: "Firmado fuera de Garabato",
+    })
+    expect(documentSigningStatus({ signatureCount: 0 }).label).toBe(
+      "Sin firmar"
+    )
+  })
+
+  test("the empty history points at the embedded signatures", () => {
+    expect(emptyHistoryMessage(0)).toBe(
+      "Este documento todavía no tiene firmas."
+    )
+    expect(emptyHistoryMessage(1)).toContain("firmas hechas fuera")
   })
 })

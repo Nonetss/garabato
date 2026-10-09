@@ -13,3 +13,16 @@ export const useSignatureValidation = (documentId: string, versionId: string) =>
       staleTime: Number.POSITIVE_INFINITY,
     })
   )
+
+/**
+ * How many signatures the version's PDF carries, whoever made them; 0 until
+ * the check answers (or when it fails), so callers fall back to the
+ * signatures made in Garabato.
+ */
+export function useEmbeddedSignatureCount(
+  documentId: string,
+  versionId: string
+) {
+  const { data } = useSignatureValidation(documentId, versionId)
+  return data?.signatures.length ?? 0
+}

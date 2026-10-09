@@ -61,3 +61,10 @@ export function signerName(report: SignatureReport) {
   if (report.fieldName) return report.fieldName
   return "Firma sin identificar"
 }
+
+/** What an empty history says: a PDF uploaded already signed has no
+ *  signatures made in Garabato, but is not unsigned. */
+export function emptyHistoryMessage(embeddedSignatures: number) {
+  if (embeddedSignatures === 0) return "Este documento todavía no tiene firmas."
+  return "Aún no se ha firmado en Garabato. El PDF ya traía firmas hechas fuera; su validez está más abajo."
+}

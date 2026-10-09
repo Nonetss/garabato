@@ -16,6 +16,7 @@ import {
   DocumentOrganizationMenu,
   DocumentPlacement,
 } from "@/features/documents/detail/components/document-organization"
+import { DocumentStatusTag } from "@/features/documents/detail/components/document-status-tag"
 import {
   PdfViewer,
   type StampPlacement,
@@ -25,6 +26,7 @@ import { SignatureHistory } from "@/features/documents/detail/components/signatu
 import { SignatureValidation } from "@/features/documents/detail/components/signature-validation"
 import { VersionList } from "@/features/documents/detail/components/version-list"
 import {
+  type DocumentSummary,
   type DocumentVersion,
   documentFacts,
   documentSigningStatus,
@@ -59,6 +61,22 @@ function ViewerState({ documentId }: { documentId: string }) {
       }
     />
   )
+}
+
+/** The hero's status: the embedded signatures count once there is a
+ *  version to check. */
+function SigningStatus({
+  document,
+  versionId,
+}: {
+  document: Pick<DocumentSummary, "id" | "signatureCount">
+  versionId: string | undefined
+}) {
+  if (versionId) {
+    return <DocumentStatusTag document={document} versionId={versionId} />
+  }
+  const status = documentSigningStatus(document)
+  return <StatusTag dotTone={status.tone}>{status.label}</StatusTag>
 }
 
 export function DocumentDetailContent({ documentId }: { documentId: string }) {
@@ -103,7 +121,6 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
 
   const placing = signing && visible
   const currentVersion = document.versions.at(-1)
-  const signingStatus = documentSigningStatus(document)
 
   return (
     // Below `lg` the whole page scrolls inside this root; from `lg` it is
@@ -116,9 +133,7 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
           <span className="tabular-nums">{documentFacts(document)}</span>
         }
         status={
-          <StatusTag dotTone={signingStatus.tone}>
-            {signingStatus.label}
-          </StatusTag>
+          <SigningStatus document={document} versionId={currentVersion?.id} />
         }
         action={
           <div className="flex gap-2">
@@ -195,7 +210,13 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
           </section>
           <section className="space-y-3">
             <SectionHeading title="Firmas" count={document.signatures.length} />
-            <SignatureHistory records={document.signatures} />
+            {currentVersion ? (
+              <SignatureHistory
+                records={document.signatures}
+                documentId={document.id}
+                versionId={currentVersion.id}
+              />
+            ) : null}
           </section>
           {currentVersion ? (
             <section className="space-y-3">

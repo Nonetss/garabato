@@ -33,6 +33,7 @@ export const documentLabels = {
   lastSigned: "Última firma",
   unsigned: "Sin firmar",
   signed: "Firmado",
+  signedElsewhere: "Firmado fuera de Garabato",
   // Organization: folders, tags and pins.
   root: "Documentos",
   folderPath: "Ruta de la carpeta",
