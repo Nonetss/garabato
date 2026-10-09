@@ -242,6 +242,8 @@ export function documentSignatureRow(
     sha256Before: "0".repeat(64),
     sha256After: "1".repeat(64),
     ipAddress: null,
+    timestampedAt: null,
+    timestampAuthority: null,
     ...overrides,
   }
 }

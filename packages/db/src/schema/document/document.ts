@@ -152,6 +152,10 @@ export const documentSignatures = pgTable(
     sha256Before: text("sha256_before").notNull(),
     sha256After: text("sha256_after").notNull(),
     ipAddress: text("ip_address"),
+    // Time asserted by the RFC 3161 timestamp token (PAdES B-T) and the name
+    // of the authority that issued it; both null for B-B signatures.
+    timestampedAt: timestamp("timestamped_at"),
+    timestampAuthority: text("timestamp_authority"),
   },
   (table) => [
     index("documentSignatures_documentId_idx").on(table.documentId),
