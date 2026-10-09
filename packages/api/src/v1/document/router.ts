@@ -190,6 +190,38 @@ export const documentRouter = {
     .output(documentOutput.sign)
     .handler(({ context, input }) => documentHandler.sign({ context, input })),
 
+  editPages: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Edit the pages of a document",
+        description:
+          "Stores the next version of one of the caller's documents with its pages reordered, rotated (degrees added clockwise) and removed as `pages` lists them, and updates the document's page count. Earlier versions are kept. `baseVersionId` must still be the current version, otherwise CONFLICT. A document with signatures, recorded or embedded, answers CONFLICT, since rewriting it would invalidate them. A list that keeps no page, names a page twice or out of range, or changes nothing answers BAD_REQUEST.",
+        tags: ["Documents"],
+        method: "POST",
+        successStatus: 201,
+      })
+    )
+    .input(documentInput.editPages)
+    .output(documentOutput.editPages)
+    .handler(({ context, input }) =>
+      documentHandler.editPages({ context, input })
+    ),
+
+  merge: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Merge documents into a new one",
+        description:
+          "Creates a new document, in `folderId` or the library root, holding every page of the current version of 2 to 20 of the caller's documents in the given order; its version 1 has origin `merge`. The sources are left unchanged. An unknown or deleted document answers NOT_FOUND, a repeated one or a result over 20 MiB BAD_REQUEST, and a signed one CONFLICT.",
+        tags: ["Documents"],
+        method: "POST",
+        successStatus: 201,
+      })
+    )
+    .input(documentInput.merge)
+    .output(documentOutput.merge)
+    .handler(({ context, input }) => documentHandler.merge({ context, input })),
+
   signatures: protectedProcedure
     .meta(
       openapi({

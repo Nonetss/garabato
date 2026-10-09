@@ -8,6 +8,7 @@ import {
   type Document,
   type DocumentSignature,
   type DocumentVersion,
+  type DocumentVersionKind,
   documentSignatures,
   documents,
   documentTagAssignments,
@@ -52,7 +53,7 @@ import {
 import { openSigningKey } from "#shared/pkcs12"
 import { likePattern } from "#shared/search"
 import { VaultError, type VaultScope, vault } from "#shared/vault"
-import type { documentInput } from "#v1/document/input"
+import { type documentInput, MAX_PDF_BYTES } from "#v1/document/input"
 import type {
   DocumentSummary,
   DocumentVersionOutput,
@@ -66,6 +67,12 @@ import { EncryptedPdfError } from "#v1/document/pades/placeholder"
 import { signPdf } from "#v1/document/pades/sign"
 import { TimestampError } from "#v1/document/pades/timestamp"
 import {
+  hasEmbeddedSignature,
+  mergePdfs,
+  PageListError,
+  rewritePages,
+} from "#v1/document/pages"
+import {
   type SignatureReport,
   validateSignatures,
 } from "#v1/document/validation/verify"
@@ -77,6 +84,14 @@ const TAG_NOT_FOUND_MESSAGE = "Alguna de las etiquetas no existe"
 const CERTIFICATE_NOT_FOUND_MESSAGE = "Certificado no encontrado"
 const CHANGED_MESSAGE =
   "El documento ha cambiado desde que lo abriste; recárgalo para firmar la última versión"
+const EDIT_CHANGED_MESSAGE =
+  "El documento ha cambiado desde que lo abriste; recárgalo para editar la última versión"
+const EDIT_SIGNED_MESSAGE =
+  "Este documento tiene firmas: editar sus páginas las invalidaría"
+// Merge sources are decrypted in memory: past this sum, refuse before that.
+const MAX_MERGE_SOURCE_BYTES = 60 * 1024 * 1024
+const MERGE_TOO_LARGE_MESSAGE =
+  "El PDF unido superaría los 20 MiB; une menos documentos o más pequeños"
 
 function documentScope(id: string): VaultScope {
   return { kind: "document", id }
@@ -146,6 +161,7 @@ function toVersion(row: DocumentVersion): DocumentVersionOutput {
   return {
     id: row.id,
     number: row.number,
+    kind: row.kind,
     sizeBytes: row.sizeBytes,
     sha256: row.sha256,
     createdAt: toIso(row.createdAt),
@@ -632,6 +648,132 @@ async function signVersion(
   }
 }
 
+/**
+ * Creates one of the caller's documents from `bytes` as version 1 of `kind`:
+ * checks the PDF and the folder, seals the bytes under a new data key, stores
+ * them and inserts the document and its version in one transaction.
+ */
+async function createDocument(
+  context: Context,
+  {
+    name,
+    folderId,
+    bytes,
+    kind,
+  }: {
+    name: string
+    folderId: string | null
+    bytes: Uint8Array<ArrayBuffer>
+    kind: DocumentVersionKind
+  }
+) {
+  const userId = requireUserId(context)
+  const pageCount = await pageCountOf(bytes)
+  if (folderId !== null) await assertOwnedFolder(db, userId, folderId)
+
+  // The id is generated here because the stored objects are bound to it.
+  const id = crypto.randomUUID()
+  const scope = documentScope(id)
+  const dataKey = vault.newDataKey()
+  const objectKey = objectKeyFor(id, 1)
+  const sealed = await vault.seal(dataKey, scope, "v1", bytes)
+  const encryptedDataKey = await vault.wrapDataKey(scope, dataKey)
+
+  const { document, version } = await storeThenCommit(
+    context,
+    objectKey,
+    sealed,
+    () =>
+      db.transaction(async (tx) => {
+        const [documentRow] = await tx
+          .insert(documents)
+          .values({
+            id,
+            userId,
+            name,
+            pageCount,
+            folderId,
+            encryptedDataKey,
+          })
+          .returning()
+        const [versionRow] = await tx
+          .insert(documentVersions)
+          .values({
+            documentId: id,
+            number: 1,
+            kind,
+            objectKey,
+            sizeBytes: bytes.length,
+            sha256: sha256(bytes),
+            createdBy: userId,
+          })
+          .returning()
+        if (!documentRow || !versionRow) {
+          throw errors.INTERNAL_SERVER_ERROR({
+            message: "Document insert returned no row",
+          })
+        }
+        return { document: documentRow, version: versionRow }
+      })
+  )
+  return summaryOf(document, [version], [], [])
+}
+
+/** How many signature records each of `documentIds` has. */
+async function signatureCounts(documentIds: string[]) {
+  const rows = await db
+    .select({
+      documentId: documentSignatures.documentId,
+      total: count(),
+    })
+    .from(documentSignatures)
+    .where(inArray(documentSignatures.documentId, documentIds))
+    .groupBy(documentSignatures.documentId)
+  return new Map(rows.map((row) => [row.documentId, row.total]))
+}
+
+/**
+ * Refuses to rewrite a document that carries signatures, recorded here or
+ * embedded in `bytes` by another tool: rewriting would invalidate them.
+ */
+async function assertRewritable(
+  recordCount: number,
+  bytes: Uint8Array<ArrayBuffer>,
+  message: string
+) {
+  if (recordCount > 0 || (await hasEmbeddedSignature(bytes))) {
+    throw errors.CONFLICT({ message })
+  }
+}
+
+function rejectPageList(error: unknown): never {
+  if (error instanceof PageListError) {
+    throw errors.BAD_REQUEST({ message: error.message })
+  }
+  throw error
+}
+
+/** The caller's live documents `ids`, in that order; NOT_FOUND otherwise. */
+async function loadOwnedInOrder(userId: string, ids: string[]) {
+  const rows = await db.query.documents.findMany({
+    where: { id: { in: ids }, userId, deletedAt: { isNull: true } },
+  })
+  const byId = new Map(rows.map((row) => [row.id, row]))
+  return ids.map((id) => assertFound(byId.get(id), SOME_NOT_FOUND_MESSAGE))
+}
+
+/** The latest version of each document, keyed by document id. */
+function currentVersions(versions: DocumentVersion[]) {
+  const current = new Map<string, DocumentVersion>()
+  for (const version of versions) {
+    const seen = current.get(version.documentId)
+    if (!seen || seen.number < version.number) {
+      current.set(version.documentId, version)
+    }
+  }
+  return current
+}
+
 export const documentHandler = {
   upload: async ({
     context,
@@ -640,57 +782,13 @@ export const documentHandler = {
     context: Context
     input: z.infer<typeof documentInput.upload>
   }) => {
-    const userId = requireUserId(context)
     const bytes = new Uint8Array(await input.file.arrayBuffer())
-    const pageCount = await pageCountOf(bytes)
-    const folderId = input.folderId ?? null
-    if (folderId !== null) await assertOwnedFolder(db, userId, folderId)
-
-    // The id is generated here because the stored objects are bound to it.
-    const id = crypto.randomUUID()
-    const scope = documentScope(id)
-    const dataKey = vault.newDataKey()
-    const objectKey = objectKeyFor(id, 1)
-    const sealed = await vault.seal(dataKey, scope, "v1", bytes)
-    const encryptedDataKey = await vault.wrapDataKey(scope, dataKey)
-
-    const { document, version } = await storeThenCommit(
-      context,
-      objectKey,
-      sealed,
-      () =>
-        db.transaction(async (tx) => {
-          const [documentRow] = await tx
-            .insert(documents)
-            .values({
-              id,
-              userId,
-              name: documentName(input.file.name),
-              pageCount,
-              folderId,
-              encryptedDataKey,
-            })
-            .returning()
-          const [versionRow] = await tx
-            .insert(documentVersions)
-            .values({
-              documentId: id,
-              number: 1,
-              objectKey,
-              sizeBytes: bytes.length,
-              sha256: sha256(bytes),
-              createdBy: userId,
-            })
-            .returning()
-          if (!documentRow || !versionRow) {
-            throw errors.INTERNAL_SERVER_ERROR({
-              message: "Document insert returned no row",
-            })
-          }
-          return { document: documentRow, version: versionRow }
-        })
-    )
-    return summaryOf(document, [version], [], [])
+    return createDocument(context, {
+      name: documentName(input.file.name),
+      folderId: input.folderId ?? null,
+      bytes,
+      kind: "upload",
+    })
   },
 
   list: async ({ context }: { context: Context }) => {
@@ -1002,6 +1100,7 @@ export const documentHandler = {
             .values({
               documentId: document.id,
               number,
+              kind: "signature",
               objectKey,
               sizeBytes: signed.bytes.length,
               sha256: sha256(signed.bytes),
@@ -1062,6 +1161,133 @@ export const documentHandler = {
       }
       throw error
     }
+  },
+
+  editPages: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.editPages>
+  }) => {
+    const userId = requireUserId(context)
+    const document = await loadOwned(userId, input.documentId)
+    const versions = await versionsOf(document.id)
+    const current = versions.at(-1)
+    if (!current || current.id !== input.baseVersionId) {
+      throw errors.CONFLICT({ message: EDIT_CHANGED_MESSAGE })
+    }
+    const records = await signatureCounts([document.id])
+
+    const dataKey = await unwrapDocumentKey(document)
+    const pdf = await readVersion(document, dataKey, current)
+    await assertRewritable(
+      records.get(document.id) ?? 0,
+      pdf,
+      EDIT_SIGNED_MESSAGE
+    )
+    const edited = await rewritePages(pdf, input.pages).catch(rejectPageList)
+
+    const pageCount = input.pages.length
+    const number = current.number + 1
+    const objectKey = objectKeyFor(document.id, number)
+    const sealed = await vault.seal(
+      dataKey,
+      documentScope(document.id),
+      `v${number}`,
+      edited
+    )
+
+    try {
+      return await storeThenCommit(context, objectKey, sealed, () =>
+        db.transaction(async (tx) => {
+          const [version] = await tx
+            .insert(documentVersions)
+            .values({
+              documentId: document.id,
+              number,
+              kind: "pages",
+              objectKey,
+              sizeBytes: edited.length,
+              sha256: sha256(edited),
+              createdBy: userId,
+            })
+            .returning()
+          if (!version) {
+            throw errors.INTERNAL_SERVER_ERROR({
+              message: "Version insert returned no row",
+            })
+          }
+          await tx
+            .update(documents)
+            .set({ pageCount, updatedAt: version.createdAt })
+            .where(eq(documents.id, document.id))
+          return { version: toVersion(version), pageCount }
+        })
+      )
+    } catch (error) {
+      // A signature or another edit took this version number first.
+      if (isUniqueViolation(error)) {
+        throw errors.CONFLICT({ message: EDIT_CHANGED_MESSAGE })
+      }
+      throw error
+    }
+  },
+
+  merge: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.merge>
+  }) => {
+    const userId = requireUserId(context)
+    if (new Set(input.documentIds).size !== input.documentIds.length) {
+      throw errors.BAD_REQUEST({
+        message: "Has elegido el mismo documento más de una vez",
+      })
+    }
+    const owned = await loadOwnedInOrder(userId, input.documentIds)
+    const current = currentVersions(
+      await db.query.documentVersions.findMany({
+        where: { documentId: { in: input.documentIds } },
+      })
+    )
+    const sources = owned.map((document) => ({
+      document,
+      version: assertFound(current.get(document.id), SOME_NOT_FOUND_MESSAGE),
+    }))
+    const sourceBytes = sources.reduce(
+      (total, source) => total + source.version.sizeBytes,
+      0
+    )
+    if (sourceBytes > MAX_MERGE_SOURCE_BYTES) {
+      throw errors.BAD_REQUEST({ message: MERGE_TOO_LARGE_MESSAGE })
+    }
+    const records = await signatureCounts(input.documentIds)
+
+    const pdfs: Uint8Array<ArrayBuffer>[] = []
+    for (const { document, version } of sources) {
+      const dataKey = await unwrapDocumentKey(document)
+      const pdf = await readVersion(document, dataKey, version)
+      await assertRewritable(
+        records.get(document.id) ?? 0,
+        pdf,
+        `«${document.name}» tiene firmas: unirlo las invalidaría`
+      )
+      pdfs.push(pdf)
+    }
+
+    const merged = await mergePdfs(pdfs)
+    if (merged.length > MAX_PDF_BYTES) {
+      throw errors.BAD_REQUEST({ message: MERGE_TOO_LARGE_MESSAGE })
+    }
+    return createDocument(context, {
+      name: pdfName(input.name),
+      folderId: input.folderId ?? null,
+      bytes: merged,
+      kind: "merge",
+    })
   },
 
   signatures: async ({
