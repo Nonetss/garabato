@@ -27,7 +27,7 @@
 
 ### 1. `DISABLE_SIGN_UP` as a validated boolean, applied in Better Auth
 
-`packages/env/src/server.ts` gains `DISABLE_SIGN_UP: z.stringbool().default(false)`. zod 4's `stringbool` accepts `true/false/1/0/yes/no/on/off` and rejects anything else, so a typo fails at startup instead of silently leaving sign-up open. `packages/auth` passes it to `emailAndPassword.disableSignUp`, and to the OIDC provider's `disableImplicitSignUp`, so SSO cannot create accounts either.
+`packages/env/src/server.ts` gains `DISABLE_SIGN_UP: z.stringbool().default(false)`. zod 4's `stringbool` accepts `true/false/1/0/yes/no/on/off` and rejects anything else, so a typo fails at startup instead of silently leaving sign-up open. `packages/auth` passes it to `emailAndPassword.disableSignUp`, and to the OIDC provider's `disableSignUp`, so SSO cannot create accounts either. `disableImplicitSignUp` was ruled out: Better Auth lifts it when the client sends `requestSignUp`.
 
 *Alternatives:* a frontend-only switch (hiding the form) — rejected, because the endpoint would stay open to anyone calling `/api/auth/sign-up/email`. An inverted `ENABLE_SIGN_UP=true` default — rejected, because the user asked for `disableSignUp` defaulting to `false`.
 
@@ -52,7 +52,7 @@ The output gains `signUpEnabled: boolean`. The sign-in content hides its `/signu
   - Disable: password → `twoFactor.disable`.
   - New backup codes: password → `generateBackupCodes`.
   - Users without a credential account see the SSO explanation instead of the actions. The profile already reads accounts or can list them with `authClient.listAccounts`.
-- **QR rendering:** a small dependency that renders an SVG locally (`react-qr-code`), so the secret never leaves the browser.
+- **QR rendering:** a small dependency that renders an SVG locally (`qrcode.react`, which ships ESM; `react-qr-code` was dropped because it is CommonJS only and Vite handed its module object to React as the component), so the secret never leaves the browser.
 
 *Alternatives:* a separate `/login/2fa` route with `onTwoFactorRedirect` — rejected, because the in-place step needs no new surface or middleware change. A hosted QR service — rejected, because it would leak the TOTP secret.
 
@@ -90,5 +90,5 @@ A constant next to the other limits in `apps/backend/src/index.ts`, documented a
 
 ## Open Questions
 
-- Should OIDC sign-in link to an admin-created account by email when sign-up is disabled (`accountLinking`)? The current config is to be checked during implementation, and the user decides whether to enable it.
+- Should OIDC sign-in link to an admin-created account by email when sign-up is disabled? Finding (Better Auth 1.7.7, `oauth2/link-account`): `packages/auth` sets no `account.accountLinking`, so implicit linking by email is on, but only when the IdP reports `email_verified` and the local user has `emailVerified = true` (`requireLocalEmailVerified` defaults to `true`). An admin-created user starts unverified, so their first SSO sign-in is refused until the user decides between marking admin-created users as verified and relaxing `requireLocalEmailVerified`.
 - Should admins be able to see which users have 2FA on, or reset it, from the admin users page? Out of scope here, but cheap to add later.
