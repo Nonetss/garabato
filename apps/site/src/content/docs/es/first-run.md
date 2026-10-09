@@ -25,7 +25,7 @@ En el visor, elige el certificado con el que vas a firmar y el tipo de firma:
 
 Añade si quieres un **Motivo** y un **Lugar**, escribe la contraseña del certificado si no está recordada y firma.
 
-La firma es PAdES básica (`ETSI.CAdES.detached`, SHA-256) e incluye la cadena del emisor, para que los validadores puedan construir la ruta de certificación.
+La firma es PAdES básica (`ETSI.CAdES.detached`, SHA-256) e incluye la cadena del emisor, para que los validadores puedan construir la ruta de certificación. Si el despliegue define una autoridad de sellado de tiempo (`TSA_URL`), lleva además un sello que demuestra cuándo se firmó (B-T), y el historial y el registro de firmas lo muestran.
 
 ## 4. Descarga y sigue el rastro
 

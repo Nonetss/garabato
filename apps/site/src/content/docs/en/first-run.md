@@ -25,7 +25,7 @@ In the viewer, pick the certificate you will sign with, then choose the kind of 
 
 Add an optional **Motivo** (reason) and **Lugar** (place), enter the certificate password if it is not remembered, and sign.
 
-The signature is a PAdES baseline signature (`ETSI.CAdES.detached`, SHA-256) that embeds the issuer chain, so validators can build the certificate path.
+The signature is a PAdES baseline signature (`ETSI.CAdES.detached`, SHA-256) that embeds the issuer chain, so validators can build the certificate path. If the deployment sets a time-stamping authority (`TSA_URL`), it also carries a timestamp that proves when it was signed (B-T), and the history and the signature log show it.
 
 ## 4. Download and keep track
 

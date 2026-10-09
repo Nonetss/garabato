@@ -58,7 +58,7 @@ const en = {
     stops: {
       sign: {
         title: "Place the signature and sign.",
-        body: "Pick a certificate, choose a visible or invisible signature, drag a rectangle on the page and add an optional reason and place. The signature is PAdES (ETSI.CAdES.detached), with the certificate chain embedded so validators can check it.",
+        body: "Pick a certificate, choose a visible or invisible signature, drag a rectangle on the page and add an optional reason and place. The signature is PAdES with the certificate chain embedded, and with a time-stamping authority configured it carries a timestamp that proves when it was made.",
         alt: "The viewer in signing mode: a rectangle drawn on the page and the signing panel with the certificate, reason and place",
       },
       versions: {
@@ -166,7 +166,7 @@ const en = {
       },
       {
         term: "Signatures a validator can check.",
-        text: "Garabato signs PAdES baseline (ETSI.CAdES.detached) with the signing-certificate-v2 attribute and embeds the issuer chain, so a validator can build the path to the certificate authority.",
+        text: "Garabato signs PAdES baseline (ETSI.CAdES.detached) with the signing-certificate-v2 attribute and embeds the issuer chain, so a validator can build the path to the certificate authority. Set TSA_URL and every signature also gets an RFC 3161 timestamp (B-T), or fails rather than be stored without one.",
       },
       {
         term: "Nothing is overwritten.",
@@ -253,7 +253,7 @@ const es: Dictionary = {
     stops: {
       sign: {
         title: "Coloca la firma y firma.",
-        body: "Elige un certificado, decide si la firma es visible o invisible, dibuja un rectángulo en la página y añade, si quieres, un motivo y un lugar. La firma es PAdES (ETSI.CAdES.detached) y lleva incrustada la cadena del certificado para que los validadores puedan comprobarla.",
+        body: "Elige un certificado, decide si la firma es visible o invisible, dibuja un rectángulo en la página y añade, si quieres, un motivo y un lugar. La firma es PAdES y lleva incrustada la cadena del certificado, y con una autoridad de sellado de tiempo configurada incluye un sello que demuestra cuándo se hizo.",
         alt: "El visor en modo firma: un rectángulo dibujado en la página y el panel de firma con el certificado, el motivo y el lugar",
       },
       versions: {
@@ -359,7 +359,7 @@ const es: Dictionary = {
       },
       {
         term: "Firmas que un validador puede comprobar.",
-        text: "Garabato firma en PAdES baseline (ETSI.CAdES.detached) con el atributo signing-certificate-v2 e incrusta la cadena del emisor, para que un validador pueda llegar hasta la autoridad de certificación.",
+        text: "Garabato firma en PAdES baseline (ETSI.CAdES.detached) con el atributo signing-certificate-v2 e incrusta la cadena del emisor, para que un validador pueda llegar hasta la autoridad de certificación. Con TSA_URL definida, cada firma lleva además un sello de tiempo RFC 3161 (B-T), o falla antes que guardarse sin él.",
       },
       {
         term: "No se sobrescribe nada.",

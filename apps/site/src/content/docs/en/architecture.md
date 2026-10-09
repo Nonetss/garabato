@@ -26,7 +26,7 @@ On startup the backend applies the committed database migrations and creates the
 1. You press sign in the viewer. The frontend calls the backend over oRPC with the document version you are looking at, the certificate, where the stamp goes and the optional reason and place.
 2. The backend checks your session and that both the document and the certificate are yours.
 3. It decrypts the certificate (with the password you typed, or the remembered one) and the current version of the PDF.
-4. It draws the visible stamp, if any, and signs the PDF: a detached CAdES signature over SHA-256 with the ESS signing-certificate-v2 attribute and the issuer chain embedded, under `SubFilter ETSI.CAdES.detached` (PAdES baseline B-B).
+4. It draws the visible stamp, if any, and signs the PDF: a detached CAdES signature over SHA-256 with the ESS signing-certificate-v2 attribute and the issuer chain embedded, under `SubFilter ETSI.CAdES.detached` (PAdES baseline B-B). When `TSA_URL` is set, it asks that time-stamping authority for an RFC 3161 timestamp over the signature and embeds it (B-T); if the TSA gives none, the signature fails instead of being stored as B-B.
 5. The signed PDF is encrypted and stored as a new version, and a record lands in the signature log.
 
 ## Security model

@@ -30,6 +30,7 @@ Read by `compose.prod.yml` itself.
 | `S3_BUCKET` | yes | The bucket must exist. The bundled MinIO's init service creates it. |
 | `S3_REGION` | no | Default `us-east-1`; MinIO ignores it. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | yes | Store credentials. With the bundled MinIO they are also its root user and password (at least 8 characters). |
+| `TSA_URL` | no | RFC 3161 time-stamping authority. When set, every signature carries its timestamp (PAdES B-T) and fails if the TSA cannot give one; unset, signatures are B-B. In production use a TSA you trust, such as a qualified trust service provider. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | no | The admin created at startup when all three are set. |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | no | All three together enable single sign-on. See [Users and sign-in](../authentication/). |
 | `LOG_LEVEL` | no | `info` by default. |

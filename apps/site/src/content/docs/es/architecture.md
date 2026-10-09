@@ -26,7 +26,7 @@ Al arrancar, el backend aplica las migraciones de la base de datos y crea el adm
 1. Pulsas firmar en el visor. El frontend llama al backend por oRPC con la versión del documento que estás viendo, el certificado, dónde va el sello y el motivo y el lugar opcionales.
 2. El backend comprueba tu sesión y que tanto el documento como el certificado son tuyos.
 3. Descifra el certificado (con la contraseña que escribiste o la recordada) y la versión actual del PDF.
-4. Dibuja el sello visible, si lo hay, y firma el PDF: una firma CAdES separada sobre SHA-256, con el atributo ESS signing-certificate-v2 y la cadena del emisor incluida, con `SubFilter ETSI.CAdES.detached` (PAdES básica B-B).
+4. Dibuja el sello visible, si lo hay, y firma el PDF: una firma CAdES separada sobre SHA-256, con el atributo ESS signing-certificate-v2 y la cadena del emisor incluida, con `SubFilter ETSI.CAdES.detached` (PAdES básica B-B). Si `TSA_URL` está definida, pide a esa autoridad de sellado de tiempo un sello RFC 3161 sobre la firma y lo incrusta (B-T); si la TSA no lo da, la firma falla en lugar de guardarse como B-B.
 5. El PDF firmado se cifra y se guarda como una nueva versión, y se añade un registro al historial de firmas.
 
 ## Modelo de seguridad

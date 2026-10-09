@@ -30,6 +30,7 @@ Las lee el propio `compose.prod.yml`.
 | `S3_BUCKET` | sí | El bucket debe existir. El servicio de inicio del MinIO incluido lo crea. |
 | `S3_REGION` | no | Por defecto `us-east-1`; MinIO la ignora. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | sí | Credenciales del almacén. Con el MinIO incluido son también su usuario y contraseña root (al menos 8 caracteres). |
+| `TSA_URL` | no | Autoridad de sellado de tiempo RFC 3161. Si está definida, cada firma lleva su sello (PAdES B-T) y falla si la TSA no puede darlo; sin ella, las firmas son B-B. En producción usa una TSA de confianza, como un prestador cualificado de servicios de confianza. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME` | no | El administrador que se crea al arrancar cuando están las tres. |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_DISCOVERY_URL` | no | Las tres juntas activan el inicio de sesión único. Consulta [Usuarios e inicio de sesión](../authentication/). |
 | `LOG_LEVEL` | no | `info` por defecto. |
