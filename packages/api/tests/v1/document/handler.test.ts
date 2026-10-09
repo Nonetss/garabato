@@ -108,6 +108,12 @@ async function storedDocument(name: PdfFixture = "plain") {
   return storedPdf(await pdfFixture(name))
 }
 
+// The document-row lock a version writer takes, then the current version it
+// reads under that lock.
+function queueLock(currentVersionId: string) {
+  fakeDb.queue("select", [{ id: DOC_ID }], [{ id: currentVersionId }])
+}
+
 // Resolves with what `promise` rejects with, to inspect its message.
 async function rejection(promise: Promise<unknown>) {
   return promise.then(
@@ -428,6 +434,7 @@ describe("document.get", () => {
         documentName: document.name,
         documentDeletedAt: null,
         versionNumber: 2,
+        versionDeletedAt: null,
         certificateAlias: "Personal",
         certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
       },
@@ -447,6 +454,44 @@ describe("document.get", () => {
       versionNumber: 2,
       certificateAlias: "Personal",
       documentDeleted: false,
+    })
+  })
+
+  test("leaves deleted versions out and stops counting their signatures", async () => {
+    const { document, version } = await storedDocument()
+    const deletedAt = new Date()
+    const signed = documentVersionRow({
+      id: "00000000-0000-4000-8000-0000000000e2",
+      number: 2,
+      kind: "signature",
+      deletedAt,
+    })
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version, signed])
+    fakeDb.queue("select", [
+      {
+        signature: documentSignatureRow({ versionId: signed.id }),
+        documentName: document.name,
+        documentDeletedAt: null,
+        versionNumber: 2,
+        versionDeletedAt: deletedAt,
+        certificateAlias: "Personal",
+        certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+      },
+    ])
+    fakeDb.queue("select", [])
+
+    const result = await documentHandler.get({ context, input: { id: DOC_ID } })
+
+    expect(result.versions.map((entry) => entry.number)).toEqual([1])
+    expect(result).toMatchObject({
+      versionCount: 1,
+      signatureCount: 0,
+      lastSignedAt: null,
+    })
+    expect(result.signatures[0]).toMatchObject({
+      versionNumber: 2,
+      versionDeleted: true,
     })
   })
 
@@ -497,6 +542,33 @@ describe("document.download", () => {
     })
 
     expect(file.name).toBe("contrato (v1).pdf")
+  })
+
+  test("answers NOT_FOUND for a deleted version and names v1 as current", async () => {
+    const { document, version } = await storedDocument()
+    const deleted = documentVersionRow({
+      id: "00000000-0000-4000-8000-0000000000e2",
+      number: 2,
+      deletedAt: new Date(),
+    })
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version, deleted])
+
+    await expectErrorCode(
+      documentHandler.download({
+        context,
+        input: { id: DOC_ID, versionNumber: 2 },
+      }),
+      "NOT_FOUND"
+    )
+
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version, deleted])
+    const file = await documentHandler.download({
+      context,
+      input: { id: DOC_ID },
+    })
+    expect(file.name).toBe("contrato.pdf")
   })
 
   test("answers NOT_FOUND for a missing version", async () => {
@@ -1087,6 +1159,7 @@ describe("document.sign", () => {
       [documentSignatureRow()]
     )
     fakeDb.queue("update", [])
+    queueLock(V1_ID)
   }
 
   test("signs with the remembered password and stores version 2", async () => {
@@ -1300,6 +1373,7 @@ describe("document.sign", () => {
 
   test("maps a version race to CONFLICT and removes the object", async () => {
     await arrange({ remember: true })
+    queueLock(V1_ID)
     fakeDb.queueError("insert", { cause: { code: "23505" } })
 
     await expectErrorCode(
@@ -1307,6 +1381,40 @@ describe("document.sign", () => {
       "CONFLICT"
     )
     expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+
+  test("refuses with CONFLICT when the base version was deleted meanwhile", async () => {
+    await arrange({ remember: true })
+    queueLock("00000000-0000-4000-8000-0000000000e0")
+
+    await expectErrorCode(
+      documentHandler.sign({ context, input: signInput() }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+
+  test("numbers the new version above a deleted one", async () => {
+    const stored = await storedDocument()
+    const deleted = documentVersionRow({
+      id: "00000000-0000-4000-8000-0000000000e2",
+      number: 2,
+      kind: "signature",
+      deletedAt: new Date(),
+    })
+    fakeDb.queue("query.documents.findFirst", stored.document)
+    fakeDb.queue("query.documentVersions.findMany", [stored.version, deleted])
+    fakeDb.queue("query.certificates.findFirst", await storedCertificate(true))
+    queueCommit()
+
+    await documentHandler.sign({ context, input: signInput() })
+
+    expect(written("insert", 0)).toMatchObject({
+      number: 3,
+      objectKey: `documents/${DOC_ID}/v3`,
+    })
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v3`)).toBe(true)
   })
 })
 
@@ -1332,6 +1440,7 @@ describe("document.editPages", () => {
   }
 
   function queueCommit() {
+    queueLock(V1_ID)
     fakeDb.queue("insert", [
       documentVersionRow({ id: V2_ID, number: 2, kind: "pages" }),
     ])
@@ -1513,6 +1622,7 @@ describe("document.editPages", () => {
 
   test("maps a version race to CONFLICT and removes the object", async () => {
     await arrange()
+    queueLock(V1_ID)
     fakeDb.queueError("insert", { cause: { code: "23505" } })
 
     await expectErrorCode(
@@ -1527,6 +1637,183 @@ describe("document.editPages", () => {
       "CONFLICT"
     )
     expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+})
+
+describe("document.deleteLatestVersion", () => {
+  const V2_ID = "00000000-0000-4000-8000-0000000000e2"
+  const V2_KEY = `documents/${DOC_ID}/v2`
+
+  // A document whose version 1 is the plain fixture and whose current version
+  // 2 is `kind`, with its object in the store.
+  async function arrange(kind: "signature" | "pages" = "signature") {
+    const stored = await storedDocument()
+    const v2 = documentVersionRow({
+      id: V2_ID,
+      documentId: DOC_ID,
+      number: 2,
+      kind,
+      objectKey: V2_KEY,
+    })
+    fakeObjectStorage.objects.set(V2_KEY, new Uint8Array([1, 2, 3]))
+    fakeDb.queue("query.documents.findFirst", stored.document)
+    fakeDb.queue("query.documentVersions.findMany", [stored.version, v2])
+    return { ...stored, v2 }
+  }
+
+  function signatureOfV2(versionDeletedAt: Date | null) {
+    return {
+      signature: documentSignatureRow({ versionId: V2_ID }),
+      documentName: "contrato.pdf",
+      documentDeletedAt: null,
+      versionNumber: 2,
+      versionDeletedAt,
+      certificateAlias: "Personal",
+      certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
+    }
+  }
+
+  function queueCommit(document: ReturnType<typeof documentRow>) {
+    queueLock(V2_ID)
+    fakeDb.queue("update", [], [document])
+    fakeDb.queue("insert", [])
+  }
+
+  const input = { id: DOC_ID, versionId: V2_ID }
+
+  test("undoes a signature: v1 is current again and the record stays", async () => {
+    const { pdf, document } = await arrange("signature")
+    const pageCount = (await PDFDocument.load(pdf)).getPageCount()
+    queueCommit({ ...document, pageCount })
+    fakeDb.queue("select", [signatureOfV2(new Date())])
+    fakeDb.queue("select", [])
+
+    const result = await documentHandler.deleteLatestVersion({
+      context,
+      input,
+    })
+
+    expect(field(written("update", 0), "deletedAt")).toBeInstanceOf(Date)
+    expect(written("update", 1)).toMatchObject({ pageCount })
+    expect(traces()).toEqual([
+      expect.objectContaining({
+        type: "document.versionDeleted",
+        documentId: DOC_ID,
+        versionId: V2_ID,
+      }),
+    ])
+    expect(result.versions.map((version) => version.number)).toEqual([1])
+    expect(result).toMatchObject({
+      versionCount: 1,
+      signatureCount: 0,
+      lastSignedAt: null,
+      pageCount,
+    })
+    expect(result.signatures).toEqual([
+      expect.objectContaining({ versionNumber: 2, versionDeleted: true }),
+    ])
+    expect(fakeObjectStorage.objects.has(V2_KEY)).toBe(false)
+  })
+
+  test("restores the page count of the version that becomes current", async () => {
+    const { document } = await arrange("pages")
+    queueCommit({ ...document, pageCount: 1 })
+    fakeDb.queue("select", [])
+    fakeDb.queue("select", [])
+
+    await documentHandler.deleteLatestVersion({ context, input })
+
+    const plainPages = (
+      await PDFDocument.load(await pdfFixture("plain"))
+    ).getPageCount()
+    expect(written("update", 1)).toMatchObject({ pageCount: plainPages })
+  })
+
+  test("refuses to delete the only version with CONFLICT", async () => {
+    const { document, version } = await storedDocument()
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [version])
+
+    await expectErrorCode(
+      documentHandler.deleteLatestVersion({
+        context,
+        input: { id: DOC_ID, versionId: V1_ID },
+      }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("refuses a version that is not the current one with CONFLICT", async () => {
+    await arrange()
+
+    await expectErrorCode(
+      documentHandler.deleteLatestVersion({
+        context,
+        input: { id: DOC_ID, versionId: V1_ID },
+      }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.has(V2_KEY)).toBe(true)
+  })
+
+  test("refuses with CONFLICT when another writer replaced the version", async () => {
+    await arrange()
+    queueLock("00000000-0000-4000-8000-0000000000e3")
+
+    await expectErrorCode(
+      documentHandler.deleteLatestVersion({ context, input }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.has(V2_KEY)).toBe(true)
+  })
+
+  test("ignores versions already deleted when finding the current one", async () => {
+    const stored = await storedDocument()
+    const deleted = documentVersionRow({
+      id: V2_ID,
+      number: 2,
+      deletedAt: new Date(),
+    })
+    fakeDb.queue("query.documents.findFirst", stored.document)
+    fakeDb.queue("query.documentVersions.findMany", [stored.version, deleted])
+
+    await expectErrorCode(
+      documentHandler.deleteLatestVersion({ context, input }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+
+  test("answers NOT_FOUND for another user's document", async () => {
+    fakeDb.queue("query.documents.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.deleteLatestVersion({ context, input }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("update")).toEqual([])
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("still succeeds when the object cannot be removed", async () => {
+    const { document } = await arrange()
+    queueCommit(document)
+    fakeDb.queue("select", [])
+    fakeDb.queue("select", [])
+    fakeObjectStorage.failNext("deleteObject", new Error("storage down"))
+
+    const result = await documentHandler.deleteLatestVersion({
+      context,
+      input,
+    })
+
+    expect(result.versions.map((version) => version.id)).toEqual([V1_ID])
   })
 })
 
@@ -1771,6 +2058,7 @@ describe("document.signatures", () => {
         documentName: "viejo.pdf",
         documentDeletedAt: new Date(),
         versionNumber: 2,
+        versionDeletedAt: null,
         certificateAlias: "Personal",
         certificateHolder: "ESPAÑOL PÉREZ JUAN - 12345678Z",
       },
@@ -1812,6 +2100,7 @@ function logRow(
     documentName: `doc-${index}.pdf`,
     documentDeletedAt: overrides.documentDeletedAt ?? null,
     versionNumber: 2,
+    versionDeletedAt: null,
     certificateAlias: certificate.alias,
     certificateHolder: certificate.commonName,
     certificateDeletedAt: overrides.certificateDeletedAt ?? null,

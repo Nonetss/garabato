@@ -162,6 +162,7 @@ type TrailRow = {
   certificateDeletedAt: Date | null
   versionId: string | null
   versionNumber: number | null
+  versionDeletedAt: Date | null
 }
 
 function documentOf(row: TrailRow): TrailCommon["document"] {
@@ -191,7 +192,11 @@ function certificateOf(row: TrailRow): TrailCommon["certificate"] {
 
 function versionOf(row: TrailRow): TrailCommon["version"] {
   if (row.versionId === null || row.versionNumber === null) return null
-  return { id: row.versionId, number: row.versionNumber }
+  return {
+    id: row.versionId,
+    number: row.versionNumber,
+    deleted: row.versionDeletedAt !== null,
+  }
 }
 
 function commonOf(row: TrailRow): TrailCommon {
@@ -314,6 +319,7 @@ export const traceHandler = {
         certificateDeletedAt: certificates.deletedAt,
         versionId: entries.versionId,
         versionNumber: documentVersions.number,
+        versionDeletedAt: documentVersions.deletedAt,
       })
       .from(entries)
       .leftJoin(documents, eq(documents.id, entries.documentId))

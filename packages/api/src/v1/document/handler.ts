@@ -96,6 +96,10 @@ const EDIT_CHANGED_MESSAGE =
   "El documento ha cambiado desde que lo abriste; recárgalo para editar la última versión"
 const EDIT_SIGNED_MESSAGE =
   "Este documento tiene firmas: editar sus páginas las invalidaría"
+const VERSION_CHANGED_MESSAGE =
+  "El documento ha cambiado desde que lo abriste; recárgalo para eliminar su última versión"
+const ONLY_VERSION_MESSAGE =
+  "No se puede eliminar la única versión del documento; elimina el documento si ya no lo necesitas"
 // Merge sources are decrypted in memory: past this sum, refuse before that.
 const MAX_MERGE_SOURCE_BYTES = 60 * 1024 * 1024
 const MERGE_TOO_LARGE_MESSAGE =
@@ -174,14 +178,16 @@ function summaryOf(
   tagIds: string[]
 ): DocumentSummary {
   const current = versions.at(-1)
+  // Records of a deleted version stay listed but no longer sign the document.
+  const live = records.filter((record) => !record.versionDeleted)
   return {
     id: document.id,
     name: document.name,
     pageCount: document.pageCount,
     sizeBytes: current?.sizeBytes ?? 0,
     versionCount: versions.length,
-    signatureCount: records.length,
-    lastSignedAt: records[0]?.signedAt ?? null,
+    signatureCount: live.length,
+    lastSignedAt: live[0]?.signedAt ?? null,
     folderId: document.folderId,
     tagIds,
     pinnedAt: toIsoOrNull(document.pinnedAt),
@@ -367,11 +373,80 @@ async function deleteDocuments(
   return deleted
 }
 
-async function versionsOf(documentId: string) {
+/** Every stored version of a document, deleted ones included, oldest first. */
+async function storedVersionsOf(documentId: string) {
   return db.query.documentVersions.findMany({
     where: { documentId },
     orderBy: { number: "asc" },
   })
+}
+
+/** The versions that make up the document: the stored ones not deleted. */
+function liveVersions(versions: DocumentVersion[]) {
+  return versions.filter((version) => version.deletedAt === null)
+}
+
+/** One above the highest number ever stored, so no number is ever reused. */
+function nextVersionNumber(stored: DocumentVersion[]) {
+  const highest = stored.at(-1)
+  if (!highest) return 1
+  return highest.number + 1
+}
+
+async function versionsOf(documentId: string) {
+  return liveVersions(await storedVersionsOf(documentId))
+}
+
+/**
+ * Locks the document row for the rest of `tx` and returns its current live
+ * version, read after the lock so it sees whatever a concurrent writer
+ * committed first. Writers that add or delete a version take this lock, so
+ * none of them builds on a version another one just replaced.
+ */
+async function lockCurrentVersion(tx: Executor, documentId: string) {
+  await tx
+    .select({ id: documents.id })
+    .from(documents)
+    .where(eq(documents.id, documentId))
+    .for("update")
+  const [current] = await tx
+    .select({ id: documentVersions.id })
+    .from(documentVersions)
+    .where(
+      and(
+        eq(documentVersions.documentId, documentId),
+        isNull(documentVersions.deletedAt)
+      )
+    )
+    .orderBy(desc(documentVersions.number))
+    .limit(1)
+  return current
+}
+
+/** Refuses with CONFLICT when `versionId` is no longer the current version. */
+async function assertStillCurrent(
+  tx: Executor,
+  documentId: string,
+  versionId: string,
+  message: string
+) {
+  const current = await lockCurrentVersion(tx, documentId)
+  if (current?.id !== versionId) throw errors.CONFLICT({ message })
+}
+
+/** A document as `get` returns it: summary, live versions and every record. */
+async function detailOf(
+  userId: string,
+  document: Document,
+  versions: DocumentVersion[]
+) {
+  const records = await signaturesOfDocument(userId, document.id)
+  const tagIds = await tagIdsOf(document.id)
+  return {
+    ...summaryOf(document, versions, records, tagIds),
+    versions: versions.map(toVersion),
+    signatures: records,
+  }
 }
 
 async function signaturesOfDocument(userId: string, documentId: string) {
@@ -716,7 +791,7 @@ async function createDocument(
   return summaryOf(document, [version], [], [])
 }
 
-/** How many signature records each of `documentIds` has. */
+/** How many signature records on live versions each of `documentIds` has. */
 async function signatureCounts(documentIds: string[]) {
   const rows = await db
     .select({
@@ -724,6 +799,13 @@ async function signatureCounts(documentIds: string[]) {
       total: count(),
     })
     .from(documentSignatures)
+    .innerJoin(
+      documentVersions,
+      and(
+        eq(documentVersions.id, documentSignatures.versionId),
+        isNull(documentVersions.deletedAt)
+      )
+    )
     .where(inArray(documentSignatures.documentId, documentIds))
     .groupBy(documentSignatures.documentId)
   return new Map(rows.map((row) => [row.documentId, row.total]))
@@ -823,6 +905,7 @@ export const documentHandler = {
           ),
       })
       .from(documentVersions)
+      .where(isNull(documentVersions.deletedAt))
       .groupBy(documentVersions.documentId)
       .as("current_version")
     const signatureStats = db
@@ -832,6 +915,14 @@ export const documentHandler = {
         lastSignedAt: max(documentSignatures.signedAt).as("last_signed_at"),
       })
       .from(documentSignatures)
+      // Records of a deleted version no longer sign the document.
+      .innerJoin(
+        documentVersions,
+        and(
+          eq(documentVersions.id, documentSignatures.versionId),
+          isNull(documentVersions.deletedAt)
+        )
+      )
       .groupBy(documentSignatures.documentId)
       .as("signature_stats")
     // `text[]` so the driver hands back plain strings.
@@ -895,14 +986,7 @@ export const documentHandler = {
   }) => {
     const userId = requireUserId(context)
     const document = await loadOwned(userId, input.id)
-    const versions = await versionsOf(document.id)
-    const records = await signaturesOfDocument(userId, document.id)
-    const tagIds = await tagIdsOf(document.id)
-    return {
-      ...summaryOf(document, versions, records, tagIds),
-      versions: versions.map(toVersion),
-      signatures: records,
-    }
+    return detailOf(userId, document, await versionsOf(document.id))
   },
 
   download: async ({
@@ -1091,8 +1175,8 @@ export const documentHandler = {
   sign: async ({ context, input }: { context: Context; input: SignInput }) => {
     const userId = requireUserId(context)
     const document = await loadOwned(userId, input.documentId)
-    const versions = await versionsOf(document.id)
-    const current = versions.at(-1)
+    const stored = await storedVersionsOf(document.id)
+    const current = liveVersions(stored).at(-1)
     if (!current || current.id !== input.baseVersionId) {
       throw errors.CONFLICT({ message: CHANGED_MESSAGE })
     }
@@ -1112,7 +1196,7 @@ export const documentHandler = {
     const pdf = await readVersion(document, dataKey, current)
     const signed = await signVersion(pdf, certificate, input, signingTime)
 
-    const number = current.number + 1
+    const number = nextVersionNumber(stored)
     const objectKey = objectKeyFor(document.id, number)
     const sealed = await vault.seal(
       dataKey,
@@ -1124,6 +1208,7 @@ export const documentHandler = {
     try {
       return await storeThenCommit(context, objectKey, sealed, () =>
         db.transaction(async (tx) => {
+          await assertStillCurrent(tx, document.id, current.id, CHANGED_MESSAGE)
           const [version] = await tx
             .insert(documentVersions)
             .values({
@@ -1177,6 +1262,7 @@ export const documentHandler = {
               documentName: document.name,
               documentDeletedAt: null,
               versionNumber: version.number,
+              versionDeletedAt: null,
               certificateAlias: certificate.alias,
               certificateHolder: certificate.commonName,
             }),
@@ -1201,8 +1287,8 @@ export const documentHandler = {
   }) => {
     const userId = requireUserId(context)
     const document = await loadOwned(userId, input.documentId)
-    const versions = await versionsOf(document.id)
-    const current = versions.at(-1)
+    const stored = await storedVersionsOf(document.id)
+    const current = liveVersions(stored).at(-1)
     if (!current || current.id !== input.baseVersionId) {
       throw errors.CONFLICT({ message: EDIT_CHANGED_MESSAGE })
     }
@@ -1218,7 +1304,7 @@ export const documentHandler = {
     const edited = await rewritePages(pdf, input.pages).catch(rejectPageList)
 
     const pageCount = input.pages.length
-    const number = current.number + 1
+    const number = nextVersionNumber(stored)
     const objectKey = objectKeyFor(document.id, number)
     const sealed = await vault.seal(
       dataKey,
@@ -1230,6 +1316,12 @@ export const documentHandler = {
     try {
       return await storeThenCommit(context, objectKey, sealed, () =>
         db.transaction(async (tx) => {
+          await assertStillCurrent(
+            tx,
+            document.id,
+            current.id,
+            EDIT_CHANGED_MESSAGE
+          )
           const [version] = await tx
             .insert(documentVersions)
             .values({
@@ -1270,6 +1362,66 @@ export const documentHandler = {
     }
   },
 
+  deleteLatestVersion: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.deleteLatestVersion>
+  }) => {
+    const userId = requireUserId(context)
+    const document = await loadOwned(userId, input.id)
+    const versions = await versionsOf(document.id)
+    const current = versions.at(-1)
+    if (!current || current.id !== input.versionId) {
+      throw errors.CONFLICT({ message: VERSION_CHANGED_MESSAGE })
+    }
+    const previous = versions.at(-2)
+    if (!previous) throw errors.CONFLICT({ message: ONLY_VERSION_MESSAGE })
+
+    // The page count the document goes back to, read before locking anything.
+    const dataKey = await unwrapDocumentKey(document)
+    const pageCount = await pageCountOf(
+      await readVersion(document, dataKey, previous)
+    )
+
+    const updated = await db.transaction(async (tx) => {
+      await assertStillCurrent(
+        tx,
+        document.id,
+        current.id,
+        VERSION_CHANGED_MESSAGE
+      )
+      const deletedAt = new Date()
+      await tx
+        .update(documentVersions)
+        .set({ deletedAt })
+        .where(eq(documentVersions.id, current.id))
+      const [row] = await tx
+        .update(documents)
+        .set({ pageCount, updatedAt: deletedAt })
+        .where(eq(documents.id, document.id))
+        .returning()
+      await recordTraces(tx, context, userId, [
+        {
+          type: "document.versionDeleted",
+          documentId: document.id,
+          versionId: current.id,
+        },
+      ])
+      return assertFound(row, NOT_FOUND_MESSAGE)
+    })
+
+    // Housekeeping: no read reaches a deleted version's object any more.
+    await objectStorage.deleteObject(current.objectKey).catch((error) => {
+      getRequestLogger(context)?.warn(
+        { err: error, objectKey: current.objectKey },
+        "Could not remove a deleted version's object"
+      )
+    })
+    return detailOf(userId, updated, versions.slice(0, -1))
+  },
+
   merge: async ({
     context,
     input,
@@ -1286,7 +1438,10 @@ export const documentHandler = {
     const owned = await loadOwnedInOrder(userId, input.documentIds)
     const current = currentVersions(
       await db.query.documentVersions.findMany({
-        where: { documentId: { in: input.documentIds } },
+        where: {
+          documentId: { in: input.documentIds },
+          deletedAt: { isNull: true },
+        },
       })
     )
     const sources = owned.map((document) => ({

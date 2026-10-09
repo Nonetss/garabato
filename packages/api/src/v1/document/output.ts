@@ -20,6 +20,11 @@ const signatureRecord = z.object({
   documentDeleted: z.boolean(),
   versionId: z.uuid(),
   versionNumber: z.number().int(),
+  versionDeleted: z
+    .boolean()
+    .describe(
+      "The version this signature produced has been deleted; the record stays, but no longer counts as a signature of the document"
+    ),
   certificateId: z.uuid(),
   certificateAlias: z.string(),
   certificateHolder: z.string(),
@@ -135,9 +140,15 @@ const documentSummary = z.object({
   name: z.string(),
   pageCount: z.number().int(),
   sizeBytes: z.number().int().describe("Size of the current version"),
-  versionCount: z.number().int(),
-  signatureCount: z.number().int(),
-  lastSignedAt: z.string().nullable(),
+  versionCount: z.number().int().describe("Live (not deleted) versions"),
+  signatureCount: z
+    .number()
+    .int()
+    .describe("Signature records whose version is live"),
+  lastSignedAt: z
+    .string()
+    .nullable()
+    .describe("Last signing time among the records on live versions"),
   folderId: z.uuid().nullable().describe("Null for the library root"),
   tagIds: z.array(z.uuid()).describe("Tags the document carries"),
   pinnedAt: z
@@ -146,6 +157,15 @@ const documentSummary = z.object({
     .describe("When the document was pinned; null when not pinned"),
   createdAt: z.string(),
   updatedAt: z.string(),
+})
+
+const documentDetail = documentSummary.extend({
+  versions: z.array(version).describe("Live versions, oldest first"),
+  signatures: z
+    .array(signatureRecord)
+    .describe(
+      "Every signature record, deleted versions included; newest first"
+    ),
 })
 
 const batchResult = z.object({
@@ -166,10 +186,7 @@ export type SignatureLogCertificate = z.infer<typeof signatureLogCertificate>
 export const documentOutput = {
   upload: documentSummary,
   list: z.array(documentSummary),
-  get: documentSummary.extend({
-    versions: z.array(version).describe("Oldest first"),
-    signatures: z.array(signatureRecord).describe("Newest first"),
-  }),
+  get: documentDetail,
   rename: documentSummary,
   download: z.file().describe("The PDF of the requested version"),
   delete: z.object({ id: z.uuid(), success: z.boolean() }),
@@ -186,6 +203,7 @@ export const documentOutput = {
       .describe("The document's page count after the edit"),
   }),
   merge: documentSummary,
+  deleteLatestVersion: documentDetail,
   signatures: z.array(signatureRecord),
   signatureLog: z.object({
     records: z.array(signatureLogRecord).describe("Newest first"),

@@ -28,7 +28,7 @@ export const documentRouter = {
       openapi({
         summary: "List my documents",
         description:
-          "Returns the caller's documents that are not deleted, pinned first (most recently pinned first) and then newest first, with page count, current size, version and signature counts, the last signing time, folder, tag ids and pin time.",
+          "Returns the caller's documents that are not deleted, pinned first (most recently pinned first) and then newest first, with page count, current size, the count of live versions and of signatures on live versions, the last of those signing times, folder, tag ids and pin time.",
         tags: ["Documents"],
         method: "GET",
       })
@@ -41,7 +41,7 @@ export const documentRouter = {
       openapi({
         summary: "Get a document",
         description:
-          "Returns one of the caller's documents with its versions (oldest first) and its signature records (newest first).",
+          "Returns one of the caller's documents with its live versions (oldest first) and all its signature records (newest first), each flagged `versionDeleted` when the version it produced has been deleted.",
         tags: ["Documents"],
         method: "GET",
       })
@@ -55,7 +55,7 @@ export const documentRouter = {
       openapi({
         summary: "Download a document version",
         description:
-          "Returns the PDF of the current version, or of `versionNumber`, for rendering. Earlier versions are named with their number. Decrypted by the API; the object store never serves files directly. A safe read: it leaves no trace. Use `exportVersion` when the user saves the file.",
+          "Returns the PDF of the current version, or of the live version `versionNumber`, for rendering; a deleted version answers NOT_FOUND. Earlier versions are named with their number. Decrypted by the API; the object store never serves files directly. A safe read: it leaves no trace. Use `exportVersion` when the user saves the file.",
         tags: ["Documents"],
         method: "GET",
       })
@@ -224,6 +224,22 @@ export const documentRouter = {
       documentHandler.editPages({ context, input })
     ),
 
+  deleteLatestVersion: heavyDocumentProcedure
+    .meta(
+      openapi({
+        summary: "Delete the latest version of a document",
+        description:
+          "Soft-deletes the current version of one of the caller's documents: the version row is kept, so the traces and the signature record that name it survive (flagged as a deleted version), its stored object is removed best-effort, the previous version becomes current again and the document's page count is restored from it. A signed version can be deleted; its signature record no longer counts as a signature of the document. Version numbers are never reused. `versionId` must still be the current version and the document must have another live version, otherwise CONFLICT. Records a `document.versionDeleted` trace. Returns the document as `get` does. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
+        tags: ["Documents"],
+        method: "DELETE",
+      })
+    )
+    .input(documentInput.deleteLatestVersion)
+    .output(documentOutput.deleteLatestVersion)
+    .handler(({ context, input }) =>
+      documentHandler.deleteLatestVersion({ context, input })
+    ),
+
   merge: heavyDocumentProcedure
     .meta(
       openapi({
@@ -244,7 +260,7 @@ export const documentRouter = {
       openapi({
         summary: "List signature records",
         description:
-          "Returns the caller's signature records for one document or one certificate (pass exactly one), newest first, including records of deleted documents and certificates.",
+          "Returns the caller's signature records for one document or one certificate (pass exactly one), newest first, including records of deleted documents, certificates and versions (`versionDeleted`).",
         tags: ["Documents"],
         method: "GET",
       })
@@ -260,7 +276,7 @@ export const documentRouter = {
       openapi({
         summary: "List my signature log",
         description:
-          "Returns the caller's signature records across every document and certificate, newest first, paginated by cursor, including records of deleted documents and certificates. Optional filters: certificate, text the document name contains, and a signing-time interval (`signedFrom` inclusive, `signedBefore` exclusive). `total` counts every matching record.",
+          "Returns the caller's signature records across every document and certificate, newest first, paginated by cursor, including records of deleted documents, certificates and versions (`versionDeleted`). Optional filters: certificate, text the document name contains, and a signing-time interval (`signedFrom` inclusive, `signedBefore` exclusive). `total` counts every matching record.",
         tags: ["Documents"],
         method: "GET",
       })

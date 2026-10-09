@@ -27,9 +27,13 @@ const certificateRef = z
   )
 
 const versionRef = z
-  .object({ id: z.uuid(), number: z.number().int() })
+  .object({
+    id: z.uuid(),
+    number: z.number().int(),
+    deleted: z.boolean().describe("The version has since been deleted"),
+  })
   .nullable()
-  .describe("The version the action produced or delivered")
+  .describe("The version the action produced, delivered or deleted")
 
 const folderRef = z
   .object({ id: z.uuid(), name: z.string() })
@@ -55,6 +59,7 @@ const plainEntry = z.object({
     "document.uploaded",
     "document.pagesEdited",
     "document.downloaded",
+    "document.versionDeleted",
     "document.deleted",
   ]),
   details: z.null(),

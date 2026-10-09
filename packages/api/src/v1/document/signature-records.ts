@@ -19,6 +19,7 @@ export type SignatureJoin = {
   documentName: string
   documentDeletedAt: Date | null
   versionNumber: number
+  versionDeletedAt: Date | null
   certificateAlias: string
   certificateHolder: string
 }
@@ -32,6 +33,7 @@ export function toRecord(row: SignatureJoin): SignatureRecord {
     documentDeleted: row.documentDeletedAt !== null,
     versionId: signature.versionId,
     versionNumber: row.versionNumber,
+    versionDeleted: row.versionDeletedAt !== null,
     certificateId: signature.certificateId,
     certificateAlias: row.certificateAlias,
     certificateHolder: row.certificateHolder,
@@ -80,6 +82,7 @@ export function signatureJoin() {
       documentName: documents.name,
       documentDeletedAt: documents.deletedAt,
       versionNumber: documentVersions.number,
+      versionDeletedAt: documentVersions.deletedAt,
       certificateAlias: certificates.alias,
       certificateHolder: certificates.commonName,
       certificateDeletedAt: certificates.deletedAt,

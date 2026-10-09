@@ -36,6 +36,7 @@ function trailRow(
     certificateId: string | null
     certificateDeletedAt: Date | null
     versionId: string | null
+    versionDeletedAt: Date | null
   }> = {}
 ) {
   const documentId = overrides.documentId === undefined ? DOC_ID : null
@@ -58,6 +59,7 @@ function trailRow(
     certificateDeletedAt: overrides.certificateDeletedAt ?? null,
     versionId,
     versionNumber: versionId === null ? null : 1,
+    versionDeletedAt: overrides.versionDeletedAt ?? null,
   }
 }
 
@@ -71,12 +73,13 @@ function certificateTrailRow(index: number, type: string, details?: unknown) {
   })
 }
 
-function signatureLogRow(id: string) {
+function signatureLogRow(id: string, versionDeletedAt: Date | null = null) {
   return {
     signature: documentSignatureRow({ id, certificateId: CERT_ID }),
     documentName: "contrato.pdf",
     documentDeletedAt: null,
     versionNumber: 2,
+    versionDeletedAt,
     certificateAlias: certificate.alias,
     certificateHolder: certificate.commonName,
     certificateDeletedAt: null,
@@ -121,7 +124,7 @@ describe("trace.list", () => {
           ipAddress: "203.0.113.7",
           document: { id: DOC_ID, name: "contrato.pdf", deleted: false },
           certificate: null,
-          version: { id: VERSION_ID, number: 1 },
+          version: { id: VERSION_ID, number: 1, deleted: false },
           details: { from: "a.pdf", to: "contrato.pdf" },
         },
         {
@@ -245,6 +248,42 @@ describe("trace.list", () => {
 
     expect(result.entries[0]?.document?.deleted).toBe(true)
     expect(result.entries[1]?.certificate?.deleted).toBe(true)
+  })
+
+  test("flags a deleted version on its deletion and on its signature", async () => {
+    const deletedAt = new Date()
+    const signatureId = entryId(2)
+    fakeDb.queue("select", [
+      trailRow(1, {
+        type: "document.versionDeleted",
+        versionDeletedAt: deletedAt,
+      }),
+      trailRow(2, {
+        type: "document.signed",
+        certificateId: CERT_ID,
+        versionDeletedAt: deletedAt,
+      }),
+    ])
+    fakeDb.queue("select", [{ total: 2 }])
+    fakeDb.queue("select", [signatureLogRow(signatureId, deletedAt)])
+
+    const result = await traceHandler.list({ context, input: listInput() })
+
+    expect(result.entries).toEqual([
+      expect.objectContaining({
+        type: "document.versionDeleted",
+        version: { id: VERSION_ID, number: 1, deleted: true },
+        details: null,
+      }),
+      expect.objectContaining({
+        type: "document.signed",
+        version: { id: VERSION_ID, number: 1, deleted: true },
+        signature: expect.objectContaining({
+          id: signatureId,
+          versionDeleted: true,
+        }),
+      }),
+    ])
   })
 
   test("answers NOT_FOUND for another user's certificate", async () => {

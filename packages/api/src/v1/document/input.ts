@@ -65,14 +65,21 @@ export const documentInput = {
       .int()
       .min(1)
       .optional()
-      .describe("Version to download; the current one when omitted"),
+      .describe("Live version to download; the current one when omitted"),
+  }),
+
+  deleteLatestVersion: z.object({
+    id,
+    versionId: id.describe(
+      "The version the caller saw as current; CONFLICT when it no longer is"
+    ),
   }),
 
   verifySignatures: z.object({
     documentId: id,
     versionId: id
       .optional()
-      .describe("Version to check; the current one when omitted"),
+      .describe("Live version to check; the current one when omitted"),
   }),
 
   rename: z.object({
