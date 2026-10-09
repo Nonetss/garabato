@@ -128,9 +128,7 @@ if (dialog) {
       : "light"
     const images = [
       ...document.querySelectorAll<HTMLImageElement>("img[data-shot]"),
-    ].filter(
-      (img) => img.dataset.theme === "any" || img.dataset.theme === theme
-    )
+    ].filter((img) => img.dataset.theme === theme)
     return [...new Map(images.map((img) => [img.dataset.shot, img])).values()]
   }
   let shots = collect()

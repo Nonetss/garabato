@@ -29,16 +29,11 @@ const dict = t(lang)
 const current = shots.find((shot) => shot.id === active) ?? shots[0]
 const sizes = "(min-width: 64rem) 56vw, 100vw"
 
-// Each shot renders once per theme it has a capture for; the `.dark` class
-// shows one of them. A shot without a dark capture shows in both themes.
-const variants = shots.flatMap((shot, index) => {
-  const first = index === 0
-  if (!shot.dark) return [{ shot, image: shot.image, theme: "any", first }]
-  return [
-    { shot, image: shot.image, theme: "light", first },
-    { shot, image: shot.dark, theme: "dark", first },
-  ]
-})
+// Each shot renders once per theme; the `.dark` class shows one of them.
+const variants = shots.flatMap((shot, index) => [
+  { shot, image: shot.image, theme: "light", first: index === 0 },
+  { shot, image: shot.dark, theme: "dark", first: index === 0 },
+])
 ---
 
 <div class:list={["terminal-frame", className]} data-frame>
