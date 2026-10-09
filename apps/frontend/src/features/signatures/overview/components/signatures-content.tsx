@@ -9,6 +9,7 @@ import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
+  type ResourceFilterChip,
   type ResourceFilterDescriptor,
   type ResourceFilterOption,
   ResourceFilters,
@@ -16,6 +17,7 @@ import {
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
 import { SignatureDetailSheet } from "@/features/signatures/overview/components/signature-detail-sheet"
 import {
   type SignaturesRowContext,
@@ -97,22 +99,51 @@ export function SignaturesContent() {
       defaultValue: ALL_CERTIFICATES,
     },
     {
-      kind: "date",
-      key: "signature-filter-from",
-      label: "Desde",
-      value: filters.from,
-      onChange: (from) => setFilters((current) => ({ ...current, from })),
-      placeholder: "Primer día",
-    },
-    {
-      kind: "date",
-      key: "signature-filter-to",
-      label: "Hasta",
-      value: filters.to,
-      onChange: (to) => setFilters((current) => ({ ...current, to })),
-      placeholder: "Último día",
+      // Both ends of the range share one grid cell, so the panel keeps three
+      // fields per row.
+      kind: "custom",
+      key: "signature-filter-dates",
+      label: "Fechas",
+      isActive: filters.from !== undefined || filters.to !== undefined,
+      render: () => (
+        <div className="grid grid-cols-2 gap-2">
+          <DatePicker
+            value={filters.from}
+            onChange={(from) => setFilters((current) => ({ ...current, from }))}
+            placeholder="Desde"
+            className="w-full"
+            aria-label="Desde"
+          />
+          <DatePicker
+            value={filters.to}
+            onChange={(to) => setFilters((current) => ({ ...current, to }))}
+            placeholder="Hasta"
+            className="w-full"
+            aria-label="Hasta"
+          />
+        </div>
+      ),
     },
   ]
+
+  // `chipsFor` skips `custom` descriptors, so the date range's chips are
+  // appended by hand.
+  const dateChips: ResourceFilterChip[] = []
+  if (filters.from !== undefined) {
+    dateChips.push({
+      key: "signature-filter-from",
+      label: `Desde: ${filters.from.toLocaleDateString()}`,
+      onRemove: () =>
+        setFilters((current) => ({ ...current, from: undefined })),
+    })
+  }
+  if (filters.to !== undefined) {
+    dateChips.push({
+      key: "signature-filter-to",
+      label: `Hasta: ${filters.to.toLocaleDateString()}`,
+      onRemove: () => setFilters((current) => ({ ...current, to: undefined })),
+    })
+  }
 
   const rowContext: SignaturesRowContext = { onOpen: detail.open }
 
@@ -124,12 +155,12 @@ export function SignaturesContent() {
         filters={
           <div className="space-y-3">
             <ResourceFilters
-              columns={2}
+              columns={3}
               filters={filterDescriptors}
               onClear={clearFilters}
             />
             <FilterChips
-              chips={chipsFor(filterDescriptors)}
+              chips={[...chipsFor(filterDescriptors), ...dateChips]}
               onClear={clearFilters}
             />
           </div>
