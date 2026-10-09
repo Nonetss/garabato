@@ -16,6 +16,7 @@ const navigationIcons = {
   crons: Lucide.Clock,
   certificates: Lucide.FileKey2,
   signatures: Lucide.FileSignature,
+  traces: Lucide.History,
   documents: Lucide.FileText,
   admin: Lucide.BrickWallFire,
   back: Lucide.ArrowLeft,

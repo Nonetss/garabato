@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from "react"
 import {
-  activeSignatureLogFilterCount,
-  emptySignatureLogFilters,
-  type SignatureLogFilters,
-  signatureLogQueryInput,
-} from "@/features/signatures/overview/model/filters"
+  activeTraceFilterCount,
+  emptyTraceFilters,
+  type TraceFilters,
+  traceQueryInput,
+} from "@/features/traces/overview/model/filters"
 import type {
-  SignatureLogCertificate,
-  SignatureLogRecord,
-} from "@/features/signatures/overview/model/types"
+  TraceCertificate,
+  TrailEntry,
+} from "@/features/traces/overview/model/types"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
 import { useHydratedInfiniteQuery } from "@/hooks/use-hydrated-infinite-query"
 import { useHydratedQuery } from "@/hooks/use-hydrated-query"
@@ -16,29 +16,27 @@ import { orpc } from "@/lib/orpc"
 
 const PAGE_SIZE = 25
 
-const noRecords: SignatureLogRecord[] = []
-const noCertificates: SignatureLogCertificate[] = []
+const noEntries: TrailEntry[] = []
+const noCertificates: TraceCertificate[] = []
 
-function certificateOptions(data: SignatureLogCertificate[] | undefined) {
+function certificateOptions(data: TraceCertificate[] | undefined) {
   if (!data) return noCertificates
   return data
 }
 
-/** The signature log page's filters, its paged records and the
- *  certificates its filter offers. */
-export function useSignatureLog() {
-  const [filters, setFilters] = useState<SignatureLogFilters>(
-    emptySignatureLogFilters
-  )
+/** The traces page's filters, its paged trail and the certificates its
+ *  filter offers. */
+export function useTraces() {
+  const [filters, setFilters] = useState<TraceFilters>(emptyTraceFilters)
   // The text box stays instant; only the request waits for a pause.
   const query = useDebouncedValue(filters.query)
   const queryInput = useMemo(
-    () => signatureLogQueryInput({ ...filters, query }),
+    () => traceQueryInput({ ...filters, query }),
     [filters, query]
   )
 
-  const log = useHydratedInfiniteQuery(
-    orpc.v1.document.signatureLog.infiniteOptions({
+  const trail = useHydratedInfiniteQuery(
+    orpc.v1.trace.list.infiniteOptions({
       input: (cursor: string | null) => ({
         ...queryInput,
         cursor,
@@ -49,33 +47,30 @@ export function useSignatureLog() {
     })
   )
   const certificates = useHydratedQuery(
-    orpc.v1.document.signatureLogCertificates.queryOptions()
+    orpc.v1.trace.certificates.queryOptions()
   )
 
-  const records = useMemo(() => {
-    if (!log.data) return noRecords
-    return log.data.pages.flatMap((page) => page.records)
-  }, [log.data])
-  const total = log.data?.pages[0]?.total
+  const entries = useMemo((): TrailEntry[] => {
+    if (!trail.data) return noEntries
+    return trail.data.pages.flatMap((page) => page.entries)
+  }, [trail.data])
+  const total = trail.data?.pages[0]?.total
 
-  const clearFilters = useCallback(
-    () => setFilters(emptySignatureLogFilters),
-    []
-  )
+  const clearFilters = useCallback(() => setFilters(emptyTraceFilters), [])
 
   return {
-    records,
+    entries,
     total,
     certificates: certificateOptions(certificates.data),
     filters,
     setFilters,
     clearFilters,
-    activeCount: activeSignatureLogFilterCount(filters),
-    hasNextPage: log.hasNextPage,
-    isFetchingNextPage: log.isFetchingNextPage,
-    fetchNextPage: log.fetchNextPage,
-    isPending: log.isPending,
-    isError: log.isError,
-    refetch: log.refetch,
+    activeCount: activeTraceFilterCount(filters),
+    hasNextPage: trail.hasNextPage,
+    isFetchingNextPage: trail.isFetchingNextPage,
+    fetchNextPage: trail.fetchNextPage,
+    isPending: trail.isPending,
+    isError: trail.isError,
+    refetch: trail.refetch,
   }
 }

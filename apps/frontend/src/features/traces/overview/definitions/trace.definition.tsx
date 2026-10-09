@@ -1,58 +1,58 @@
 import type { EntityListDefinition } from "@/components/shared/resource/entity-list"
+import { TRAIL_TYPE_ICONS } from "@/features/traces/overview/definitions/trace-icons"
 import {
-  deletedAware,
-  placementLabel,
-} from "@/features/signatures/overview/model/filters"
-import type { SignatureLogRecord } from "@/features/signatures/overview/model/types"
+  TRAIL_TYPE_LABELS,
+  traceSubject,
+  traceSummary,
+} from "@/features/traces/overview/model/labels"
+import type { TrailEntry } from "@/features/traces/overview/model/types"
 import { formatDateTime } from "@/lib/format"
 
-export interface SignaturesRowContext {
-  onOpen: (record: SignatureLogRecord) => void
+export interface TracesRowContext {
+  onOpen: (entry: TrailEntry) => void
 }
 
-function certificateLine(record: SignatureLogRecord) {
-  const alias = deletedAware(record.certificateAlias, record.certificateDeleted)
-  if (record.certificateHolder === record.certificateAlias) return alias
-  return `${alias} · ${record.certificateHolder}`
+function TypeLabel({ entry }: { entry: TrailEntry }) {
+  const Icon = TRAIL_TYPE_ICONS[entry.type]
+  return (
+    <span className="inline-flex items-center gap-2">
+      <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      {TRAIL_TYPE_LABELS[entry.type]}
+    </span>
+  )
 }
 
-/** The signature log's `EntityList` row: the document, the certificate it
- *  was signed with, when, which version it produced and where the stamp is.
- *  The row opens the record's detail. */
-export const signatureDefinition: EntityListDefinition<
-  SignatureLogRecord,
-  SignaturesRowContext
+/** The trail's `EntityList` row: what happened, to which document or
+ *  certificate, when, and a one-line summary of the change. The row opens
+ *  the entry's detail. */
+export const traceDefinition: EntityListDefinition<
+  TrailEntry,
+  TracesRowContext
 > = {
-  getKey: (record) => record.id,
-  getAccessibleLabel: (record) =>
-    `Firma de ${record.documentName}, ${formatDateTime(record.signedAt, {
-      includeYear: true,
-    })}`,
-  getPrimary: (record) =>
-    deletedAware(record.documentName, record.documentDeleted),
-  getSecondary: certificateLine,
-  onOpen: (record, context) => context.onOpen(record),
+  getKey: (entry) => entry.id,
+  getAccessibleLabel: (entry) =>
+    `${TRAIL_TYPE_LABELS[entry.type]}: ${traceSubject(entry)}, ${formatDateTime(
+      entry.occurredAt,
+      { includeYear: true }
+    )}`,
+  getPrimary: (entry) => <TypeLabel entry={entry} />,
+  getSecondary: traceSubject,
+  onOpen: (entry, context) => context.onOpen(entry),
   metadata: [
     {
-      key: "signedAt",
+      key: "occurredAt",
       label: "Fecha",
-      value: (record) => (
+      value: (entry) => (
         <span className="tabular-nums">
-          {formatDateTime(record.signedAt, { includeYear: true })}
+          {formatDateTime(entry.occurredAt, { includeYear: true })}
         </span>
       ),
     },
     {
-      key: "version",
-      label: "Versión",
-      value: (record) => (
-        <span className="tabular-nums">v{record.versionNumber}</span>
-      ),
-    },
-    {
-      key: "placement",
-      label: "Firma",
-      value: (record) => placementLabel(record),
+      key: "summary",
+      label: "Detalle",
+      value: (entry) => traceSummary(entry),
+      hidden: (entry) => traceSummary(entry) === "",
     },
   ],
 }

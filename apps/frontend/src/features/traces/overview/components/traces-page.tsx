@@ -1,10 +1,10 @@
-import { SignaturesContent } from "@/features/signatures/overview/components/signatures-content"
+import { TracesContent } from "@/features/traces/overview/components/traces-content"
 import { QueryProvider } from "@/providers/query-provider"
 
-export function SignaturesPage() {
+export function TracesPage() {
   return (
     <QueryProvider>
-      <SignaturesContent />
+      <TracesContent />
     </QueryProvider>
   )
 }

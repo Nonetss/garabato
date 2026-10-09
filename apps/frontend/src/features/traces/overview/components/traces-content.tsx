@@ -1,6 +1,6 @@
 import { getIcon } from "@/lib/icon-registry"
 
-const SignaturesIcon = getIcon("navigation", "signatures")
+const TracesIcon = getIcon("navigation", "traces")
 const DocumentIcon = getIcon("navigation", "documents")
 
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
@@ -9,6 +9,7 @@ import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
+  type ResourceFacetOption,
   type ResourceFilterChip,
   type ResourceFilterDescriptor,
   type ResourceFilterOption,
@@ -18,25 +19,34 @@ import { ResourceOverview } from "@/components/shared/resource/resource-overview
 import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
-import { SignatureDetailSheet } from "@/features/signatures/overview/components/signature-detail-sheet"
+import { SignatureDetailSheet } from "@/features/traces/overview/components/signature-detail-sheet"
+import { TraceDetailSheet } from "@/features/traces/overview/components/trace-detail-sheet"
 import {
-  type SignaturesRowContext,
-  signatureDefinition,
-} from "@/features/signatures/overview/definitions/signature.definition"
-import { useSignatureLog } from "@/features/signatures/overview/hooks/use-signature-log"
+  type TracesRowContext,
+  traceDefinition,
+} from "@/features/traces/overview/definitions/trace.definition"
+import { useTraces } from "@/features/traces/overview/hooks/use-traces"
 import {
   ALL_CERTIFICATES,
   deletedAware,
-} from "@/features/signatures/overview/model/filters"
-import type {
-  SignatureLogCertificate,
-  SignatureLogRecord,
-} from "@/features/signatures/overview/model/types"
+} from "@/features/traces/overview/model/filters"
+import { TRAIL_TYPE_LABELS } from "@/features/traces/overview/model/labels"
+import {
+  type SignatureLogRecord,
+  TRAIL_TYPES,
+  type TraceCertificate,
+  type TrailEntry,
+} from "@/features/traces/overview/model/types"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
 
+const typeOptions: ResourceFacetOption[] = TRAIL_TYPES.map((type) => ({
+  value: type,
+  label: TRAIL_TYPE_LABELS[type],
+}))
+
 function certificateOptions(
-  certificates: SignatureLogCertificate[]
+  certificates: TraceCertificate[]
 ): ResourceFilterOption[] {
   return [
     { value: ALL_CERTIFICATES, label: "Todos los certificados" },
@@ -49,13 +59,13 @@ function certificateOptions(
 
 function TotalCount({ total }: { total: number | undefined }) {
   if (total === undefined) return null
-  const label = total === 1 ? "firma" : "firmas"
+  const label = total === 1 ? "traza" : "trazas"
   return <HeroCount segments={[{ count: total, label }]} />
 }
 
-export function SignaturesContent() {
+export function TracesContent() {
   const {
-    records,
+    entries,
     total,
     certificates,
     filters,
@@ -68,8 +78,9 @@ export function SignaturesContent() {
     isPending,
     isError,
     refetch,
-  } = useSignatureLog()
-  const detail = useTargetDialog<SignatureLogRecord>()
+  } = useTraces()
+  const signatureDetail = useTargetDialog<SignatureLogRecord>()
+  const traceDetail = useTargetDialog<TrailEntry>()
 
   // The page itself scrolls, so the sentinel is observed against the viewport.
   const sentinelRef = useInfiniteScroll(
@@ -81,15 +92,23 @@ export function SignaturesContent() {
   const filterDescriptors: ResourceFilterDescriptor[] = [
     {
       kind: "search",
-      key: "signature-filter-document",
-      label: "Documento",
+      key: "trace-filter-query",
+      label: "Buscar",
       value: filters.query,
       onChange: (query) => setFilters((current) => ({ ...current, query })),
-      placeholder: "Nombre del documento",
+      placeholder: "Documento o certificado",
+    },
+    {
+      kind: "facet",
+      key: "trace-filter-type",
+      label: "Tipo",
+      options: typeOptions,
+      value: filters.types,
+      onChange: (types) => setFilters((current) => ({ ...current, types })),
     },
     {
       kind: "select",
-      key: "signature-filter-certificate",
+      key: "trace-filter-certificate",
       label: "Certificado",
       value: filters.certificateId,
       onChange: (certificateId) =>
@@ -100,10 +119,10 @@ export function SignaturesContent() {
       searchable: true,
     },
     {
-      // Both ends of the range share one grid cell, so the panel keeps three
-      // fields per row.
+      // Both ends of the range share one grid cell, so the panel keeps the
+      // other fields on one row.
       kind: "custom",
-      key: "signature-filter-dates",
+      key: "trace-filter-dates",
       label: "Fechas",
       isActive: filters.from !== undefined || filters.to !== undefined,
       render: () => (
@@ -132,7 +151,7 @@ export function SignaturesContent() {
   const dateChips: ResourceFilterChip[] = []
   if (filters.from !== undefined) {
     dateChips.push({
-      key: "signature-filter-from",
+      key: "trace-filter-from",
       label: `Desde: ${filters.from.toLocaleDateString()}`,
       onRemove: () =>
         setFilters((current) => ({ ...current, from: undefined })),
@@ -140,23 +159,31 @@ export function SignaturesContent() {
   }
   if (filters.to !== undefined) {
     dateChips.push({
-      key: "signature-filter-to",
+      key: "trace-filter-to",
       label: `Hasta: ${filters.to.toLocaleDateString()}`,
       onRemove: () => setFilters((current) => ({ ...current, to: undefined })),
     })
   }
 
-  const rowContext: SignaturesRowContext = { onOpen: detail.open }
+  const rowContext: TracesRowContext = {
+    onOpen: (entry) => {
+      if (entry.type === "document.signed") {
+        signatureDetail.open(entry.signature)
+        return
+      }
+      traceDetail.open(entry)
+    },
+  }
 
   return (
     <>
       <ResourceOverview
-        surface="signatures"
+        surface="traces"
         heroChildren={<TotalCount total={total} />}
         filters={
           <div className="space-y-3">
             <ResourceFilters
-              columns={3}
+              columns={2}
               filters={filterDescriptors}
               onClear={clearFilters}
             />
@@ -166,20 +193,20 @@ export function SignaturesContent() {
             />
           </div>
         }
-        query={{ data: records, isPending, isError, refetch }}
-        loading="Cargando firmas..."
+        query={{ data: entries, isPending, isError, refetch }}
+        loading="Cargando trazas..."
         error={{
-          icon: <SignaturesIcon className="size-6" />,
-          title: "No se pudo cargar el registro de firmas",
+          icon: <TracesIcon className="size-6" />,
+          title: "No se pudieron cargar las trazas",
           description:
             "Comprueba tu conexión; si el problema continúa, inténtalo de nuevo más tarde.",
         }}
         isEmpty={(data) => data.length === 0}
         empty={{
-          icon: <SignaturesIcon className="size-6" />,
-          title: "Todavía no has firmado nada",
+          icon: <TracesIcon className="size-6" />,
+          title: "Todavía no hay actividad",
           description:
-            "Cada firma que hagas quedará registrada aquí con su certificado.",
+            "Cada firma, importación, descarga o cambio que hagas en tus documentos y certificados quedará registrado aquí.",
           action: (
             <Button
               variant="outline"
@@ -193,8 +220,8 @@ export function SignaturesContent() {
         }}
         hasActiveFilters={activeCount > 0}
         filteredEmpty={{
-          icon: <SignaturesIcon className="size-6" />,
-          title: "Ninguna firma coincide con los filtros",
+          icon: <TracesIcon className="size-6" />,
+          title: "Ninguna traza coincide con los filtros",
           description: "Prueba a limpiar o ajustar los filtros.",
           onClear: clearFilters,
         }}
@@ -204,7 +231,7 @@ export function SignaturesContent() {
             <EntityList
               items={data}
               context={rowContext}
-              definition={signatureDefinition}
+              definition={traceDefinition}
             />
             <InfiniteScrollSentinel
               sentinelRef={sentinelRef}
@@ -215,7 +242,14 @@ export function SignaturesContent() {
         )}
       </ResourceOverview>
 
-      <SignatureDetailSheet record={detail.target} {...detail.dialogProps} />
+      <SignatureDetailSheet
+        record={signatureDetail.target}
+        {...signatureDetail.dialogProps}
+      />
+      <TraceDetailSheet
+        entry={traceDetail.target}
+        {...traceDetail.dialogProps}
+      />
     </>
   )
 }

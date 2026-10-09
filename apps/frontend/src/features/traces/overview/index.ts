@@ -1,1 +1,1 @@
-export { SignaturesPage } from "@/features/signatures/overview/components/signatures-page"
+export { TracesPage } from "@/features/traces/overview/components/traces-page"

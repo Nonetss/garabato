@@ -17,8 +17,8 @@ import { timestampDetail } from "@/features/documents/shared/public"
 import {
   deletedAware,
   placementLabel,
-} from "@/features/signatures/overview/model/filters"
-import type { SignatureLogRecord } from "@/features/signatures/overview/model/types"
+} from "@/features/traces/overview/model/filters"
+import type { SignatureLogRecord } from "@/features/traces/overview/model/types"
 import { formatDate, formatDateTime } from "@/lib/format"
 
 function DocumentName({ record }: { record: SignatureLogRecord }) {

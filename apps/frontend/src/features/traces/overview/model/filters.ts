@@ -1,12 +1,19 @@
 import { addDays, startOfDay } from "date-fns"
+import type { ResourceFacetValue } from "@/components/shared/resource/resource-filters"
+import {
+  TRAIL_TYPES,
+  type TrailType,
+} from "@/features/traces/overview/model/types"
 import { formatPages } from "@/lib/format"
 
 /** Every certificate: the certificate filter's "no filter" value. */
 export const ALL_CERTIFICATES = "all"
 
-export type SignatureLogFilters = {
-  /** Text the document name contains. */
+export type TraceFilters = {
+  /** Text the document name or certificate alias contains. */
   query: string
+  /** Types to include and to exclude. */
+  types: ResourceFacetValue
   /** A certificate id, or `ALL_CERTIFICATES`. */
   certificateId: string
   /** First day to include, whole. */
@@ -15,19 +22,26 @@ export type SignatureLogFilters = {
   to: Date | undefined
 }
 
-export const emptySignatureLogFilters: SignatureLogFilters = {
+export const emptyTraceFilters: TraceFilters = {
   query: "",
+  types: { include: [], exclude: [] },
   certificateId: ALL_CERTIFICATES,
   from: undefined,
   to: undefined,
 }
 
-/** The `document.signatureLog` filters, without paging. */
-export type SignatureLogQueryInput = {
+/** The `trace.list` filters, without paging. */
+export type TraceQueryInput = {
   query?: string
+  types?: TrailType[]
+  excludedTypes?: TrailType[]
   certificateId?: string
-  signedFrom?: string
-  signedBefore?: string
+  from?: string
+  before?: string
+}
+
+function isTrailType(value: string): value is TrailType {
+  return TRAIL_TYPES.some((type) => type === value)
 }
 
 // The chosen days in order, so picking "Hasta" before "Desde" still reads
@@ -39,24 +53,27 @@ function orderedDays(from: Date | undefined, to: Date | undefined) {
 
 /** Maps the page's filters to the API input: whole days in the browser's
  *  time zone, from the start of `from` to the start of the day after `to`. */
-export function signatureLogQueryInput(
-  filters: SignatureLogFilters
-): SignatureLogQueryInput {
-  const input: SignatureLogQueryInput = {}
+export function traceQueryInput(filters: TraceFilters): TraceQueryInput {
+  const input: TraceQueryInput = {}
   const query = filters.query.trim()
   if (query !== "") input.query = query
+  const types = filters.types.include.filter(isTrailType)
+  if (types.length > 0) input.types = types
+  const excludedTypes = filters.types.exclude.filter(isTrailType)
+  if (excludedTypes.length > 0) input.excludedTypes = excludedTypes
   if (filters.certificateId !== ALL_CERTIFICATES) {
     input.certificateId = filters.certificateId
   }
   const { first, last } = orderedDays(filters.from, filters.to)
-  if (first) input.signedFrom = startOfDay(first).toISOString()
-  if (last) input.signedBefore = addDays(startOfDay(last), 1).toISOString()
+  if (first) input.from = startOfDay(first).toISOString()
+  if (last) input.before = addDays(startOfDay(last), 1).toISOString()
   return input
 }
 
-export function activeSignatureLogFilterCount(filters: SignatureLogFilters) {
+export function activeTraceFilterCount(filters: TraceFilters) {
   return [
     filters.query.trim() !== "",
+    filters.types.include.length > 0 || filters.types.exclude.length > 0,
     filters.certificateId !== ALL_CERTIFICATES,
     filters.from !== undefined,
     filters.to !== undefined,

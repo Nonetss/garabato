@@ -83,11 +83,10 @@ export const useDocumentPreviewFile = (id: string, enabled: boolean) =>
     enabled,
   })
 
+/** Saves a version as the user asked: unlike `useDocumentFile`, it leaves a
+ *  "downloaded" trace. */
 export const downloadDocumentVersion = (id: string, versionNumber?: number) =>
-  orpc.v1.document.download.call(
-    { id, versionNumber },
-    { context: { read: true } }
-  )
+  orpc.v1.document.exportVersion.call({ id, versionNumber })
 
 export const useDocumentUpload = () =>
   useOrpcMutation<DocumentSummary, { file: File; folderId?: string }>({

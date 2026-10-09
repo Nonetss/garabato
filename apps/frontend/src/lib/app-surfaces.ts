@@ -10,7 +10,7 @@ export type SurfaceId =
   | "crons"
   | "cron-detail"
   | "certificates"
-  | "signatures"
+  | "traces"
   | "documents"
   | "document-detail"
   | "admin"
@@ -188,14 +188,14 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     icon: iconRef("navigation", "certificates"),
     nav: { primary: true },
   },
-  signatures: {
-    id: "signatures",
-    path: "/signatures",
-    title: "Registro de firmas",
-    label: "Firmas",
+  traces: {
+    id: "traces",
+    path: "/traces",
+    title: "Trazas",
+    label: "Trazas",
     description:
-      "Consulta qué documentos has firmado, cuándo y con qué certificado.",
-    icon: iconRef("navigation", "signatures"),
+      "Consulta lo que has hecho con tus documentos y certificados: firmas, importaciones, descargas y más.",
+    icon: iconRef("navigation", "traces"),
     nav: { primary: true },
   },
   config: {

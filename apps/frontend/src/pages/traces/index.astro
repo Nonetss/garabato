@@ -1,9 +1,9 @@
 ---
-import { SignaturesPage } from "@/features/signatures"
+import { TracesPage } from "@/features/traces"
 import Layout from "@/layouts/Layout.astro"
 import { appSurfaces } from "@/lib/app-surfaces"
 ---
 
-<Layout title={appSurfaces.signatures.title} scrollToTop>
-  <SignaturesPage client:only="react" />
+<Layout title={appSurfaces.traces.title} scrollToTop>
+  <TracesPage client:only="react" />
 </Layout>
