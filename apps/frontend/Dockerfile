@@ -12,6 +12,7 @@ ENV SKIP_ENV_VALIDATION=1
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/backend/package.json apps/backend/
 COPY apps/frontend/package.json apps/frontend/
+COPY apps/site/package.json apps/site/
 COPY packages/api/package.json packages/api/
 COPY packages/auth/package.json packages/auth/
 COPY packages/config/package.json packages/config/

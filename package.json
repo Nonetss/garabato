@@ -47,6 +47,7 @@
     "format": "biome check --write --linter-enabled=false .",
     "dev:frontend": "turbo watch -F frontend dev",
     "dev:backend": "turbo watch -F backend dev",
+    "dev:site": "turbo watch -F site dev",
     "icons:catalog": "cd apps/frontend && bun scripts/generate-icon-catalog.ts",
     "gateway": "docker compose -f apps/gateway/compose.yml up --build",
     "dev:cert": "docker run --rm -v stack-dev_gateway_data:/data:ro caddy:2-alpine cat /data/caddy/pki/authorities/local/root.crt > caddy-local-root.crt && echo 'Exported caddy-local-root.crt: import it in the browser as a trusted certificate authority'",
@@ -65,8 +66,8 @@
     "docker:logs": "docker compose logs -f",
     "check": "biome check --write .",
     "test": "turbo test",
-    "tailwind:check": "cd apps/frontend && tailwint",
-    "tailwind:fix": "cd apps/frontend && tailwint --fix"
+    "tailwind:check": "(cd apps/frontend && tailwint) && (cd apps/site && tailwint)",
+    "tailwind:fix": "(cd apps/frontend && tailwint --fix) && (cd apps/site && tailwint --fix)"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

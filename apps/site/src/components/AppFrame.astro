@@ -1,0 +1,74 @@
+---
+import { Image } from "astro:assets"
+import Maximize from "@lucide/astro/icons/maximize-2"
+import Logo from "@/components/Logo.astro"
+import { type Lang, t } from "@/i18n/ui"
+import { type Screen, screenWidths } from "@/lib/screens"
+
+interface Shot extends Screen {
+  alt: string
+}
+
+interface Props {
+  lang: Lang
+  /** One shot renders a static frame; several stack for the tour. */
+  shots: Shot[]
+  active?: Shot["id"]
+  eager?: boolean
+  class?: string
+}
+
+const {
+  lang,
+  shots,
+  active = shots[0]?.id,
+  eager = false,
+  class: className,
+} = Astro.props
+const dict = t(lang)
+const current = shots.find((shot) => shot.id === active) ?? shots[0]
+const sizes = "(min-width: 64rem) 56vw, 100vw"
+---
+
+<div class:list={["terminal-frame", className]} data-frame>
+  <div class="terminal-bar h-9 gap-2.5 px-3.5">
+    <Logo class="size-3.5 text-primary" />
+    <span class="font-mono text-[0.75rem] text-terminal-muted">
+      garabato.example.com<span class="text-terminal-fg" data-frame-route
+        >{current?.route}</span
+      >
+    </span>
+  </div>
+  <!-- Opens the screenshot on display in the full-screen viewer (Lightbox). -->
+  <button
+    type="button"
+    data-lightbox-open
+    aria-label={dict.frame.open}
+    class="group relative block aspect-16/10 w-full cursor-zoom-in bg-terminal-bg focus-ring focus-visible:ring-inset"
+  >
+    {shots.map((shot, index) => (
+      <Image
+        src={shot.image}
+        alt={shot.alt}
+        widths={screenWidths}
+        sizes={sizes}
+        loading={eager && index === 0 ? "eager" : "lazy"}
+        fetchpriority={eager && index === 0 ? "high" : undefined}
+        data-shot={shot.id}
+        data-route={shot.route}
+        data-active={shot.id === current?.id ? "" : undefined}
+        aria-hidden={shot.id === current?.id ? undefined : "true"}
+        class:list={[
+          "absolute inset-0 size-full object-cover object-top-left",
+          shots.length > 1 && "frame-shot",
+        ]}
+      />
+    ))}
+    <span
+      class="terminal-control zoom-hint absolute right-3 bottom-3 grid size-8 place-items-center"
+      aria-hidden="true"
+    >
+      <Maximize class="size-3.5" stroke-width={1.75} />
+    </span>
+  </button>
+</div>
