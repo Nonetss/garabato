@@ -94,45 +94,49 @@ function CertificatesBody() {
 /**
  * The home's side column: which certificates can sign, whether they still
  * hold and whether they ask for a password, then the way into the library.
+ * Under the sheet, where the column runs the full width, both sit side by
+ * side from `@xl`.
  */
 export function HomeCertificates() {
   const certificates = getAppSurface("certificates")
   const documents = getAppSurface("documents")
 
   return (
-    <aside className="space-y-8">
-      <section className="space-y-4">
-        <SectionHeading
-          title="Firmarás con"
-          action={
-            <AppLink
-              href={certificates.path}
-              className={cn(
-                textVariants({ role: "compact", tone: "muted" }),
-                "transition-colors hover:text-foreground"
-              )}
-            >
-              Gestionar
-            </AppLink>
-          }
-        />
-        <CertificatesBody />
-      </section>
+    <aside className="@container min-w-0">
+      <div className="grid gap-8 @xl:grid-cols-2 @xl:gap-10">
+        <section className="min-w-0 space-y-4">
+          <SectionHeading
+            title="Firmarás con"
+            action={
+              <AppLink
+                href={certificates.path}
+                className={cn(
+                  textVariants({ role: "compact", tone: "muted" }),
+                  "transition-colors hover:text-foreground"
+                )}
+              >
+                Gestionar
+              </AppLink>
+            }
+          />
+          <CertificatesBody />
+        </section>
 
-      <section className="space-y-3 border-t pt-6">
-        <SectionHeading title="Tu biblioteca" />
-        <AppLink
-          href={documents.path}
-          className="group/link flex items-center justify-between gap-3 rounded-md py-1 text-foreground transition-colors hover:text-primary"
-        >
-          <Text variant="title">Ver todos los documentos</Text>
-          <ArrowRightIcon className="size-4 transition-transform group-hover/link:translate-x-0.5" />
-        </AppLink>
-        <Text as="p" variant="compact" tone="muted" className="text-pretty">
-          Cada PDF guarda sus versiones y el registro de quién lo firmó y con
-          qué certificado.
-        </Text>
-      </section>
+        <section className="min-w-0 space-y-3 border-t pt-6 @xl:border-t-0 @xl:border-l @xl:pt-0 @xl:pl-10">
+          <SectionHeading title="Tu biblioteca" />
+          <AppLink
+            href={documents.path}
+            className="group/link flex items-center justify-between gap-3 rounded-md py-1 text-foreground transition-colors hover:text-primary"
+          >
+            <Text variant="title">Ver todos los documentos</Text>
+            <ArrowRightIcon className="size-4 transition-transform group-hover/link:translate-x-0.5" />
+          </AppLink>
+          <Text as="p" variant="compact" tone="muted" className="text-pretty">
+            Cada PDF guarda sus versiones y el registro de quién lo firmó y con
+            qué certificado.
+          </Text>
+        </section>
+      </div>
     </aside>
   )
 }

@@ -114,14 +114,14 @@ export function DocumentDropZone({ className }: { className?: string }) {
     >
       <div
         className={cn(
-          "flex min-h-80 flex-1 flex-col items-center justify-center gap-6 rounded-md border-[1.5px] border-dashed px-6 py-10 text-center transition-colors duration-200 @md:min-h-96 @md:py-14",
+          "flex min-h-72 flex-1 flex-col items-center justify-center gap-5 rounded-md border-[1.5px] border-dashed px-4 py-8 text-center transition-colors duration-200 @md:min-h-96 @md:gap-6 @md:px-6 @md:py-14",
           dragging ? "border-primary/60 bg-primary/5" : "border-border"
         )}
       >
         <Rubric
           key={rubricMotion}
           motion={rubricMotion}
-          className="w-28 @md:w-36"
+          className="w-24 @md:w-36"
         />
 
         <div className="flex max-w-md flex-col items-center gap-2">
@@ -156,6 +156,7 @@ export function DocumentDropZone({ className }: { className?: string }) {
         <Button
           size="lg"
           disabled={busy}
+          className="w-full max-w-xs @md:w-auto"
           onClick={() => inputRef.current?.click()}
         >
           <UploadIcon className="size-4" />
