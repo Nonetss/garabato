@@ -12,6 +12,9 @@ foundation that came with the template (auth, admin panel, typed API, cron
 scheduler, comments, entity icons, activity log, Docker) is still here; the
 product on top of it is document signing.
 
+The project website, with the docs in English and Spanish, is at
+[nonetss.github.io/garabato](https://nonetss.github.io/garabato/) (`apps/site`).
+
 The code is in English; the UI copy and the API error messages users see are
 in Spanish.
 
@@ -194,6 +197,7 @@ garabato/
 ├── apps/
 │   ├── frontend/       # Astro app (TypeScript, Bun)
 │   ├── backend/        # Hono + oRPC API and cron scheduler (TypeScript, Bun)
+│   ├── site/           # Static project website (Astro), published to GitHub Pages
 │   └── gateway/        # Caddy: public HTTP entry point (not a workspace)
 ├── packages/           # Shared TypeScript libraries (bun workspaces, @nonete/*)
 │   ├── api/            # oRPC contract + handlers, versioned per-feature
@@ -372,6 +376,7 @@ There are no git hooks.
 - `bun run dev`: Start the Docker dev stack with hot reload (`compose.dev.yml`); `dev:down` removes it
 - `bun run dev:local`: Start all applications natively through Turbo (needs `bun run gateway` for `https://localhost:4321`)
 - `bun run dev:frontend` / `dev:backend`: Start a single app
+- `bun run dev:site`: Start the project website (`http://localhost:4322/garabato/`)
 - `bun run gateway`: Start the dev gateway in front of the native apps (`https://localhost:4321`)
 - `bun run dev:cert`: Export the dev gateway's local CA root to `caddy-local-root.crt`, to trust in the browser
 - `bun run build`: Build all applications

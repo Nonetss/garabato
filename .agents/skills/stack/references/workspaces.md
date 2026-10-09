@@ -21,6 +21,13 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - Routers `src/routers/{auth,docs,rpc}.ts` (+ `handler-plugins.ts`), middlewares `src/middlewares/{auth,request-logger}.ts`, cron wiring `src/cron/{index,run-as}.ts`. `GET /` returns `OK` for healthchecks.
 - Dev `bun run --hot src/index.ts`. Build `tsdown` → `dist/index.mjs`; `deps.alwaysBundle` inlines every dependency because the runtime image ships no `node_modules`. Check `tsc -b`.
 
+### `apps/site`
+- The project website, a static Astro 7 build (`output: "static"`, Tailwind v4, no React, no API) published to GitHub Pages at `https://nonetss.github.io/garabato/` by `.github/workflows/pages.yml`. It has nothing to do with the running app: no auth, no backend, no Docker image, and the gateway never serves it.
+- `base: "/garabato"` with `trailingSlash: "always"`; every internal link goes through `href()` / `localized()` in `src/lib/url.ts`. English at the root, Spanish under `/es/` (`src/i18n/ui.ts` holds every landing string for both).
+- Landing (`src/components/Landing.astro`: hero, screenshot tour, architecture, install) plus a docs collection, one Markdown file per page and language in `src/content/docs/<lang>/<slug>.md` (frontmatter `title`, `description`, `order`).
+- The tour reuses the README's screenshots from the repo root `doc/screenshots/` (`src/lib/screens.ts`); the design tokens and faces mirror `apps/frontend/src/styles/global.css`, and `src/components/Logo.astro` is the app's mark.
+- Dev `astro dev --port 4322` (`bun run dev:site`). Check `astro check`.
+
 ### `apps/gateway` (not a workspace)
 - Docker assets only: `routes.caddy`, `Caddyfile`, `Caddyfile.dev`, `Dockerfile` (`caddy:2-alpine`, copies the three into `/etc/caddy`, runs `Caddyfile`), and a dev `compose.yml` (host network for the native apps, `localhost` upstreams, runs `Caddyfile.dev`) started by `bun run gateway`. `routes.caddy` is the only place that maps requests to apps.
 - `routes.caddy`, the site body every site imports (zstd/gzip, security headers): `/health` answers `ok` (the compose healthcheck); `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → `BACKEND_HTTP_UPSTREAM` (`backend:3000`); everything else → `FRONTEND_HTTP_UPSTREAM` (`frontend:4321`).

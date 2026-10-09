@@ -9,6 +9,7 @@ Root scripts (`package.json`) go through Turbo (`turbo.json`) or `docker compose
 | `bun run dev` | `docker compose -f compose.dev.yml up --build --watch`: the hot-reloading Docker dev stack, Loki included and no database (see `docker.md`); `bun run dev:down` removes it. |
 | `bun run dev:local` | Native dev: `turbo watch dev`, persistent; depends on `^build`. Needs the external dev database in `DATABASE_URL` and `bun run gateway` for the dev URL `https://localhost:4321` (`astro dev` itself is on `:4320`); `bun run loki:start` for the activity log, and an object store for documents: `bun run minio:start` (or an external one in `S3_ENDPOINT`). Same host ports as the Docker dev stack, so only one runs at a time; never stop the user's running stack to start the other. |
 | `bun run dev:frontend` / `dev:backend` | `turbo watch -F frontend dev` / `-F backend dev`. |
+| `bun run dev:site` | `turbo watch -F site dev`: the static project website alone on `http://localhost:4322/garabato/`. `dev:local` starts it too. |
 | `bun run gateway` | Runs only the dev gateway container (`apps/gateway/compose.yml`, host network, `Caddyfile.dev`) in front of natively running apps: the dev URL `https://localhost:4321` (local CA, HTTP/2). Required for native dev. |
 | `bun run dev:cert` | Exports the dev gateway's local CA root (volume `stack-dev_gateway_data`) to `caddy-local-root.crt` (git-ignored), to import once in the browser as a trusted authority. The gateway must have started once. |
 | `bun run setup:dev` | `scripts/setup-dev.sh`: writes the root `.env` from `.env.example` with generated secrets and the admin seed (`--force` overwrites). |
@@ -30,10 +31,10 @@ The repo runs no dev database: `DATABASE_URL` in `.env` points at a PostgreSQL o
 | Command | What it does |
 |---|---|
 | `bun run build` | `turbo build`: depends on `^build`; reads `.env*` as inputs; outputs `dist/**`, `.astro/**`. The `@nonete/*` packages build nothing (`"build": "true"`, no outputs). |
-| `bun run check-types` | `tsc -b` in `apps/backend`, `packages/{cron,logger}`; `tsc --noEmit -p .` in `packages/{api,auth,db,env}`; `astro check` in the frontend. |
+| `bun run check-types` | `tsc -b` in `apps/backend`, `packages/{cron,logger}`; `tsc --noEmit -p .` in `packages/{api,auth,db,env}`; `astro check` in the frontend and the site. |
 | `bun run check` | `biome check --write .` (format + lint + organize imports). |
 | `bun run format` | `biome check --write --linter-enabled=false .` (format + organize imports, no lint). |
-| `bun run tailwind:check` / `tailwind:fix` | `tailwint` over `apps/frontend`. |
+| `bun run tailwind:check` / `tailwind:fix` | `tailwint` over `apps/frontend`, then `apps/site`. |
 
 Scope a check to one workspace: `bun run --filter <name> check-types` (e.g. `@nonete/api`, `backend`, `frontend`).
 
