@@ -53,6 +53,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 
 - `README.md` (English) is the human overview; `AGENTS.md` holds the hard rules for agents (`CLAUDE.md` only imports it); `PRODUCT.md` (Spanish) is the product context.
 - `DESIGN.md`, `PRODUCT.md` and `.impeccable/` feed the Impeccable design skill.
+- `LICENSE` is the AGPL-3.0 text and every `package.json` declares `"license": "AGPL-3.0-only"`; a new workspace's `package.json` carries the same field. The project is dual-licensed: AGPL-3.0 for everyone, a separate commercial license from the author (README, "License").
 - OpenSpec lives in `openspec/`: one spec per capability in `openspec/specs/<capability>/spec.md` (list them with `openspec list --specs`); finished changes are in `openspec/changes/archive/`.
 
 ## What git tracks (vs `.gitignore`)

@@ -464,3 +464,22 @@ expected behavior before changing code in an area you're unfamiliar with;
 - `AGENTS.md`: normative conventions for contributors and coding agents
 - `.agents/skills/stack/`: the project skill (workspaces, commands, env, Docker, API layering and frontend structure)
 - `DESIGN.md` / `PRODUCT.md`: visual system and product context, used by the `impeccable` design skill
+
+## License
+
+Garabato is free software licensed under the
+[GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`). You may
+use, modify and self-host it, including commercially, as long as you comply
+with the AGPL: if you distribute it, or let users interact with a modified
+version over a network, you must make the complete corresponding source code
+of that version available to them under the same license.
+
+**Commercial license.** If you want to use Garabato without the AGPL's
+obligations (for example, to ship it inside a closed-source product or run a
+modified hosted service without publishing your changes), a separate
+commercial license is available from the author. Open an
+[issue](https://github.com/Nonetss/garabato/issues) to get in touch.
+
+**Contributions.** Because the project is dual-licensed, contributions are
+accepted only if their author agrees that they may be distributed under both
+the AGPL-3.0 and the commercial license.
