@@ -34,7 +34,7 @@ function CronRowRunsAs({
 }) {
   if (!userId) {
     return (
-      <span className="text-muted-foreground/70 italic">
+      <span className="text-muted-foreground italic">
         {cronLabels.runsAsNobody}
       </span>
     )

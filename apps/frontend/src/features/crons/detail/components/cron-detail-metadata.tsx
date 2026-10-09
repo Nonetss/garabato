@@ -87,7 +87,7 @@ export function CronDetailMetadata({
                   ) : null}
                 </span>
               ) : (
-                <span className="text-muted-foreground/70 italic">
+                <span className="text-muted-foreground italic">
                   {cronLabels.runsAsNobody}
                 </span>
               )}
