@@ -39,9 +39,13 @@ export type DocumentTag = {
   updatedAt: string
 }
 
+/** What produced a version. */
+export type DocumentVersionKind = "upload" | "merge" | "signature" | "pages"
+
 export type DocumentVersion = {
   id: string
   number: number
+  kind: DocumentVersionKind
   sizeBytes: number
   sha256: string
   createdAt: string
@@ -84,6 +88,22 @@ export type SignatureRecord = {
 export type DocumentDetail = DocumentSummary & {
   versions: DocumentVersion[]
   signatures: SignatureRecord[]
+}
+
+/** Clockwise degrees added to a page's own rotation. */
+export type PageRotation = 0 | 90 | 180 | 270
+
+export type EditPagesInput = {
+  documentId: string
+  baseVersionId: string
+  /** The resulting pages in order: 0-based pages of the base version. */
+  pages: { page: number; rotation: PageRotation }[]
+}
+
+export type MergeDocumentsInput = {
+  documentIds: string[]
+  name: string
+  folderId?: string
 }
 
 export type SignAppearance =

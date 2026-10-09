@@ -33,6 +33,7 @@ import {
 } from "@/features/documents/overview/components/folder-dialog"
 import { FolderGrid } from "@/features/documents/overview/components/folder-grid"
 import { ManageTagsDialog } from "@/features/documents/overview/components/manage-tags-dialog"
+import { MergeDocumentsDialog } from "@/features/documents/overview/components/merge-documents-dialog"
 import { RenameDocumentDialog } from "@/features/documents/overview/components/rename-document-dialog"
 import { SelectionBar } from "@/features/documents/overview/components/selection-bar"
 import { UploadDocumentDialog } from "@/features/documents/overview/components/upload-document-dialog"
@@ -68,6 +69,7 @@ import {
   FolderPath,
   folderHref,
   folderIconRef,
+  folderPathLabel,
   MoveToFolderDialog,
   saveFile,
   useDocumentDelete,
@@ -84,6 +86,7 @@ import { useEntityIcons } from "@/features/entity-icons"
 import { type QueryParamCodec, useQueryParam } from "@/hooks/use-query-param"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
+import { navigate } from "@/lib/navigate"
 import { notifyError } from "@/lib/toast"
 
 type DocumentsView = "grid" | "list"
@@ -207,6 +210,9 @@ export function DocumentsContent() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [manageTagsOpen, setManageTagsOpen] = useState(false)
   const [deleteManyOpen, setDeleteManyOpen] = useState(false)
+  const [mergeOpen, setMergeOpen] = useState(false)
+  // Filtered results span the library, so a merge then lands in the root.
+  const mergeFolderId = filtering ? null : folderId
   const folderDialog = useTargetDialog<FolderDialogMode>()
   const renameDialog = useTargetDialog<DocumentSummary>()
   const moveDialog = useTargetDialog<MoveTarget>()
@@ -586,6 +592,7 @@ export function DocumentsContent() {
         onTags={() => tagsDialog.open(selectedDocuments)}
         onPin={() => setPinned.mutate({ ids: selection.ids, pinned: true })}
         onUnpin={() => setPinned.mutate({ ids: selection.ids, pinned: false })}
+        onMerge={() => setMergeOpen(true)}
         onDelete={() => setDeleteManyOpen(true)}
         onClear={selection.clear}
       />
@@ -614,6 +621,17 @@ export function DocumentsContent() {
       <ManageTagsDialog
         open={manageTagsOpen}
         onOpenChange={setManageTagsOpen}
+      />
+      <MergeDocumentsDialog
+        open={mergeOpen}
+        onOpenChange={setMergeOpen}
+        documents={selectedDocuments}
+        folderId={mergeFolderId}
+        folderPath={folderPathLabel(index, mergeFolderId)}
+        onMerged={(document) => {
+          selection.clear()
+          navigate(`/documents/${document.id}`)
+        }}
       />
       <ConfirmDialog {...deleteDialog.confirmDialogProps} />
       <ConfirmDialog {...deleteFolderDialog.confirmDialogProps} />

@@ -17,3 +17,4 @@ export {
   folderHref,
   folderIconRef,
 } from "@/features/documents/shared/model/library"
+export { moveItem } from "@/features/documents/shared/model/reorder"

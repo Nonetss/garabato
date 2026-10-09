@@ -1,5 +1,7 @@
 import type {
   DocumentSummary,
+  EditPagesInput,
+  MergeDocumentsInput,
   SignatureRecord,
   SignInput,
 } from "@/features/documents/shared/model/types"
@@ -223,6 +225,24 @@ export const useDocumentDelete = () =>
       success: "Documento eliminado",
       error: "No se pudo eliminar el documento",
     },
+  })
+
+/** Stores the edited pages as the next version and reloads the viewer. */
+export const useDocumentEditPages = (id: string) =>
+  useOrpcMutation<{ pageCount: number }, EditPagesInput>({
+    mutationFn: (input) => orpc.v1.document.editPages.call(input),
+    success: "Páginas guardadas",
+    error: "No se pudieron guardar las páginas",
+    invalidate: [documentKey(id), downloadKey(id), documentsListKey],
+  })
+
+/** Creates a new document joining the inputs; the sources stay unchanged. */
+export const useDocumentMerge = () =>
+  useOrpcMutation<DocumentSummary, MergeDocumentsInput>({
+    mutationFn: (input) => orpc.v1.document.merge.call(input),
+    success: "Documentos unidos",
+    error: "No se pudieron unir los documentos",
+    invalidate: [documentsListKey, foldersKey],
   })
 
 export const useDocumentSign = (id: string) =>

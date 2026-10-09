@@ -3,10 +3,12 @@ import { getIcon } from "@/lib/icon-registry"
 const DocumentIcon = getIcon("navigation", "documents")
 const DownloadIcon = getIcon("actions", "download")
 const SignIcon = getIcon("actions", "sign")
+const EditPagesIcon = getIcon("actions", "editPages")
 
 import { useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
+import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
@@ -17,6 +19,7 @@ import {
   DocumentPlacement,
 } from "@/features/documents/detail/components/document-organization"
 import { DocumentStatusTag } from "@/features/documents/detail/components/document-status-tag"
+import { PageEditor } from "@/features/documents/detail/components/page-editor"
 import {
   PdfViewer,
   type StampPlacement,
@@ -25,10 +28,12 @@ import { SignPanel } from "@/features/documents/detail/components/sign-panel"
 import { SignatureHistory } from "@/features/documents/detail/components/signature-history"
 import { SignatureValidation } from "@/features/documents/detail/components/signature-validation"
 import { VersionList } from "@/features/documents/detail/components/version-list"
+import { useEmbeddedSignatureCount } from "@/features/documents/detail/hooks/use-signature-validation"
 import {
   type DocumentSummary,
   type DocumentVersion,
   documentFacts,
+  documentLabels,
   documentSigningStatus,
   downloadDocumentVersion,
   saveFile,
@@ -79,6 +84,41 @@ function SigningStatus({
   return <StatusTag dotTone={status.tone}>{status.label}</StatusTag>
 }
 
+/**
+ * Opens the page editor. Disabled while the file is loading, and, with a
+ * hint saying why, when the document carries signatures (made here or
+ * embedded in the current version), since rewriting would invalidate them.
+ */
+function EditPagesAction({
+  document,
+  versionId,
+  ready,
+  onEdit,
+}: {
+  document: Pick<DocumentSummary, "id" | "signatureCount">
+  versionId: string
+  ready: boolean
+  onEdit: () => void
+}) {
+  const embeddedSignatures = useEmbeddedSignatureCount(document.id, versionId)
+  const signed = document.signatureCount > 0 || embeddedSignatures > 0
+  const button = (
+    <Button
+      variant="outline"
+      disabled={signed || !ready}
+      // Keeps the hint reachable by hover and keyboard while disabled.
+      focusableWhenDisabled={signed}
+      className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+      onClick={onEdit}
+    >
+      <EditPagesIcon className="size-4" />
+      {documentLabels.editPages}
+    </Button>
+  )
+  if (!signed) return button
+  return <Hint label={documentLabels.editPagesSigned}>{button}</Hint>
+}
+
 export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const {
     data: document,
@@ -86,8 +126,9 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
     isError,
     refetch,
   } = useDocument(documentId)
-  const { data: file } = useDocumentFile(documentId)
+  const { data: file, isFetching: fileFetching } = useDocumentFile(documentId)
   const pdf = usePdfDocument(file)
+  const [editingPages, setEditingPages] = useState(false)
 
   // `?firmar=1` opens signing straight away (the home's drop zone links here).
   const [signing, setSigning] = useQueryParam("firmar", false, flagCodec)
@@ -141,6 +182,14 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
               <DownloadIcon className="size-4" />
               Descargar
             </Button>
+            {!signing && currentVersion ? (
+              <EditPagesAction
+                document={document}
+                versionId={currentVersion.id}
+                ready={pdf.status === "ready" && !fileFetching}
+                onEdit={() => setEditingPages(true)}
+              />
+            ) : null}
             {signing ? null : (
               <Button onClick={() => setSigning(true)}>
                 <SignIcon className="size-4" />
@@ -229,6 +278,16 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
           ) : null}
         </aside>
       </div>
+
+      {pdf.status === "ready" && currentVersion ? (
+        <PageEditor
+          open={editingPages}
+          onOpenChange={setEditingPages}
+          pdf={pdf.pdf}
+          documentId={document.id}
+          baseVersionId={currentVersion.id}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,3 +1,29 @@
+import type {
+  DocumentVersion,
+  DocumentVersionKind,
+} from "@/features/documents/shared/model/types"
+
+/** How the version list names each origin. */
+export const versionKindLabels: Record<DocumentVersionKind, string> = {
+  upload: "original",
+  merge: "unión de documentos",
+  signature: "firmada",
+  pages: "páginas editadas",
+}
+
+/** `v2 · firmada`: the version's number and what produced it. */
+export function versionLabel(
+  version: Pick<DocumentVersion, "number" | "kind">
+) {
+  return `v${version.number} · ${versionKindLabels[version.kind]}`
+}
+
+// `1 página`, `3 páginas`.
+function counted(count: number, one: string, many: string) {
+  if (count === 1) return `1 ${one}`
+  return `${count} ${many}`
+}
+
 export const documentLabels = {
   upload: "Subir PDF",
   uploadSubmit: "Subir",
@@ -125,4 +151,42 @@ export const documentLabels = {
     if (count === 1) return "1 documento en toda la biblioteca"
     return `${count} documentos en toda la biblioteca`
   },
+  // Page editing and merging.
+  editPages: "Editar páginas",
+  editPagesTitle: "Editar páginas",
+  editPagesDescription:
+    "Arrastra las páginas para ordenarlas, gíralas o quítalas. Al guardar se crea una versión nueva; las anteriores se conservan.",
+  editPagesSigned:
+    "Este documento tiene firmas: editar sus páginas las invalidaría",
+  pageNumber: (number: number) => `Página ${number}`,
+  pageRemoved: "Quitada",
+  moveBefore: "Mover antes",
+  moveAfter: "Mover después",
+  rotateLeft: "Girar a la izquierda",
+  rotateRight: "Girar a la derecha",
+  removePage: "Quitar página",
+  restorePage: "Recuperar página",
+  pageAction: (action: string, number: number) =>
+    `${action} (página ${number})`,
+  pageSummary: (pages: number, removed: number, rotated: number) => {
+    const parts = [counted(pages, "página", "páginas")]
+    if (removed > 0) parts.push(counted(removed, "quitada", "quitadas"))
+    if (rotated > 0) parts.push(counted(rotated, "girada", "giradas"))
+    return parts.join(" · ")
+  },
+  noPagesLeft: "Deja al menos una página para poder guardar.",
+  cancel: "Cancelar",
+  merge: "Unir en un PDF",
+  mergeTitle: (count: number) => `Unir ${count} documentos en un PDF`,
+  mergeDescription:
+    "Ordena los documentos como quieras que aparezcan. Se crea un documento nuevo y los originales no cambian.",
+  mergeOrder: "Orden",
+  mergeName: "Nombre del documento nuevo",
+  mergeSubmit: "Unir",
+  mergeIn: (path: string) => {
+    if (path === "") return "Se guardará en la raíz de Documentos."
+    return `Se guardará en ${path}.`
+  },
+  moveUp: "Subir",
+  moveDown: "Bajar",
 } as const

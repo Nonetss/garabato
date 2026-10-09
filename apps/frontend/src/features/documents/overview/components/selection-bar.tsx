@@ -6,6 +6,7 @@ const TagsIcon = getIcon("actions", "tags")
 const PinIcon = getIcon("actions", "pin")
 const UnpinIcon = getIcon("actions", "unpin")
 const DeleteIcon = getIcon("actions", "delete")
+const MergeIcon = getIcon("actions", "merge")
 
 import type { ComponentType, ReactNode } from "react"
 import { Text } from "@/components/shared/brand/typography"
@@ -46,6 +47,13 @@ function BarAction({
   )
 }
 
+type BarActionEntry = {
+  key: string
+  label: string
+  Icon: ComponentType<{ className?: string }>
+  onClick: () => void
+}
+
 /**
  * The actions for the selected documents, fixed to the bottom edge while a
  * selection exists. On narrow viewports it takes the filter bar's place
@@ -57,6 +65,7 @@ export function SelectionBar({
   onTags,
   onPin,
   onUnpin,
+  onMerge,
   onDelete,
   onClear,
 }: {
@@ -65,13 +74,14 @@ export function SelectionBar({
   onTags: () => void
   onPin: () => void
   onUnpin: () => void
+  onMerge: () => void
   onDelete: () => void
   onClear: () => void
 }) {
   const compact = useIsMobile()
   if (count === 0) return null
 
-  const actions = [
+  const actions: BarActionEntry[] = [
     {
       key: "move",
       label: documentLabels.move,
@@ -92,6 +102,15 @@ export function SelectionBar({
       onClick: onUnpin,
     },
   ]
+  // Merging needs at least two documents.
+  if (count >= 2) {
+    actions.push({
+      key: "merge",
+      label: documentLabels.merge,
+      Icon: MergeIcon,
+      onClick: onMerge,
+    })
+  }
 
   return (
     <div
