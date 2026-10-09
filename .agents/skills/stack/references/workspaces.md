@@ -33,7 +33,7 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 - `routes.caddy`, the site body every site imports (zstd/gzip, security headers): `/health` answers `ok` (the compose healthcheck); `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` → `BACKEND_HTTP_UPSTREAM` (`backend:3000`); everything else → `FRONTEND_HTTP_UPSTREAM` (`frontend:4321`).
 - `Caddyfile` (production): one HTTP site, `:{$GATEWAY_HTTP_PORT:80}` (`h1`/`h2c`, `admin off`, `auto_https off`).
 - `Caddyfile.dev` (dev only): one site, `https://localhost:4321` (`tls internal`, `h1`/`h2`), the dev URL and the only port dev exposes; `auto_https disable_redirects`, `skip_install_trust`. Its CA lives in `/data` (volume `stack-dev_gateway_data`, shared by both dev compose files); `bun run dev:cert` exports the root.
-- It is the only service with `ports` on a public interface in `compose.yml` and `compose.prod.yml`; the only other `ports` entry is the bundled MinIO console on `127.0.0.1:9001`.
+- It is the only service with `ports` in `compose.yml` and `compose.prod.yml`; the bundled MinIO publishes nothing.
 
 `NODE_ENV` defaults to `development`; `production` (set by the compose files and Dockerfiles) switches logging to JSON lines. Logs go to stdout, and also to Loki when `LOKI_URL` is set.
 

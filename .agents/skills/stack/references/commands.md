@@ -23,7 +23,7 @@ The repo runs no dev database: `DATABASE_URL` in `.env` points at a PostgreSQL o
 | Command | What it does |
 |---|---|
 | `bun run loki:start` | `docker compose -f compose.dev.yml --profile native up -d loki-native`: only the dev Loki, on `127.0.0.1:3100`, for native dev (`loki:stop` stops it). |
-| `bun run minio:start` | `docker compose -f compose.dev.yml --profile native up -d minio-native minio-native-init`: only the dev MinIO, on `127.0.0.1:9000` (console `:9001`), with its bucket, for native dev (`minio:stop` stops it). |
+| `bun run minio:start` | `docker compose -f compose.dev.yml --profile native up -d minio-native`: only the dev MinIO's S3 API on `127.0.0.1:9000` (the container creates its bucket), for native dev (`minio:stop` stops it). |
 | `bun run loki:stop` | Stop it (the `loki_data` volume stays). |
 
 ## Build and validate

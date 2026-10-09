@@ -12,7 +12,7 @@ Garabato es un monorepo con dos apps detrás de un gateway Caddy, más PostgreSQ
 | Frontend | Astro SSR, React | `4321` (interno) | La interfaz web. |
 | Backend | Bun, Hono, oRPC, Better Auth, Drizzle | `3000` (interno) | Autenticación, la API y la firma. Es el dueño de la base de datos y del almacén. |
 | PostgreSQL | PostgreSQL 17 | `5432` (interno) | Usuarios, certificados, la biblioteca, las versiones y el registro de firmas. |
-| MinIO | Compatible con S3 | `9000` (interno), consola en `127.0.0.1:9001` | Los PDF cifrados. Opcional: vale cualquier almacén externo compatible con S3. |
+| MinIO | Compatible con S3 | `9000` (solo interno, no publica nada) | Los PDF cifrados. Opcional: vale cualquier almacén externo compatible con S3. |
 | Loki | Grafana Loki | `3100` (interno) | Registro de actividad opcional, consultable en `/admin/logs`. |
 
 ## Recorrido de las peticiones

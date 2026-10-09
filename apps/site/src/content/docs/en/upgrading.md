@@ -10,10 +10,10 @@ From the directory that holds `compose.prod.yml` and `.env`:
 
 ```bash
 docker compose -f compose.prod.yml --env-file .env pull
-docker compose -f compose.prod.yml --env-file .env up -d
+docker compose -f compose.prod.yml --env-file .env up -d --remove-orphans
 ```
 
-The backend applies any new database migration when it starts. Upgrade the three images (gateway, frontend and backend) together.
+`--remove-orphans` removes containers of services the new compose file no longer has, such as the old one-shot `minio-init`. The backend applies any new database migration when it starts. Upgrade the three images (gateway, frontend and backend) together.
 
 When a release changes the compose file itself, download it again before pulling. Read the [release notes](https://github.com/Nonetss/garabato/releases) first.
 

@@ -10,10 +10,10 @@ Desde el directorio que contiene `compose.prod.yml` y `.env`:
 
 ```bash
 docker compose -f compose.prod.yml --env-file .env pull
-docker compose -f compose.prod.yml --env-file .env up -d
+docker compose -f compose.prod.yml --env-file .env up -d --remove-orphans
 ```
 
-El backend aplica las migraciones nuevas de la base de datos al arrancar. Actualiza las tres imágenes (gateway, frontend y backend) a la vez.
+`--remove-orphans` borra los contenedores de servicios que el nuevo fichero compose ya no tiene, como el antiguo `minio-init` de un solo uso. El backend aplica las migraciones nuevas de la base de datos al arrancar. Actualiza las tres imágenes (gateway, frontend y backend) a la vez.
 
 Si una versión cambia el propio fichero compose, vuelve a descargarlo antes del `pull`. Lee antes las [notas de la versión](https://github.com/Nonetss/garabato/releases).
 

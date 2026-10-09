@@ -351,7 +351,7 @@ bun run dev:down   # remove the dev containers
 `apps/gateway/Caddyfile.dev` and `loki` (so `/admin/logs` works in
 development). Documents go to the `S3_ENDPOINT` of `.env`; with
 `COMPOSE_PROFILES=minio` (and `S3_ENDPOINT=http://minio:9000`) the stack also
-runs its own `minio`, with a one-shot `minio-init` that creates the bucket. As
+runs its own `minio`, which creates the bucket itself on startup. As
 in production, **only the gateway publishes a port**
 (`https://localhost:4321`). The apps, Loki and MinIO stay on the stack's
 private network and reach each other by service name: compose overrides
@@ -374,7 +374,7 @@ There is no database service: the backend uses the external dev PostgreSQL in
 
 ### Docker Compose (local, builds from source)
 
-- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL), `loki` and `minio` (document store). Only the gateway publishes a public port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`; MinIO's console listens on `127.0.0.1:9001` only.
+- Config: `compose.yml` builds `frontend`, `backend` and `gateway` from their own `apps/*/Dockerfile`, and runs `db` (PostgreSQL), `loki` and `minio` (document store). Only the gateway publishes a port: the site is at `http://localhost:${FRONTEND_PORT:-4444}`. MinIO creates its bucket on startup and publishes nothing; administer it with `docker exec stack-minio mc ...`.
 - Build images: `bun run docker:build`
 - Start: `bun run docker:up`
 - Logs: `bun run docker:logs`
@@ -388,7 +388,8 @@ overridden in the compose file.
 
 - Config: `compose.prod.yml` pulls the `ghcr.io/nonetss/garabato-{frontend,backend,gateway}:main` images, plus `db` (Postgres) and `loki`, and a bundled MinIO (`pgsty/silo`) for documents under the `minio` profile (`COMPOSE_PROFILES=minio` in `.env`); leave the profile off to use an external S3-compatible store set in the `S3_*` variables
 - Images are built by `.github/workflows/docker-build.yml` on pushes to `main`, which rebuilds only the images whose code changed and pushes them to the GitHub Container Registry. On the Gitea remote, `.gitea/workflows/docker-build.yml` does the same against the Gitea container registry (needs a `TOKEN` repo secret with `write:package`)
-- Only the gateway publishes a public port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port. The bundled MinIO's console is on the host's loopback (`127.0.0.1:9001`, use an SSH tunnel) and its S3 API is never published
+- Only the gateway publishes a public port (`FRONTEND_PORT`, default `4444`): it serves the site and the backend API on one origin. A reverse proxy in front of the stack targets that port. The bundled MinIO publishes no port, neither its S3 API nor its console; it creates its bucket on startup and is administered with `docker exec garabato-minio mc ...`
+- Deployments from before the bucket moved into the `minio` container still have an exited `garabato-minio-init`; `up -d --remove-orphans` removes it
 - One `.env` next to `compose.prod.yml` supplies every service's configuration. It belongs to the deployment directory, not to a dev checkout
 
 For a fresh server, `scripts/bootstrap.sh` is a standalone installer: it
@@ -423,7 +424,7 @@ There are no git hooks.
 - `bun run build`: Build all applications
 - `bun run setup:dev`: Generate the local root `.env`
 - `bun run loki:start` / `loki:stop`: Only the dev Loki container on `127.0.0.1:3100` (`loki-native`), for native dev
-- `bun run minio:start` / `minio:stop`: Only the dev MinIO on `127.0.0.1:9000` (console `:9001`) with its bucket (`minio-native`), for native dev
+- `bun run minio:start` / `minio:stop`: Only the dev MinIO's S3 API on `127.0.0.1:9000`, which creates its bucket on startup (`minio-native`), for native dev
 - `bun run db:push` / `db:generate` / `db:migrate` / `db:studio`: Drizzle schema commands
 - `bun run icons:catalog`: Regenerate the Lucide icon catalog used by the entity icon picker
 - `bun run check` / `bun run format`: Biome formatting and linting

@@ -59,7 +59,7 @@ docker compose -f compose.prod.yml --env-file .env pull
 docker compose -f compose.prod.yml --env-file .env up -d
 ```
 
-Al arrancar, el backend aplica las migraciones de la base de datos y crea el administrador si todavía no existe, así que con `up -d` basta. Los servicios arrancan en orden (base de datos, backend, frontend, gateway) y cada uno espera al *healthcheck* del anterior. Con el perfil `minio`, un contenedor de un solo uso, `minio-init`, crea el bucket.
+Al arrancar, el backend aplica las migraciones de la base de datos y crea el administrador si todavía no existe, así que con `up -d` basta. Los servicios arrancan en orden (base de datos, backend, frontend, gateway) y cada uno espera al *healthcheck* del anterior. Con el perfil `minio`, el propio contenedor `minio` crea el bucket al arrancar y no se da por sano hasta que existe.
 
 ## Detrás de HTTPS
 
@@ -101,12 +101,12 @@ DATABASE_URL='postgresql://usuario:contraseña@db.example.com:5432/garabato'
 
 Haz copia a la vez de la base de datos, el almacén de objetos y el `.env`; consulta [Actualizar y copias de seguridad](../upgrading/).
 
-## La consola de MinIO
+## Administrar MinIO
 
-La API S3 del MinIO incluido se queda en la red de Docker. Su consola web solo se publica en el loopback del host, en `127.0.0.1:9001`; llega a ella con un túnel SSH:
+El MinIO incluido no publica ningún puerto: su API S3 y su consola se quedan en la red de Docker. Adminístralo con el cliente `mc` dentro de su contenedor, entrando con `S3_ACCESS_KEY_ID` y `S3_SECRET_ACCESS_KEY`:
 
 ```bash
-ssh -L 9001:127.0.0.1:9001 usuario@servidor
+docker exec -it garabato-minio sh
+mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+mc ls local/
 ```
-
-Entra con `S3_ACCESS_KEY_ID` y `S3_SECRET_ACCESS_KEY`.

@@ -27,7 +27,7 @@ Read by `compose.prod.yml` itself.
 | `BETTER_AUTH_SECRET` | yes | At least 32 characters. Signs sessions and cookies. |
 | `CERTIFICATE_ENCRYPTION_KEY` | yes | Base64 of exactly 32 bytes. Master key that encrypts the stored certificates and documents. Back it up, and never reuse it across environments. |
 | `S3_ENDPOINT` | yes | S3-compatible endpoint, a full URL. The bundled MinIO is `http://minio:9000`. |
-| `S3_BUCKET` | yes | The bucket must exist. The bundled MinIO's init service creates it. |
+| `S3_BUCKET` | yes | The bucket must exist. The bundled MinIO creates it on startup. |
 | `S3_REGION` | no | Default `us-east-1`; MinIO ignores it. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | yes | Store credentials. With the bundled MinIO they are also its root user and password (at least 8 characters). |
 | `TSA_URL` | no | RFC 3161 time-stamping authority. When set, every signature carries its timestamp (PAdES B-T) and fails if the TSA cannot give one; unset, signatures are B-B. In production use a TSA you trust, such as a qualified trust service provider. |

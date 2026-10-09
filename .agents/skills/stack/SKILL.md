@@ -24,7 +24,7 @@ browser ──▶ apps/gateway :80 (Caddy, only published port) ──rest──
 ```
 
 - `packages/api`, `auth`, `cron`, `db`, `env` and `logger` are consumed as **raw TS source** (no build step; their `build` script is `true`).
-- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port on a public interface in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); the only other `ports` entry is the bundled MinIO console on `127.0.0.1:9001`. A new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
+- `apps/gateway` (one Caddy, one HTTP site) is the only routing map: `/rpc/*`, `/api/*`, `/scalar*` and `/openapi.json` go to the backend, `/health` answers `ok`, everything else goes to the frontend. Only the gateway publishes a port in `compose.yml` and `compose.prod.yml` (`${FRONTEND_PORT:-4444}:80`); no other service has a `ports` entry, the bundled MinIO included. A new public route goes in its `routes.caddy`, never as a `ports` entry on another service. In dev, the gateway (`Caddyfile.dev`) serves `https://localhost:4321` (HTTP/2, local CA) in front of `astro dev` on `:4320`.
 - Foundation features (admin/API-key/organization plugins, cron, comments, entity icons, activity log…) exist because they came with the foundation, not because the current task needs them.
 
 ## Where to look

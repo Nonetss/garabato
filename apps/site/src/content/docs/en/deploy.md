@@ -59,7 +59,7 @@ docker compose -f compose.prod.yml --env-file .env pull
 docker compose -f compose.prod.yml --env-file .env up -d
 ```
 
-On startup the backend applies the database migrations and creates the admin if it does not exist yet, so `up -d` is all there is. Services start in order (database, backend, frontend, gateway), each one waiting for the previous one's healthcheck. With the `minio` profile, a one-shot `minio-init` container creates the bucket.
+On startup the backend applies the database migrations and creates the admin if it does not exist yet, so `up -d` is all there is. Services start in order (database, backend, frontend, gateway), each one waiting for the previous one's healthcheck. With the `minio` profile, the `minio` container creates the bucket itself on startup and only reports healthy once it exists.
 
 ## Behind HTTPS
 
@@ -101,12 +101,12 @@ DATABASE_URL='postgresql://user:password@db.example.com:5432/garabato'
 
 Back up the database, the object store and `.env` together; see [Upgrading and backups](../upgrading/).
 
-## The MinIO console
+## Administering MinIO
 
-The bundled MinIO's S3 API stays on the Docker network. Its web console is published on the host's loopback only, at `127.0.0.1:9001`; reach it through an SSH tunnel:
+The bundled MinIO publishes no port: its S3 API and its console stay on the Docker network. Administer it with the `mc` client inside its container, signing in with `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`:
 
 ```bash
-ssh -L 9001:127.0.0.1:9001 user@server
+docker exec -it garabato-minio sh
+mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+mc ls local/
 ```
-
-Sign in with `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`.

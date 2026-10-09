@@ -27,7 +27,7 @@ Las lee el propio `compose.prod.yml`.
 | `BETTER_AUTH_SECRET` | sí | Al menos 32 caracteres. Firma las sesiones y las cookies. |
 | `CERTIFICATE_ENCRYPTION_KEY` | sí | Base64 de exactamente 32 bytes. Clave maestra que cifra los certificados y documentos guardados. Haz copia y no la reutilices entre entornos. |
 | `S3_ENDPOINT` | sí | Endpoint compatible con S3, una URL completa. El MinIO incluido es `http://minio:9000`. |
-| `S3_BUCKET` | sí | El bucket debe existir. El servicio de inicio del MinIO incluido lo crea. |
+| `S3_BUCKET` | sí | El bucket debe existir. El MinIO incluido lo crea al arrancar. |
 | `S3_REGION` | no | Por defecto `us-east-1`; MinIO la ignora. |
 | `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | sí | Credenciales del almacén. Con el MinIO incluido son también su usuario y contraseña root (al menos 8 caracteres). |
 | `TSA_URL` | no | Autoridad de sellado de tiempo RFC 3161. Si está definida, cada firma lleva su sello (PAdES B-T) y falla si la TSA no puede darlo; sin ella, las firmas son B-B. En producción usa una TSA de confianza, como un prestador cualificado de servicios de confianza. |
