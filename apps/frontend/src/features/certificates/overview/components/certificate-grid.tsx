@@ -95,17 +95,26 @@ function CertificateCard({
       <article className="group flex h-full flex-col rounded-lg bg-background shadow-sheet">
         <div
           className={cn(
-            "flex flex-1 flex-col gap-6 p-5 transition-opacity",
+            "flex flex-1 flex-col gap-5 p-4 transition-opacity @md:gap-6 @md:p-5",
             expired && "opacity-60 group-hover:opacity-100"
           )}
         >
           <header className="flex items-start justify-between gap-2">
             <div className="min-w-0 space-y-0.5 pt-1.5">
-              <Text as="h3" variant="headline" className="truncate">
+              <Text
+                as="h3"
+                variant="headline"
+                className="line-clamp-2 wrap-break-word"
+              >
                 {certificate.alias}
               </Text>
               {showHolder ? (
-                <Text as="p" variant="meta" tone="muted" className="truncate">
+                <Text
+                  as="p"
+                  variant="meta"
+                  tone="muted"
+                  className="line-clamp-2 wrap-break-word"
+                >
                   {certificate.commonName}
                 </Text>
               ) : null}
@@ -129,7 +138,7 @@ function CertificateCard({
             </div>
           </header>
 
-          <dl className="flex gap-6">
+          <dl className="flex gap-5 @md:gap-6">
             <div className="shrink-0 space-y-1">
               <Text as="dt" variant="label" tone="muted">
                 {certificateLabels.taxId}
@@ -142,7 +151,7 @@ function CertificateCard({
               <Text as="dt" variant="label" tone="muted">
                 {certificateLabels.issuer}
               </Text>
-              <Text as="dd" variant="body" className="truncate">
+              <Text as="dd" variant="body" className="line-clamp-2 text-pretty">
                 {certificate.issuerCommonName}
               </Text>
             </div>
@@ -157,12 +166,14 @@ function CertificateCard({
           </div>
         </div>
 
-        <footer className="flex items-center justify-between gap-3 border-t py-2 pr-2 pl-5">
+        <footer className="flex items-center justify-between gap-3 border-t py-2 pr-2 pl-4 @md:pl-5">
           <PasswordState remembered={certificate.passwordRemembered} />
+          {/* Kept compact, but touch gets a 44px-tall hit area inside the
+              footer's padding. */}
           <Button
             variant="ghost"
             size="sm"
-            className="shrink-0"
+            className="relative shrink-0 pointer-coarse:after:absolute pointer-coarse:after:-inset-y-1.5 pointer-coarse:after:inset-x-0"
             onClick={() => context.onShowSignatures(certificate)}
           >
             <SignIcon className="size-4" />
