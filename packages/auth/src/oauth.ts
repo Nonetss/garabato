@@ -19,6 +19,9 @@ export function buildGenericOAuthPlugin() {
         clientSecret: OIDC_CLIENT_SECRET,
         discoveryUrl: `${OIDC_DISCOVERY_URL}/.well-known/openid-configuration`,
         scopes: ["openid", "profile", "email"],
+        // Not `disableImplicitSignUp`: a client can lift that one by asking
+        // for `requestSignUp`, while this refuses every new user.
+        disableSignUp: env.DISABLE_SIGN_UP,
       },
     ],
   })

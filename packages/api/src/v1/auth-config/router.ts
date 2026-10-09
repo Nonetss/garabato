@@ -9,7 +9,7 @@ export const authConfigRouter = {
       openapi({
         summary: "Get public auth configuration",
         description:
-          "Returns which optional sign-in methods are configured on the server (e.g. SSO), so the frontend can hide unavailable options. Safe to call while unauthenticated.",
+          "Returns which optional sign-in methods are configured on the server (e.g. SSO) and whether self-service sign-up is open, so the frontend can hide unavailable options. Safe to call while unauthenticated.",
         tags: ["System - Auth", "System"],
         method: "GET",
       })

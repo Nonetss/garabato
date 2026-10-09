@@ -16,6 +16,10 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_URL: z.url(),
     CORS_ORIGIN: z.url(),
+    // `true` closes self-service sign-up: the email/password sign-up endpoint
+    // and first-time OIDC sign-ins are refused. Existing users still sign in
+    // and admins still create accounts from the admin users page.
+    DISABLE_SIGN_UP: z.stringbool().default(false),
     // Master key that wraps the per-certificate data keys (AES-256), as the
     // base64 encoding of exactly 32 bytes. Losing it makes every stored
     // certificate unrecoverable.

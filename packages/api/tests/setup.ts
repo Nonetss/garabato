@@ -40,6 +40,7 @@ const cleared = [
   "SKIP_ENV_VALIDATION",
   "LOKI_URL",
   "TSA_URL",
+  "DISABLE_SIGN_UP",
   "ADMIN_EMAIL",
   "ADMIN_PASSWORD",
   "ADMIN_NAME",

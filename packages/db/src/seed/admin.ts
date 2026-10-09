@@ -11,9 +11,9 @@ export type SeedAdminResult =
 
 export type AuthLike = {
   api: {
-    signUpEmail: (args: {
-      body: { email: string; password: string; name: string }
-    }) => Promise<{ user: { id: string } }>
+    createUser: (args: {
+      body: { email: string; password: string; name: string; role: "admin" }
+    }) => Promise<unknown>
   }
 }
 
@@ -36,14 +36,11 @@ export async function seedAdmin(auth: AuthLike): Promise<SeedAdminResult> {
     return { created: false, reason: "already-exists", email }
   }
 
-  const { user: created } = await auth.api.signUpEmail({
-    body: { email, password, name },
+  // The admin plugin's `createUser`, called server-side without headers,
+  // rather than the public sign-up, which `DISABLE_SIGN_UP` closes.
+  await auth.api.createUser({
+    body: { email, password, name, role: "admin" },
   })
-
-  await db
-    .update(schema.user)
-    .set({ role: "admin" })
-    .where(eq(schema.user.id, created.id))
 
   return { created: true, email }
 }

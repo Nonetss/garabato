@@ -311,6 +311,10 @@ DATABASE_URL=$(env_quote "postgresql://postgres:$POSTGRES_PASSWORD@db:5432/stack
 
 BETTER_AUTH_SECRET=$(env_quote "$BETTER_AUTH_SECRET")
 
+# 'true' closes self-service sign-up (/signup and first-time SSO sign-ins);
+# admins still create accounts from the admin users page.
+DISABLE_SIGN_UP='false'
+
 # Master key of the certificate vault. Back it up together with the database:
 # without it the stored certificates cannot be decrypted.
 CERTIFICATE_ENCRYPTION_KEY=$(env_quote "$CERTIFICATE_ENCRYPTION_KEY")

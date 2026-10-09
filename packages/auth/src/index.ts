@@ -20,6 +20,7 @@ export function createAuth() {
     trustedOrigins: [env.CORS_ORIGIN],
     emailAndPassword: {
       enabled: true,
+      disableSignUp: env.DISABLE_SIGN_UP,
     },
     session: {
       cookieCache: {
