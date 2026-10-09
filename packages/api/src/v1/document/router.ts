@@ -65,6 +65,22 @@ export const documentRouter = {
       documentHandler.download({ context, input })
     ),
 
+  verifySignatures: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Check the signatures of a document version",
+        description:
+          "Checks every signature embedded in the current version, or in `versionId`, whoever made it: integrity, the CMS signature, coverage, the signer certificate's validity at the signing time (the timestamp's when present) and its chain to a trusted root (the runtime's Mozilla store plus bundled Spanish roots). Revocation is not checked. Changes nothing.",
+        tags: ["Documents"],
+        method: "GET",
+      })
+    )
+    .input(documentInput.verifySignatures)
+    .output(documentOutput.verifySignatures)
+    .handler(({ context, input }) =>
+      documentHandler.verifySignatures({ context, input })
+    ),
+
   rename: protectedProcedure
     .meta(
       openapi({

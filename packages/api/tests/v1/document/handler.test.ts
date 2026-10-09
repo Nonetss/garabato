@@ -20,7 +20,8 @@ import { fakeDb } from "#tests/fixtures/db"
 import { type PdfFixture, pdfFixture } from "#tests/fixtures/document-files"
 import { expectErrorCode } from "#tests/fixtures/errors"
 import { fakeObjectStorage } from "#tests/fixtures/object-storage"
-import { verifySignatures } from "#tests/fixtures/pdf-signatures"
+import { signatureAttributes } from "#tests/fixtures/pdf-signatures"
+import { signedPdf } from "#tests/fixtures/signed-documents"
 import {
   FAKE_TSA_TIME,
   type FakeTsaMode,
@@ -28,6 +29,7 @@ import {
 } from "#tests/fixtures/tsa"
 import { documentHandler, documentName, pdfName } from "#v1/document/handler"
 import { documentInput } from "#v1/document/input"
+import { validateSignatures } from "#v1/document/validation/verify"
 
 type SignInput = z.infer<typeof documentInput.sign>
 
@@ -479,6 +481,89 @@ describe("document.download", () => {
   })
 })
 
+describe("document.verifySignatures", () => {
+  const V2_ID = "00000000-0000-4000-8000-0000000000e2"
+
+  // v1 is the unsigned upload; v2 the same PDF signed with the rsa fixture.
+  async function storedSignedDocument() {
+    const stored = await storedDocument()
+    const signed = await signedPdf({ pdf: stored.pdf })
+    const v2 = documentVersionRow({
+      id: V2_ID,
+      documentId: DOC_ID,
+      number: 2,
+      objectKey: `documents/${DOC_ID}/v2`,
+    })
+    fakeObjectStorage.objects.set(
+      v2.objectKey,
+      await vault.seal(stored.dataKey, DOC_SCOPE, "v2", signed)
+    )
+    fakeDb.queue("query.documents.findFirst", stored.document)
+    fakeDb.queue("query.documentVersions.findMany", [stored.version, v2])
+  }
+
+  test("checks the signatures of the current version", async () => {
+    await storedSignedDocument()
+
+    const result = await documentHandler.verifySignatures({
+      context,
+      input: { documentId: DOC_ID },
+    })
+
+    expect(result).toMatchObject({
+      versionId: V2_ID,
+      parseError: false,
+      revocationChecked: false,
+    })
+    expect(result.signatures).toHaveLength(1)
+    expect(result.signatures[0]).toMatchObject({
+      verdict: "valid_untrusted",
+      level: "B-B",
+      coverage: "whole",
+      signer: { taxId: "12345678Z" },
+    })
+  })
+
+  test("checks a named earlier version", async () => {
+    await storedSignedDocument()
+
+    const result = await documentHandler.verifySignatures({
+      context,
+      input: { documentId: DOC_ID, versionId: V1_ID },
+    })
+
+    expect(result).toMatchObject({ versionId: V1_ID, signatures: [] })
+  })
+
+  test("answers NOT_FOUND for a version of another document", async () => {
+    await storedSignedDocument()
+
+    await expectErrorCode(
+      documentHandler.verifySignatures({
+        context,
+        input: {
+          documentId: DOC_ID,
+          versionId: "00000000-0000-4000-8000-0000000000e9",
+        },
+      }),
+      "NOT_FOUND"
+    )
+  })
+
+  test("answers NOT_FOUND for another user's document", async () => {
+    fakeDb.queue("query.documents.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.verifySignatures({
+        context,
+        input: { documentId: DOC_ID },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeObjectStorage.objects.size).toBe(0)
+  })
+})
+
 describe("document.rename", () => {
   test("renames an owned document and returns its summary", async () => {
     const { document, version } = await storedDocument()
@@ -837,8 +922,9 @@ describe("document.sign", () => {
       bytesOf(object)
     )
     expect(signedPdf.subarray(0, pdf.length)).toEqual(pdf)
-    const [signature] = await verifySignatures(signedPdf)
-    expect(signature).toMatchObject({ intact: true, coversWholeDocument: true })
+    const { signatures } = await validateSignatures(signedPdf)
+    expect(signatures[0]?.checks?.signature.passed).toBe(true)
+    expect(signatures[0]?.coverage).toBe("whole")
 
     expect(written("insert", 0)).toMatchObject({
       documentId: DOC_ID,
@@ -883,9 +969,12 @@ describe("document.sign", () => {
       "v2",
       bytesOf(object)
     )
-    const [signature] = await verifySignatures(signedPdf)
-    expect(signature?.intact).toBe(true)
-    expect(signature?.timestampImprint).toEqual(signature?.signatureValueDigest)
+    const { signatures } = await validateSignatures(signedPdf)
+    expect(signatures[0]?.level).toBe("B-T")
+    const [attributes] = await signatureAttributes(signedPdf)
+    expect(attributes?.timestampImprint).toEqual(
+      attributes?.signatureValueDigest
+    )
     expect(fakeTimestampService.tsa.requests).toHaveLength(1)
     expect(field(written("insert", 1), "timestampedAt")).toEqual(FAKE_TSA_TIME)
     expect(field(written("insert", 1), "timestampAuthority")).toEqual(

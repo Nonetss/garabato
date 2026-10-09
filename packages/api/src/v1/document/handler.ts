@@ -58,11 +58,17 @@ import type {
   DocumentVersionOutput,
   SignatureLogRecord,
   SignatureRecord,
+  SignatureReportOutput,
+  VerifySignaturesOutput,
 } from "#v1/document/output"
 import { AppearanceError } from "#v1/document/pades/appearance"
 import { EncryptedPdfError } from "#v1/document/pades/placeholder"
 import { signPdf } from "#v1/document/pades/sign"
 import { TimestampError } from "#v1/document/pades/timestamp"
+import {
+  type SignatureReport,
+  validateSignatures,
+} from "#v1/document/validation/verify"
 
 const NOT_FOUND_MESSAGE = "Documento no encontrado"
 const SOME_NOT_FOUND_MESSAGE = "Alguno de los documentos no existe"
@@ -228,6 +234,41 @@ function summaryOf(
 }
 
 // The requested version, or the current (latest) one when none is asked.
+function toReport(report: SignatureReport): SignatureReportOutput {
+  const { signer, timestamp } = report
+  return {
+    fieldName: report.fieldName,
+    subFilter: report.subFilter,
+    level: report.level,
+    claimedTime: toIsoOrNull(report.claimedTime),
+    reason: report.reason,
+    location: report.location,
+    signer: signer && {
+      holder: signer.commonName,
+      taxId: signer.taxId,
+      issuer: signer.issuerCommonName,
+      serialNumber: signer.serialNumber,
+      notBefore: toIso(signer.notBefore),
+      notAfter: toIso(signer.notAfter),
+    },
+    timestamp: timestamp && {
+      time: toIso(timestamp.time),
+      authority: timestamp.authority,
+      valid: timestamp.valid,
+    },
+    coverage: report.coverage,
+    checks: report.checks,
+    verdict: report.verdict,
+    problem: report.problem,
+    modifiedAfterSigning: report.modifiedAfterSigning,
+  }
+}
+
+function pickVersionById(versions: DocumentVersion[], id: string | undefined) {
+  if (id === undefined) return versions.at(-1)
+  return versions.find((version) => version.id === id)
+}
+
 function pickVersion(versions: DocumentVersion[], number: number | undefined) {
   if (number === undefined) return versions.at(-1)
   return versions.find((version) => version.number === number)
@@ -768,6 +809,31 @@ export const documentHandler = {
       downloadName(document.name, version.number, version === current),
       { type: "application/pdf" }
     )
+  },
+
+  verifySignatures: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof documentInput.verifySignatures>
+  }) => {
+    const userId = requireUserId(context)
+    const document = await loadOwned(userId, input.documentId)
+    const versions = await versionsOf(document.id)
+    const version = assertFound(
+      pickVersionById(versions, input.versionId),
+      "Versión no encontrada"
+    )
+    const dataKey = await unwrapDocumentKey(document)
+    const bytes = await readVersion(document, dataKey, version)
+    const result = await validateSignatures(new Uint8Array(bytes))
+    return {
+      versionId: version.id,
+      signatures: result.signatures.map(toReport),
+      parseError: result.parseError,
+      revocationChecked: false,
+    } satisfies VerifySignaturesOutput
   },
 
   rename: async ({

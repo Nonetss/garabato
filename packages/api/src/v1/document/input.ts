@@ -67,6 +67,13 @@ export const documentInput = {
       .describe("Version to download; the current one when omitted"),
   }),
 
+  verifySignatures: z.object({
+    documentId: id,
+    versionId: id
+      .optional()
+      .describe("Version to check; the current one when omitted"),
+  }),
+
   rename: z.object({
     id,
     name: z

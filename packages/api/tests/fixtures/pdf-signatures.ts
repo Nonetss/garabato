@@ -1,4 +1,3 @@
-import { X509Certificate } from "node:crypto"
 import {
   PDFArray,
   PDFDict,
@@ -9,21 +8,19 @@ import {
   PDFRef,
 } from "@cantoo/pdf-lib"
 import * as pkijs from "pkijs"
+import { extractSignatures } from "#v1/document/validation/extract"
 
 const OID_SIGNING_CERTIFICATE_V2 = "1.2.840.113549.1.9.16.2.47"
 const OID_SIGNATURE_TIME_STAMP_TOKEN = "1.2.840.113549.1.9.16.2.14"
-const BYTE_RANGE = /\/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]/g
 
-export type VerifiedSignature = {
-  subFilter: string
-  /** The digest matches the signed bytes and the CMS signature verifies. */
-  intact: boolean
-  /** The byte range reaches the end of the file. */
-  coversWholeDocument: boolean
-  /** Length of the revision this signature covers. */
-  signedLength: number
+/**
+ * CMS attributes `validateSignatures` does not report, for the PAdES tests:
+ * whether signing-certificate-v2 is signed, which unsigned attributes are
+ * present, and what a B-T token's imprint is over. Intactness, coverage and
+ * the signer come from `validateSignatures`.
+ */
+export type SignatureAttributes = {
   hasSigningCertificateV2: boolean
-  signerSubject: string
   /** OIDs of the SignerInfo's unsigned attributes (the B-T token's, if any). */
   unsignedAttributeTypes: string[]
   /** SHA-256 the embedded timestamp token is over; null without a token. */
@@ -49,67 +46,22 @@ function timestampImprintOf(signerInfo: pkijs.SignerInfo | undefined) {
   )
 }
 
-async function verifyCms(
-  signedData: pkijs.SignedData,
-  data: Uint8Array
-): Promise<{ intact: boolean; signer?: pkijs.Certificate | null }> {
-  try {
-    const result = await signedData.verify({
-      signer: 0,
-      data: new Uint8Array(data).buffer,
-      extendedMode: true,
-    })
-    return {
-      intact: result.signatureVerified === true,
-      signer: result.signerCertificate,
-    }
-  } catch {
-    return { intact: false }
-  }
-}
-
-function sigDictAround(pdf: string, at: number) {
-  const start = pdf.lastIndexOf("<<", at)
-  return pdf.slice(start, pdf.indexOf("/Contents", start))
-}
-
-/**
- * Independent check of every signature in a PDF: extracts each byte range
- * and its CMS and verifies them with pkijs, the way a validator would.
- */
-export async function verifySignatures(
-  bytes: Uint8Array
-): Promise<VerifiedSignature[]> {
-  const latin1 = Buffer.from(bytes).toString("latin1")
-  const results: VerifiedSignature[] = []
-  for (const match of latin1.matchAll(BYTE_RANGE)) {
-    const [a = 0, b = 0, c = 0, d = 0] = match.slice(1).map(Number)
-    const dict = sigDictAround(latin1, match.index)
-    const der = Buffer.from(latin1.slice(b + 1, c - 1), "hex")
-    const signed = Buffer.concat([
-      bytes.subarray(a, a + b),
-      bytes.subarray(c, c + d),
-    ])
-    const contentInfo = pkijs.ContentInfo.fromBER(der)
+/** The CMS attributes of every signature in `pdf`, in signing order. */
+export async function signatureAttributes(
+  pdf: Uint8Array<ArrayBuffer>
+): Promise<SignatureAttributes[]> {
+  const results: SignatureAttributes[] = []
+  for (const signature of await extractSignatures(pdf)) {
+    const contentInfo = pkijs.ContentInfo.fromBER(signature.contents)
     const signedData = new pkijs.SignedData({ schema: contentInfo.content })
-    const verified = await verifyCms(signedData, signed)
     const signerInfo = signedData.signerInfos[0]
-    const attributes = signerInfo?.signedAttrs?.attributes ?? []
     const signatureValue = new Uint8Array(
       signerInfo?.signature.valueBlock.valueHexView ?? []
     )
-    const signer = verified.signer
     results.push({
-      subFilter: dict.match(/\/SubFilter\s*\/([\w.]+)/)?.[1] ?? "",
-      intact: verified.intact,
-      coversWholeDocument: c + d === bytes.length,
-      signedLength: c + d,
-      hasSigningCertificateV2: attributes.some(
+      hasSigningCertificateV2: (signerInfo?.signedAttrs?.attributes ?? []).some(
         (attribute) => attribute.type === OID_SIGNING_CERTIFICATE_V2
       ),
-      signerSubject: signer
-        ? new X509Certificate(new Uint8Array(signer.toSchema().toBER())).subject
-        : "",
       unsignedAttributeTypes:
         signerInfo?.unsignedAttrs?.attributes.map((entry) => entry.type) ?? [],
       timestampImprint: timestampImprintOf(signerInfo),

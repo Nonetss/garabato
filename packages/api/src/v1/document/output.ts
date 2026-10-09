@@ -65,6 +65,66 @@ const signatureLogCertificate = z.object({
   deleted: z.boolean(),
 })
 
+const check = z.object({
+  passed: z.boolean(),
+  reason: z.string().describe("Why it passed or failed, in Spanish"),
+})
+
+const signatureReport = z.object({
+  fieldName: z.string(),
+  subFilter: z.string().nullable(),
+  level: z
+    .enum(["B-B", "B-T"])
+    .nullable()
+    .describe("PAdES level, only for ETSI.CAdES.detached signatures"),
+  claimedTime: z
+    .string()
+    .nullable()
+    .describe("Signing time the signer claims (/M), not proven"),
+  reason: z.string().nullable(),
+  location: z.string().nullable(),
+  signer: z
+    .object({
+      holder: z.string(),
+      taxId: z.string().nullable(),
+      issuer: z.string(),
+      serialNumber: z.string(),
+      notBefore: z.string(),
+      notAfter: z.string(),
+    })
+    .nullable()
+    .describe("Null when the signature could not be checked"),
+  timestamp: z
+    .object({
+      time: z.string(),
+      authority: z.string(),
+      valid: z.boolean(),
+    })
+    .nullable()
+    .describe("The signature timestamp (PAdES B-T), when it carries one"),
+  coverage: z
+    .enum(["whole", "followed_by_signatures", "followed_by_changes"])
+    .describe("What follows the signed bytes in the file"),
+  checks: z
+    .object({
+      integrity: check,
+      signature: check,
+      coverage: check,
+      certificateValidity: check,
+      trust: check,
+    })
+    .nullable()
+    .describe("Null when the signature could not be checked"),
+  verdict: z.enum(["valid", "valid_untrusted", "invalid", "indeterminate"]),
+  problem: z
+    .string()
+    .nullable()
+    .describe("Why the signature could not be checked, in Spanish"),
+  modifiedAfterSigning: z
+    .boolean()
+    .describe("Changes other than signatures were added after it"),
+})
+
 const documentSummary = z.object({
   id: z.uuid(),
   name: z.string(),
@@ -89,6 +149,10 @@ const batchResult = z.object({
 })
 
 export type DocumentSummary = z.infer<typeof documentSummary>
+export type SignatureReportOutput = z.infer<typeof signatureReport>
+export type VerifySignaturesOutput = z.infer<
+  typeof documentOutput.verifySignatures
+>
 export type DocumentVersionOutput = z.infer<typeof version>
 export type SignatureRecord = z.infer<typeof signatureRecord>
 export type SignatureLogRecord = z.infer<typeof signatureLogRecord>
@@ -120,4 +184,16 @@ export const documentOutput = {
     nextCursor: z.string().nullable(),
   }),
   signatureLogCertificates: z.array(signatureLogCertificate),
+  verifySignatures: z.object({
+    versionId: z.uuid().describe("The version that was checked"),
+    signatures: z
+      .array(signatureReport)
+      .describe("In the order they were added to the file"),
+    parseError: z
+      .boolean()
+      .describe("The version did not parse as a PDF, so nothing was read"),
+    revocationChecked: z
+      .literal(false)
+      .describe("Revocation (OCSP/CRL) is never checked"),
+  }),
 }
