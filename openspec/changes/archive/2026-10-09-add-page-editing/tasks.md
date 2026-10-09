@@ -2,7 +2,7 @@
 
 - [x] 1.1 Confirm with the user before touching the schema, then add `kind` (`text`, not null, typed `"upload" | "merge" | "signature" | "pages"`, exported as `DocumentVersionKind`) to `documentVersions` in `packages/db/src/schema/document/document.ts`, and update the table comment ("1 is the upload or the merge, each signature or page edit adds the next one"); verify `bun run --filter @nonete/db check-types`
 - [x] 1.2 Add `kind` (default `"upload"`) to `documentVersionRow` in `packages/db/testing/rows.ts`; verify `check-types`
-- [ ] 1.3 Stop and ask the user to run `bun run db:generate`, append `UPDATE document_versions SET kind = 'upload' WHERE number = 1;` after the column is added with default `'signature'`, and apply it; do not continue with tasks that write or read `kind` until they confirm it exists
+- [x] 1.3 Stop and ask the user to run `bun run db:generate`, append `UPDATE document_versions SET kind = 'upload' WHERE number = 1;` after the column is added with default `'signature'`, and apply it; do not continue with tasks that write or read `kind` until they confirm it exists
 
 ## 2. API: version origin and create flow
 
