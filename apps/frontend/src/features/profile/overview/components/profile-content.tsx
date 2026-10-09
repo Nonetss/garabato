@@ -11,6 +11,8 @@ import { IconButton } from "@/components/shared/form/icon-button"
 import { UserAvatar } from "@/components/shared/user/avatar"
 import { ChangePasswordDialog } from "@/features/profile/overview/components/change-password-dialog"
 import { EditNameDialog } from "@/features/profile/overview/components/edit-name-dialog"
+import { TwoFactorActions } from "@/features/profile/overview/components/two-factor-actions"
+import { useHasPassword } from "@/features/profile/overview/hooks/use-two-factor"
 import { authClient } from "@/lib/auth-client"
 import { formatDate } from "@/lib/format"
 import { userDisplayName } from "@/lib/user-display"
@@ -26,6 +28,8 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
 
   const [editNameOpen, setEditNameOpen] = useState(false)
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
+  const { data: hasPassword } = useHasPassword()
+  const twoFactorEnabled = session?.user.twoFactorEnabled === true
 
   if (!user) return null
 
@@ -72,7 +76,13 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
 
       <MetadataDefinitionList
         columns={2}
-        context={{ displayName, user, createdAt }}
+        context={{
+          displayName,
+          user,
+          createdAt,
+          hasPassword,
+          twoFactorEnabled,
+        }}
         fields={[
           {
             key: "name",
@@ -109,6 +119,31 @@ export function ProfileContent({ user: initialUser }: ProfilePageProps) {
                 onClick={() => setChangePasswordOpen(true)}
               />
             ),
+          },
+          {
+            key: "twoFactor",
+            label: "Verificación en dos pasos",
+            // Unknown until the accounts load; then SSO-only users get the
+            // explanation instead of the controls.
+            hidden: ({ hasPassword }) => hasPassword === undefined,
+            value: ({ hasPassword, twoFactorEnabled }) => {
+              if (!hasPassword) {
+                return (
+                  <Text variant="meta" tone="muted">
+                    Solo protege el acceso con contraseña; con SSO la gestiona
+                    tu proveedor de identidad.
+                  </Text>
+                )
+              }
+              if (twoFactorEnabled) {
+                return <StatusTag dotTone="primary">Activada</StatusTag>
+              }
+              return <StatusTag dotTone="muted">Desactivada</StatusTag>
+            },
+            action: ({ hasPassword, twoFactorEnabled }) =>
+              hasPassword ? (
+                <TwoFactorActions enabled={twoFactorEnabled} />
+              ) : null,
           },
           {
             key: "id",

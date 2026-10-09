@@ -1,6 +1,10 @@
 import { apiKeyClient } from "@better-auth/api-key/client"
 import { ac, roles } from "@nonete/auth/permissions"
-import { adminClient, organizationClient } from "better-auth/client/plugins"
+import {
+  adminClient,
+  organizationClient,
+  twoFactorClient,
+} from "better-auth/client/plugins"
 import { createAuthClient } from "better-auth/react"
 
 export const authClient = createAuthClient({
@@ -17,6 +21,9 @@ export const authClient = createAuthClient({
         enabled: true,
       },
     }),
+    // No redirect page: `useSignIn` reads `twoFactorRedirect` and asks for
+    // the code in place.
+    twoFactorClient(),
   ],
 })
 

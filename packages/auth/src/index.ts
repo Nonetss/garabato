@@ -4,7 +4,7 @@ import * as schema from "@nonete/db/schema/auth"
 import { env } from "@nonete/env/server"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { admin, organization } from "better-auth/plugins"
+import { admin, organization, twoFactor } from "better-auth/plugins"
 import { ac, roles } from "#auth/permissions"
 import { buildGenericOAuthPlugin } from "./oauth"
 
@@ -50,6 +50,9 @@ export function createAuth() {
           enabled: true,
         },
       }),
+      // Opt-in per user from the profile page: TOTP plus backup codes. It
+      // guards email/password sign-in only; SSO and API keys skip it.
+      twoFactor({ issuer: "Garabato" }),
       ...(oauthEnabled ? [oauthPlugin] : []),
     ],
   })

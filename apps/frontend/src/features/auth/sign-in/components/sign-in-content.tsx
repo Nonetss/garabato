@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input"
 import { Marker, MarkerContent } from "@/components/ui/marker"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuthConfig } from "@/features/auth/shared"
+import { SecondFactorForm } from "@/features/auth/sign-in/components/second-factor-form"
 import { useSignIn } from "@/features/auth/sign-in/hooks/use-sign-in"
 import { cn } from "@/lib/utils"
 
@@ -26,16 +27,26 @@ const ERROR_ID = "sign-in-error"
 
 export function SignInContent() {
   const {
+    step,
     email,
     setEmail,
     password,
     setPassword,
+    code,
+    setCode,
+    backupCodeMode,
+    toggleBackupCodeMode,
+    trustDevice,
+    setTrustDevice,
     error,
     loading,
     submit,
+    submitCode,
+    backToCredentials,
     oidcLoading,
     signInWithOidc,
   } = useSignIn()
+  const secondFactor = step === "second-factor"
   const { data: authConfig } = useAuthConfig()
 
   const invalid = error ? true : undefined
@@ -72,62 +83,77 @@ export function SignInContent() {
       </CardHeader>
 
       <CardContent className="px-7 py-7">
-        <form onSubmit={submit} className="space-y-5">
-          <FormField label="Email" htmlFor="email">
-            <Input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              disabled={loading}
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              placeholder="tu@ejemplo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </FormField>
+        {secondFactor ? (
+          <SecondFactorForm
+            code={code}
+            onCodeChange={setCode}
+            backupCodeMode={backupCodeMode}
+            onToggleBackupCodeMode={toggleBackupCodeMode}
+            trustDevice={trustDevice}
+            onTrustDeviceChange={setTrustDevice}
+            error={error}
+            loading={loading}
+            onSubmit={submitCode}
+            onBack={backToCredentials}
+          />
+        ) : (
+          <form onSubmit={submit} className="space-y-5">
+            <FormField label="Email" htmlFor="email">
+              <Input
+                id="email"
+                type="email"
+                required
+                autoComplete="email"
+                disabled={loading}
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                placeholder="tu@ejemplo.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </FormField>
 
-          <FormField label="Contraseña" htmlFor="password">
-            <Input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              disabled={loading}
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </FormField>
+            <FormField label="Contraseña" htmlFor="password">
+              <Input
+                id="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                disabled={loading}
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </FormField>
 
-          {error ? (
-            <Text
-              as="p"
-              variant="meta"
-              tone="destructive"
-              id={ERROR_ID}
-              role="alert"
-            >
-              {error}
-            </Text>
-          ) : null}
+            {error ? (
+              <Text
+                as="p"
+                variant="meta"
+                tone="destructive"
+                id={ERROR_ID}
+                role="alert"
+              >
+                {error}
+              </Text>
+            ) : null}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner decorative />
-                Entrando…
-              </>
-            ) : (
-              "Entrar"
-            )}
-          </Button>
-        </form>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <Spinner decorative />
+                  Entrando…
+                </>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
+          </form>
+        )}
 
-        {authConfig?.ssoEnabled ? (
+        {authConfig?.ssoEnabled && !secondFactor ? (
           <>
             <Marker
               variant="separator"
@@ -162,7 +188,7 @@ export function SignInContent() {
         ) : null}
       </CardContent>
 
-      {authConfig?.signUpEnabled ? (
+      {authConfig?.signUpEnabled && !secondFactor ? (
         <CardFooter className="border-t px-7 pb-7">
           <Text
             as="p"

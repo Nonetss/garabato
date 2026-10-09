@@ -3,7 +3,11 @@ import { apiKeyClient } from "@better-auth/api-key/client"
 import { ac, roles } from "@nonete/auth/permissions"
 import type { AstroGlobal } from "astro"
 import { createAuthClient } from "better-auth/client"
-import { adminClient, organizationClient } from "better-auth/client/plugins"
+import {
+  adminClient,
+  organizationClient,
+  twoFactorClient,
+} from "better-auth/client/plugins"
 
 export const authServer = createAuthClient({
   baseURL: BACKEND_URL,
@@ -20,6 +24,9 @@ export const authServer = createAuthClient({
         enabled: true,
       },
     }),
+    // Same plugins as the browser client, so the session user carries
+    // `twoFactorEnabled` here too.
+    twoFactorClient(),
   ],
 })
 
