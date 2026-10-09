@@ -49,7 +49,10 @@ const {
   <main
     class:list={[
       "px-4 py-6 sm:px-6",
-      fillViewport && "flex min-h-0 flex-1 flex-col pb-4",
+      // The pinned page's bottom (page controls, signing bar) clears the
+      // home indicator on notched phones.
+      fillViewport &&
+        "flex min-h-0 flex-1 flex-col pb-[max(1rem,env(safe-area-inset-bottom))]",
     ]}
   >
     <div

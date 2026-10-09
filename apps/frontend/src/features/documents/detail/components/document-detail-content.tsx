@@ -10,6 +10,7 @@ import { Text } from "@/components/shared/brand/typography"
 import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { Hint } from "@/components/shared/feedback/hint"
 import { StateCard } from "@/components/shared/feedback/state-card"
+import { IconButton } from "@/components/shared/form/icon-button"
 import { PageHero } from "@/components/shared/layout/page-hero"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { Button } from "@/components/ui/button"
@@ -41,6 +42,7 @@ import {
   useDocumentFile,
   usePdfDocument,
 } from "@/features/documents/shared"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { flagCodec, useQueryParam } from "@/hooks/use-query-param"
 import { notifyError } from "@/lib/toast"
 
@@ -93,15 +95,36 @@ function EditPagesAction({
   document,
   versionId,
   ready,
+  compact,
   onEdit,
 }: {
   document: Pick<DocumentSummary, "id" | "signatureCount">
   versionId: string
   ready: boolean
+  compact: boolean
   onEdit: () => void
 }) {
   const embeddedSignatures = useEmbeddedSignatureCount(document.id, versionId)
   const signed = document.signatureCount > 0 || embeddedSignatures > 0
+  if (compact) {
+    // Touch never shows the bubble; the disabled look says enough there.
+    const hint = signed
+      ? documentLabels.editPagesSigned
+      : documentLabels.editPages
+    return (
+      <IconButton
+        variant="outline"
+        size="icon"
+        label={hint}
+        accessibleLabel={documentLabels.editPages}
+        icon={EditPagesIcon}
+        disabled={signed || !ready}
+        focusableWhenDisabled={signed}
+        className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        onClick={onEdit}
+      />
+    )
+  }
   const button = (
     <Button
       variant="outline"
@@ -119,6 +142,33 @@ function EditPagesAction({
   return <Hint label={documentLabels.editPagesSigned}>{button}</Hint>
 }
 
+/** Icon-only on narrow viewports (named with `Hint`), labelled from `md`. */
+function DownloadAction({
+  compact,
+  onClick,
+}: {
+  compact: boolean
+  onClick: () => void
+}) {
+  if (compact) {
+    return (
+      <IconButton
+        variant="outline"
+        size="icon"
+        label={documentLabels.download}
+        icon={DownloadIcon}
+        onClick={onClick}
+      />
+    )
+  }
+  return (
+    <Button variant="outline" onClick={onClick}>
+      <DownloadIcon className="size-4" />
+      {documentLabels.download}
+    </Button>
+  )
+}
+
 export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const {
     data: document,
@@ -129,6 +179,8 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const { data: file, isFetching: fileFetching } = useDocumentFile(documentId)
   const pdf = usePdfDocument(file)
   const [editingPages, setEditingPages] = useState(false)
+  const compact = useIsMobile()
+  const [signBar, setSignBar] = useState<HTMLDivElement | null>(null)
 
   // `?firmar=1` opens signing straight away (the home's drop zone links here).
   const [signing, setSigning] = useQueryParam("firmar", false, flagCodec)
@@ -164,120 +216,134 @@ export function DocumentDetailContent({ documentId }: { documentId: string }) {
   const currentVersion = document.versions.at(-1)
 
   return (
-    // Below `lg` the whole page scrolls inside this root; from `lg` it is
-    // pinned and only the PDF (and the side panel, if it overflows) scroll.
-    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto lg:overflow-hidden">
-      <PageHero
-        icon={<DocumentIcon className="size-5" />}
-        title={document.name}
-        description={
-          <span className="tabular-nums">{documentFacts(document)}</span>
-        }
-        status={
-          <SigningStatus document={document} versionId={currentVersion?.id} />
-        }
-        action={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => download(document.id)}>
-              <DownloadIcon className="size-4" />
-              Descargar
-            </Button>
-            {!signing && currentVersion ? (
-              <EditPagesAction
-                document={document}
-                versionId={currentVersion.id}
-                ready={pdf.status === "ready" && !fileFetching}
-                onEdit={() => setEditingPages(true)}
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Below `lg` the whole page scrolls inside this pane; from `lg` it is
+          pinned and only the PDF (and the side panel, if it overflows)
+          scroll. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto lg:overflow-hidden">
+        <PageHero
+          icon={<DocumentIcon className="size-5" />}
+          title={document.name}
+          description={
+            <span className="tabular-nums">{documentFacts(document)}</span>
+          }
+          status={
+            <SigningStatus document={document} versionId={currentVersion?.id} />
+          }
+          action={
+            <div className="flex gap-2">
+              <DownloadAction
+                compact={compact}
+                onClick={() => download(document.id)}
               />
+              {!signing && currentVersion ? (
+                <EditPagesAction
+                  document={document}
+                  versionId={currentVersion.id}
+                  ready={pdf.status === "ready" && !fileFetching}
+                  compact={compact}
+                  onEdit={() => setEditingPages(true)}
+                />
+              ) : null}
+              {signing ? null : (
+                <Button onClick={() => setSigning(true)}>
+                  <SignIcon className="size-4" />
+                  Firmar
+                </Button>
+              )}
+              <DocumentOrganizationMenu document={document} />
+            </div>
+          }
+        >
+          <DocumentPlacement document={document} />
+        </PageHero>
+
+        {/* One column below `lg`, ordered signing → PDF → history: the side
+            column dissolves (`contents`) so signing can come first. */}
+        <div className="flex flex-col gap-6 lg:grid lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div className="order-2 flex min-w-0 flex-col rounded-lg bg-desk lg:order-0 lg:min-h-0 lg:overflow-hidden">
+            {pdf.status === "error" ? (
+              <div className="p-3 sm:p-6 xl:p-8">
+                <ViewerState documentId={document.id} />
+              </div>
             ) : null}
-            {signing ? null : (
-              <Button onClick={() => setSigning(true)}>
-                <SignIcon className="size-4" />
-                Firmar
-              </Button>
-            )}
-            <DocumentOrganizationMenu document={document} />
-          </div>
-        }
-      >
-        <DocumentPlacement document={document} />
-      </PageHero>
-
-      <div className="grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="flex min-w-0 flex-col rounded-lg bg-desk lg:min-h-0 lg:overflow-hidden">
-          {pdf.status === "error" ? (
-            <div className="p-3 sm:p-6 xl:p-8">
-              <ViewerState documentId={document.id} />
-            </div>
-          ) : null}
-          {pdf.status === "loading" ? (
-            <div className="p-3 sm:p-6 xl:p-8">
-              <Skeleton className="aspect-[1/1.414] w-full rounded-sm" />
-            </div>
-          ) : null}
-          {pdf.status === "ready" ? (
-            <PdfViewer
-              pdf={pdf.pdf}
-              placing={placing}
-              stamp={stamp}
-              onDraw={(page, rect) =>
-                setStamp({ page, rect, pages: stamp?.pages ?? "one" })
-              }
-            />
-          ) : null}
-        </div>
-
-        <aside className="space-y-6 overscroll-contain lg:overflow-y-auto lg:pr-1">
-          {signing ? (
-            <section className="space-y-4 rounded-xl border bg-card/40 p-4">
-              <Text as="h2" variant="headline">
-                Firmar documento
-              </Text>
-              <SignPanel
-                document={document}
+            {pdf.status === "loading" ? (
+              <div className="p-3 sm:p-6 xl:p-8">
+                <Skeleton className="aspect-[1/1.414] w-full rounded-sm" />
+              </div>
+            ) : null}
+            {pdf.status === "ready" ? (
+              <PdfViewer
+                pdf={pdf.pdf}
+                placing={placing}
                 stamp={stamp}
-                onVisibilityChange={setVisible}
-                onPagesChange={(pages) => {
-                  if (stamp) setStamp({ ...stamp, pages })
-                }}
-                onSigned={closeSigning}
-                onCancel={closeSigning}
-              />
-            </section>
-          ) : null}
-          <section className="space-y-3">
-            <SectionHeading
-              title="Versiones"
-              count={document.versions.length}
-            />
-            <VersionList
-              versions={document.versions}
-              onDownload={(version: DocumentVersion) =>
-                download(document.id, version.number)
-              }
-            />
-          </section>
-          <section className="space-y-3">
-            <SectionHeading title="Firmas" count={document.signatures.length} />
-            {currentVersion ? (
-              <SignatureHistory
-                records={document.signatures}
-                documentId={document.id}
-                versionId={currentVersion.id}
+                onDraw={(page, rect) =>
+                  setStamp({ page, rect, pages: stamp?.pages ?? "one" })
+                }
               />
             ) : null}
-          </section>
-          {currentVersion ? (
-            <section className="space-y-3">
-              <SectionHeading title="Validez de las firmas" />
-              <SignatureValidation
-                documentId={document.id}
-                versionId={currentVersion.id}
-              />
-            </section>
-          ) : null}
-        </aside>
+          </div>
+
+          <div className="contents lg:block lg:space-y-6 lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+            {signing ? (
+              <section className="order-1 space-y-4 rounded-xl border bg-card/40 p-4 lg:order-0">
+                <Text as="h2" variant="headline">
+                  Firmar documento
+                </Text>
+                <SignPanel
+                  document={document}
+                  stamp={stamp}
+                  onVisibilityChange={setVisible}
+                  onPagesChange={(pages) => {
+                    if (stamp) setStamp({ ...stamp, pages })
+                  }}
+                  onSigned={closeSigning}
+                  onCancel={closeSigning}
+                  barSlot={signBar}
+                />
+              </section>
+            ) : null}
+            <aside className="order-3 space-y-6 lg:order-0">
+              <section className="space-y-3">
+                <SectionHeading
+                  title="Versiones"
+                  count={document.versions.length}
+                />
+                <VersionList
+                  versions={document.versions}
+                  onDownload={(version: DocumentVersion) =>
+                    download(document.id, version.number)
+                  }
+                />
+              </section>
+              <section className="space-y-3">
+                <SectionHeading
+                  title="Firmas"
+                  count={document.signatures.length}
+                />
+                {currentVersion ? (
+                  <SignatureHistory
+                    records={document.signatures}
+                    documentId={document.id}
+                    versionId={currentVersion.id}
+                  />
+                ) : null}
+              </section>
+              {currentVersion ? (
+                <section className="space-y-3">
+                  <SectionHeading title="Validez de las firmas" />
+                  <SignatureValidation
+                    documentId={document.id}
+                    versionId={currentVersion.id}
+                  />
+                </section>
+              ) : null}
+            </aside>
+          </div>
+        </div>
       </div>
+
+      {signing ? <div ref={setSignBar} className="shrink-0 lg:hidden" /> : null}
 
       {pdf.status === "ready" && currentVersion ? (
         <PageEditor

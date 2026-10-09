@@ -9,13 +9,16 @@ import {
   currentPageIndex,
 } from "@/features/documents/detail/model/page-nav"
 import {
+  isTap,
   isUsableRect,
   type PagePoint,
   pointIn,
   rectBetween,
   rectStyle,
+  stampAt,
 } from "@/features/documents/detail/model/placement"
 import type { StampRect } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { cn } from "@/lib/utils"
 
 /** Where the stamp goes, as chosen so far. */
@@ -27,7 +30,10 @@ export type StampPlacement = {
 
 interface PdfViewerProps {
   pdf: PDFDocumentProxy
-  /** When true, dragging on a page draws the stamp rectangle. */
+  /**
+   * When true, dragging on a page draws the stamp rectangle (fine pointers)
+   * or tapping it drops a standard stamp there (touch, which keeps scroll).
+   */
   placing: boolean
   stamp: StampPlacement | null
   onDraw: (page: number, rect: StampRect) => void
@@ -67,6 +73,20 @@ function scrollParent(element: HTMLElement): HTMLElement | null {
     parent = parent.parentElement
   }
   return null
+}
+
+function pointOf(event: PointerEvent<HTMLElement>) {
+  return pointIn(
+    event.currentTarget.getBoundingClientRect(),
+    event.clientX,
+    event.clientY
+  )
+}
+
+// Height over width of the page as displayed.
+function displayedAspect(element: HTMLElement) {
+  const { width, height } = element.getBoundingClientRect()
+  return height / width
 }
 
 function aspectStyle(aspect: number | null) {
@@ -139,30 +159,44 @@ function PdfPage({
     }
   }, [pdf, index, visible])
 
+  const fine = useFinePointer()
+  // Touch taps instead of dragging, so a swipe over the page still scrolls.
+  const [tapStart, setTapStart] = useState<PagePoint | null>(null)
+
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!placing) return
+    const start = pointOf(event)
+    if (!fine) {
+      setTapStart(start)
+      return
+    }
     event.currentTarget.setPointerCapture(event.pointerId)
-    const start = pointIn(
-      event.currentTarget.getBoundingClientRect(),
-      event.clientX,
-      event.clientY
-    )
     setDragStart(start)
     setDraft(rectBetween(start, start))
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!dragStart) return
-    const point = pointIn(
-      event.currentTarget.getBoundingClientRect(),
-      event.clientX,
-      event.clientY
-    )
-    setDraft(rectBetween(dragStart, point))
+    setDraft(rectBetween(dragStart, pointOf(event)))
   }
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (tapStart) {
+      const end = pointOf(event)
+      if (isTap(tapStart, end)) {
+        onDraw(index, stampAt(end, displayedAspect(event.currentTarget)))
+      }
+      setTapStart(null)
+      return
+    }
     if (draft && isUsableRect(draft)) onDraw(index, draft)
+    setDragStart(null)
+    setDraft(null)
+  }
+
+  // The browser took the touch over for scrolling or zooming.
+  const handlePointerCancel = () => {
+    setTapStart(null)
     setDragStart(null)
     setDraft(null)
   }
@@ -182,13 +216,15 @@ function PdfPage({
         <canvas ref={canvasRef} className="block h-auto w-full" />
         <div
           className={cn(
-            "absolute inset-0 touch-none",
-            placing && "cursor-crosshair"
+            "absolute inset-0",
+            placing && fine && "cursor-crosshair touch-none",
+            // Pan and pinch stay; double-tap zoom goes, so a tap lands at once.
+            placing && !fine && "touch-manipulation"
           )}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         >
           {shown ? (
             <div

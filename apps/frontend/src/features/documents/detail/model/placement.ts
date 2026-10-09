@@ -48,3 +48,36 @@ export function rectStyle(rect: StampRect) {
     height: `${rect.height * 100}%`,
   }
 }
+
+/** Width of a tapped stamp, as a fraction of the page width. */
+export const TAP_STAMP_WIDTH = 0.3
+
+/** A tapped stamp is this many times wider than tall on paper. */
+export const TAP_STAMP_RATIO = 3
+
+/** A touch that travels further than this (in page fractions) is a scroll. */
+export const TAP_SLOP = 0.02
+
+/**
+ * The stamp a tap places: a standard-size rectangle centered on the point
+ * and kept inside the page. `aspect` is the page's height over its width,
+ * so the stamp keeps its paper proportions on any page shape.
+ */
+export function stampAt(point: PagePoint, aspect: number): StampRect {
+  const width = TAP_STAMP_WIDTH
+  const height = Math.min(1, width / TAP_STAMP_RATIO / aspect)
+  return {
+    x: Math.min(1 - width, Math.max(0, point.x - width / 2)),
+    y: Math.min(1 - height, Math.max(0, point.y - height / 2)),
+    width,
+    height,
+  }
+}
+
+/** True while a touch has stayed close enough to its start to be a tap. */
+export function isTap(start: PagePoint, end: PagePoint): boolean {
+  return (
+    Math.abs(end.x - start.x) <= TAP_SLOP &&
+    Math.abs(end.y - start.y) <= TAP_SLOP
+  )
+}

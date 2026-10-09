@@ -1,4 +1,5 @@
-import { type SyntheticEvent, useState } from "react"
+import { type SyntheticEvent, useId, useState } from "react"
+import { createPortal } from "react-dom"
 import { Text } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
 import {
@@ -15,14 +16,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Spinner } from "@/components/ui/spinner"
 import type { StampPlacement } from "@/features/documents/detail/components/pdf-viewer"
 import {
   type DocumentDetail,
   type SignAppearance,
   useDocumentSign,
 } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { useHydratedQuery } from "@/hooks/use-hydrated-query"
 import { orpc } from "@/lib/orpc"
+import { cn } from "@/lib/utils"
 
 type Visibility = "visible" | "invisible"
 type PagesMode = "one" | "all"
@@ -58,11 +62,98 @@ function appearanceOf(
   return { visible: true, page: stamp.page, pages, rect: stamp.rect }
 }
 
-function placementHint(stamp: StampPlacement | null) {
-  if (!stamp) {
+// Drawing needs a precise pointer; touch taps a standard stamp instead.
+function placementHint(stamp: StampPlacement | null, fine: boolean) {
+  if (!stamp && fine) {
     return "Arrastra sobre la página para dibujar dónde va la firma."
   }
-  return `Firma en la página ${stamp.page + 1}. Arrastra otra vez para moverla.`
+  if (!stamp) return "Toca la página donde quieras la firma."
+  if (fine) {
+    return `Firma en la página ${stamp.page + 1}. Arrastra otra vez para moverla.`
+  }
+  return `Firma en la página ${stamp.page + 1}. Toca en otro sitio para moverla.`
+}
+
+type NextStep = { text: string; tone: "muted" | "destructive" }
+
+/** What the signing bar says: the error, the step still missing, or where
+ *  the signature will go. */
+function nextStep({
+  error,
+  selected,
+  passwordMissing,
+  visibility,
+  pages,
+  stamp,
+  fine,
+}: {
+  error: string | null
+  selected: boolean
+  passwordMissing: boolean
+  visibility: Visibility
+  pages: PagesMode
+  stamp: StampPlacement | null
+  fine: boolean
+}): NextStep {
+  if (error) return { text: error, tone: "destructive" }
+  if (!selected) return { text: "Elige un certificado.", tone: "muted" }
+  if (passwordMissing) {
+    return { text: "Escribe la contraseña del certificado.", tone: "muted" }
+  }
+  if (visibility === "invisible") {
+    return { text: "Firma invisible, sin sello en las páginas.", tone: "muted" }
+  }
+  if (!stamp && fine) {
+    return { text: "Dibuja en la página dónde va la firma.", tone: "muted" }
+  }
+  if (!stamp) {
+    return { text: "Toca la página donde quieras la firma.", tone: "muted" }
+  }
+  if (pages === "all") {
+    return { text: "Firma en todas las páginas.", tone: "muted" }
+  }
+  return { text: `Firma en la página ${stamp.page + 1}.`, tone: "muted" }
+}
+
+/**
+ * Below `lg` the form sits above the PDF, so the submit moves to a bar
+ * docked under the scrolling page: it says what is still missing and
+ * stays in reach while the visitor scrolls to the page to sign.
+ */
+function SigningBar({
+  formId,
+  step,
+  canSubmit,
+  pending,
+}: {
+  formId: string
+  step: NextStep
+  canSubmit: boolean
+  pending: boolean
+}) {
+  return (
+    <div className="flex items-center gap-3 border-t bg-background pt-3">
+      <Text
+        as="p"
+        variant="meta"
+        tone={step.tone}
+        aria-live="polite"
+        className="line-clamp-2 min-w-0 flex-1"
+      >
+        {step.text}
+      </Text>
+      <Button
+        type="submit"
+        form={formId}
+        size="lg"
+        className="h-11 shrink-0 px-5"
+        disabled={!canSubmit || pending}
+      >
+        {pending ? <Spinner decorative /> : null}
+        Firmar
+      </Button>
+    </div>
+  )
 }
 
 interface SignPanelProps {
@@ -72,6 +163,8 @@ interface SignPanelProps {
   onPagesChange: (pages: PagesMode) => void
   onSigned: () => void
   onCancel: () => void
+  /** Where the narrow-viewport signing bar renders, under the scroll pane. */
+  barSlot: HTMLElement | null
 }
 
 export function SignPanel({
@@ -81,7 +174,10 @@ export function SignPanel({
   onPagesChange,
   onSigned,
   onCancel,
+  barSlot,
 }: SignPanelProps) {
+  const formId = useId()
+  const fine = useFinePointer()
   const sign = useDocumentSign(document.id)
   const { data: certificates = [], isPending: certificatesPending } =
     useHydratedQuery(orpc.v1.certificate.list.queryOptions())
@@ -156,8 +252,18 @@ export function SignPanel({
     )
   }
 
+  const step = nextStep({
+    error: submitError,
+    selected: selected !== undefined,
+    passwordMissing: needsPassword && password === "",
+    visibility,
+    pages,
+    stamp,
+    fine,
+  })
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id={formId} onSubmit={handleSubmit} className="space-y-4">
       <FormField label="Certificado" htmlFor="sign-certificate">
         <Select
           items={usable.map((certificate) => ({
@@ -201,7 +307,7 @@ export function SignPanel({
             columns={2}
           />
           <Text as="p" variant="meta" tone="muted">
-            {placementHint(stamp)}
+            {placementHint(stamp, fine)}
           </Text>
         </>
       ) : null}
@@ -250,10 +356,27 @@ export function SignPanel({
         >
           Cancelar
         </Button>
-        <Button type="submit" disabled={!canSubmit || sign.isPending}>
+        {/* Below `lg` the signing bar holds the submit. */}
+        <Button
+          type="submit"
+          className={cn(barSlot && "max-lg:hidden")}
+          disabled={!canSubmit || sign.isPending}
+        >
           Firmar
         </Button>
       </div>
+
+      {barSlot
+        ? createPortal(
+            <SigningBar
+              formId={formId}
+              step={step}
+              canSubmit={canSubmit}
+              pending={sign.isPending}
+            />,
+            barSlot
+          )
+        : null}
     </form>
   )
 }
