@@ -112,7 +112,7 @@ The trusted roots SHALL be the root certificates bundled with the runtime (the M
 
 ### Requirement: Signature validity on the document page
 
-The document page SHALL show a "Validez de las firmas" section that checks the current version when the page opens and again after a new signature. It SHALL list each signature with its verdict as a status tag, the signer's name, the signing time (and "Sello de tiempo" with its time when present) and a one-line coverage summary. It SHALL let the user expand a signature to see each check with its reason, the certificate data and the PAdES level. The section SHALL state that revocation is not checked. While checking it SHALL show a loading state, and if the check fails it SHALL show an error with a retry action. A version without signatures SHALL show "Este documento no tiene firmas". All text SHALL be in Spanish.
+The document page SHALL show a "Validez de las firmas" section that checks the current version when the page opens and again after a new signature. It SHALL list each signature with its verdict as a status tag, the signer's name, the signing time (and "Sello de tiempo" with its time when present) and a one-line coverage summary. It SHALL let the user expand a signature to see each check with its reason, the certificate data and the PAdES level. The section SHALL state that revocation is not checked. While checking it SHALL show a loading state, and if the check fails it SHALL show an error with a retry action. A version without signatures SHALL show "Este documento no tiene firmas". Once the check answers, the page header SHALL count the embedded signatures too: a document with no signature made in Garabato whose current version carries signatures SHALL read "Firmado fuera de Garabato", and the empty history of Garabato signatures SHALL point at them. All text SHALL be in Spanish.
 
 #### Scenario: Externally signed upload
 
@@ -123,6 +123,11 @@ The document page SHALL show a "Validez de las firmas" section that checks the c
 
 - **WHEN** the user signs the document from the page
 - **THEN** the section SHALL check the new version and list the new signature without reloading
+
+#### Scenario: Status of a PDF uploaded already signed
+
+- **WHEN** the user opens a document with no signature made in Garabato whose current version carries a signature made elsewhere
+- **THEN** the page header SHALL read "Firmado fuera de Garabato" instead of "Sin firmar", and the empty Garabato signature history SHALL say that the PDF already carried signatures made elsewhere
 
 #### Scenario: Modified after signing
 
