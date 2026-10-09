@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
@@ -53,9 +52,9 @@ export function SignUpForm() {
             >
               NONETE · Registro
             </Text>
-            <CardTitle className="font-semibold text-lg tracking-tight">
+            <Text as="h1" variant="display">
               Crear cuenta
-            </CardTitle>
+            </Text>
             <CardDescription className={textVariants({ role: "meta" })}>
               Introduce tus datos para crear tu cuenta
             </CardDescription>

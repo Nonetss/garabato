@@ -6,7 +6,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 
 /** Shown on `/signup` when the server sets `DISABLE_SIGN_UP`. */
@@ -31,9 +30,9 @@ export function SignUpClosed() {
             >
               NONETE · Registro
             </Text>
-            <CardTitle className="font-semibold text-lg tracking-tight">
+            <Text as="h1" variant="display">
               Registro cerrado
-            </CardTitle>
+            </Text>
             <CardDescription className={textVariants({ role: "meta" })}>
               No se pueden crear cuentas nuevas desde aquí. Pide a un
               administrador que te dé de alta.

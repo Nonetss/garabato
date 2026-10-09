@@ -13,7 +13,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Marker, MarkerContent } from "@/components/ui/marker"
@@ -72,9 +71,9 @@ export function SignInContent() {
             >
               GARABATO · Acceso
             </Text>
-            <CardTitle className="font-semibold text-lg tracking-tight">
+            <Text as="h1" variant="display">
               Iniciar sesión
-            </CardTitle>
+            </Text>
             <CardDescription className={textVariants({ role: "meta" })}>
               Introduce tu email para acceder a tu cuenta
             </CardDescription>
