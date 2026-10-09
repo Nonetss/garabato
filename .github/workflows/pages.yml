@@ -1,0 +1,64 @@
+name: Pages
+
+# Builds the project website (apps/site, static Astro) and publishes it to
+# GitHub Pages at https://nonetss.github.io/garabato/. Requires
+# Settings → Pages → Source: GitHub Actions.
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "apps/site/**"
+      - "doc/screenshots/**"
+      - "bun.lock"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time; never cancel one that is already publishing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      # Full install, not --filter site: the screenshots live in the root
+      # doc/screenshots/, so Vite resolves them against the root tsconfig,
+      # which extends @nonete/config from the root devDependencies.
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Build
+        run: bun run --filter site build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: apps/site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
