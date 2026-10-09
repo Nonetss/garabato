@@ -25,6 +25,10 @@ export const env = createEnv({
         (value) => Buffer.from(value, "base64").length === 32,
         "must decode to exactly 32 bytes"
       ),
+    // RFC 3161 time-stamping authority. Set, every signature carries its
+    // timestamp (PAdES B-T) and fails when the TSA cannot give one; unset,
+    // signatures are B-B and no TSA is contacted.
+    TSA_URL: z.url().optional(),
     // S3-compatible object store for documents: the bundled MinIO
     // (http://minio:9000 in compose, http://localhost:9000 for native dev) or
     // any external service. The bucket must exist; the bundled MinIO's init
