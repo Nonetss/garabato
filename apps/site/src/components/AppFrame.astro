@@ -28,6 +28,17 @@ const {
 const dict = t(lang)
 const current = shots.find((shot) => shot.id === active) ?? shots[0]
 const sizes = "(min-width: 64rem) 56vw, 100vw"
+
+// Each shot renders once per theme it has a capture for; the `.dark` class
+// shows one of them. A shot without a dark capture shows in both themes.
+const variants = shots.flatMap((shot, index) => {
+  const first = index === 0
+  if (!shot.dark) return [{ shot, image: shot.image, theme: "any", first }]
+  return [
+    { shot, image: shot.image, theme: "light", first },
+    { shot, image: shot.dark, theme: "dark", first },
+  ]
+})
 ---
 
 <div class:list={["terminal-frame", className]} data-frame>
@@ -46,21 +57,24 @@ const sizes = "(min-width: 64rem) 56vw, 100vw"
     aria-label={dict.frame.open}
     class="group relative block aspect-16/10 w-full cursor-zoom-in bg-terminal-bg focus-ring focus-visible:ring-inset"
   >
-    {shots.map((shot, index) => (
+    {variants.map(({ shot, image, theme, first }) => (
       <Image
-        src={shot.image}
+        src={image}
         alt={shot.alt}
         widths={screenWidths}
         sizes={sizes}
-        loading={eager && index === 0 ? "eager" : "lazy"}
-        fetchpriority={eager && index === 0 ? "high" : undefined}
+        loading={eager && first ? "eager" : "lazy"}
+        fetchpriority={eager && first ? "high" : undefined}
         data-shot={shot.id}
+        data-theme={theme}
         data-route={shot.route}
         data-active={shot.id === current?.id ? "" : undefined}
         aria-hidden={shot.id === current?.id ? undefined : "true"}
         class:list={[
           "absolute inset-0 size-full object-cover object-top-left",
           shots.length > 1 && "frame-shot",
+          theme === "light" && "dark:hidden",
+          theme === "dark" && "hidden dark:block",
         ]}
       />
     ))}

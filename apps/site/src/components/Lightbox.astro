@@ -120,14 +120,20 @@ if (dialog) {
   const caption = dialog.querySelector("[data-lightbox-caption]")
 
   // One entry per screen, in page order (the tour frame and the per-stop
-  // frames on small screens show the same screens).
-  const shots = [
-    ...new Map(
-      [...document.querySelectorAll<HTMLImageElement>("img[data-shot]")].map(
-        (img) => [img.dataset.shot, img]
-      )
-    ).values(),
-  ]
+  // frames on small screens show the same screens), in the capture for the
+  // current theme. Read on every open: the theme can change in between.
+  const collect = () => {
+    const theme = document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light"
+    const images = [
+      ...document.querySelectorAll<HTMLImageElement>("img[data-shot]"),
+    ].filter(
+      (img) => img.dataset.theme === "any" || img.dataset.theme === theme
+    )
+    return [...new Map(images.map((img) => [img.dataset.shot, img])).values()]
+  }
+  let shots = collect()
   let index = 0
 
   const show = (next: number) => {
@@ -146,6 +152,7 @@ if (dialog) {
     "[data-lightbox-open]"
   )) {
     button.addEventListener("click", () => {
+      shots = collect()
       const visible =
         button.querySelector<HTMLImageElement>("img[data-active]") ??
         button.querySelector<HTMLImageElement>("img[data-shot]")
