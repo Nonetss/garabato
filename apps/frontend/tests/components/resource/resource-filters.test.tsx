@@ -66,13 +66,14 @@ describe("ResourceFilters on a narrow viewport", () => {
 })
 
 function certificateFilter(
-  onChange: (value: string) => void
+  onChange: (value: string) => void,
+  value = "all"
 ): ResourceFilterDescriptor {
   return {
     kind: "select",
     key: "certificate",
     label: "Certificado",
-    value: "all",
+    value,
     onChange,
     defaultValue: "all",
     searchable: true,
@@ -121,6 +122,18 @@ describe("ResourceFilters with a searchable select", () => {
       screen.getByRole("option", { name: /Empresa Señales/ })
     ).toBeDefined()
     expect(screen.queryByRole("option", { name: /Personal/ })).toBeNull()
+  })
+
+  test("leaves the clear action to the filter chips", () => {
+    render(
+      <ResourceFilters
+        filters={[certificateFilter(() => {}, "cert-1")]}
+        onClear={() => {}}
+        defaultOpen
+      />
+    )
+
+    expect(screen.queryByRole("button", { name: /Limpiar/ })).toBeNull()
   })
 
   test("applies the picked option", () => {

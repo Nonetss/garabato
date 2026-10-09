@@ -733,6 +733,8 @@ export function ResourceFilters({
   hideMobileActionBar = false,
 }: {
   filters: ResourceFilterDescriptor[]
+  /** The mobile sheet's "Limpiar". The inline panel has no clear button of
+   *  its own; `FilterChips` carries it there. */
   onClear?: () => void
   count?: ReactNode
   title?: string
@@ -769,11 +771,12 @@ export function ResourceFilters({
     )
   }
 
+  // No `onClear` on the inline panel: every list pairs these filters with
+  // `FilterChips`, whose "Limpiar" is the single clear action at this width.
   return (
     <CollapsibleFilters
       title={title}
       activeCount={activeCount}
-      onClear={onClear}
       count={count}
       columns={columns}
       defaultOpen={defaultOpen}
