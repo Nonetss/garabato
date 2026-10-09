@@ -1,12 +1,12 @@
-import type { SyntheticEvent } from "react"
+import { type SyntheticEvent, useRef } from "react"
 import { Text, textVariants } from "@/components/shared/brand/typography"
 import { FormField } from "@/components/shared/form/field-label"
+import { TotpCodeInput } from "@/components/shared/form/totp-code-input"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import { TOTP_CODE_LENGTH } from "@/lib/one-time-code"
 import { cn } from "@/lib/utils"
 
 const ERROR_ID = "second-factor-error"
@@ -37,11 +37,12 @@ export function SecondFactorForm({
   onSubmit,
   onBack,
 }: SecondFactorFormProps) {
+  const formRef = useRef<HTMLFormElement>(null)
   const invalid = error ? true : undefined
   const describedBy = error ? ERROR_ID : undefined
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5">
+    <form ref={formRef} onSubmit={onSubmit} className="space-y-5">
       <Text as="p" variant="meta" tone="muted">
         {backupCodeMode
           ? "Introduce uno de los códigos de respaldo que guardaste al activar la verificación en dos pasos."
@@ -66,24 +67,17 @@ export function SecondFactorForm({
           />
         </FormField>
       ) : (
-        <FormField label="Código" htmlFor="totp-code">
-          <Input
+        <FormField label="Código" htmlFor="totp-code" className="text-center">
+          <TotpCodeInput
             id="totp-code"
-            type="text"
-            required
+            className="justify-center"
             autoFocus
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern={`\\d{${TOTP_CODE_LENGTH}}`}
-            minLength={TOTP_CODE_LENGTH}
-            maxLength={TOTP_CODE_LENGTH}
             disabled={loading}
-            aria-invalid={invalid}
+            invalid={Boolean(error)}
             aria-describedby={describedBy}
-            placeholder="123456"
-            className="font-mono tracking-[0.3em]"
             value={code}
-            onChange={(e) => onCodeChange(e.target.value)}
+            onChange={onCodeChange}
+            onComplete={() => formRef.current?.requestSubmit()}
           />
         </FormField>
       )}

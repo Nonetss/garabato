@@ -122,6 +122,7 @@ const controlIcons = {
   circle: Lucide.Circle,
   exclude: Lucide.Ban,
   grip: Lucide.GripVertical,
+  separator: Lucide.Minus,
 } as const
 
 const statusIcons = {

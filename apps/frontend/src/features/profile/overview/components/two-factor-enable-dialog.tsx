@@ -5,7 +5,7 @@ import { CopyButton } from "@/components/shared/form/copy-button"
 import type { DialogFieldDescriptor } from "@/components/shared/form/dialog-fields"
 import { FormField } from "@/components/shared/form/field-label"
 import { FormDialog } from "@/components/shared/form/form-dialog"
-import { Input } from "@/components/ui/input"
+import { TotpCodeInput } from "@/components/shared/form/totp-code-input"
 import { BackupCodesList } from "@/features/profile/overview/components/backup-codes-list"
 import {
   type TotpEnrolment,
@@ -15,7 +15,7 @@ import {
 import { totpSecretOf } from "@/features/profile/overview/model/totp"
 import { useDialogForm } from "@/hooks/use-dialog-form"
 import { useOnOpen } from "@/hooks/use-on-open"
-import { TOTP_CODE_LENGTH, totpCodeDigits } from "@/lib/one-time-code"
+import { TOTP_CODE_LENGTH } from "@/lib/one-time-code"
 
 interface PasswordValues {
   password: string
@@ -128,16 +128,11 @@ export function TwoFactorEnableDialog({
         <BackupCodesList codes={enrolment.backupCodes} />
 
         <FormField label="Código de la aplicación" htmlFor="two-factor-code">
-          <Input
+          <TotpCodeInput
             id="two-factor-code"
-            type="text"
-            required
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="123456"
-            className="font-mono tracking-[0.3em]"
+            disabled={confirm.isPending}
             value={code}
-            onChange={(e) => setCode(totpCodeDigits(e.target.value))}
+            onChange={setCode}
           />
         </FormField>
       </div>
