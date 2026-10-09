@@ -143,7 +143,7 @@ export function CronsContent() {
       value: search,
       onChange: setSearch,
       suggestions: searchSuggestions,
-      placeholder: "Nombre o handler...",
+      placeholder: "Nombre o handler…",
     },
     {
       kind: "select",
@@ -233,7 +233,7 @@ export function CronsContent() {
           ) : undefined
         }
         query={{ data: filteredJobs, isPending, isError, refetch }}
-        loading="Cargando crons..."
+        loading="Cargando crons…"
         error={{
           icon: <Clock className="size-6" />,
           title: "No se pudieron cargar los crons",

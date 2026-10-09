@@ -127,7 +127,7 @@ export function CertificatesContent() {
           ) : null
         }
         query={{ data: listed, isPending, isError, refetch }}
-        loading="Cargando certificados..."
+        loading="Cargando certificados…"
         error={{
           icon: <CertificateIcon className="size-6" />,
           title: "No se pudieron cargar los certificados",

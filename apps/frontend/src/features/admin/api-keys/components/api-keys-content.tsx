@@ -32,7 +32,7 @@ export function ApiKeysContent() {
   const deleteDialog = useTargetConfirmDialog<ApiKeyListItem>({
     title: "Eliminar API key",
     description: (key) =>
-      `Esta acción no se puede deshacer. Las integraciones que usen "${key.name?.trim() || "esta clave"}" dejarán de funcionar.`,
+      `Esta acción no se puede deshacer. Las integraciones que usen «${key.name?.trim() || "esta clave"}» dejarán de funcionar.`,
     confirmLabel: "Eliminar",
     onConfirm: (key) => deleteApiKey.mutateAsync({ id: key.id }),
   })
@@ -95,7 +95,7 @@ export function ApiKeysContent() {
           </div>
         }
         query={{ data: apiKeys, isPending, isError, refetch }}
-        loading="Cargando API keys..."
+        loading="Cargando API keys…"
         error={{
           icon: <KeyRound className="size-6" />,
           title: "No se pudieron cargar las API keys",

@@ -43,7 +43,7 @@ export function CommentList({
   }
 
   if (isPending) {
-    return <StateCard spinner title="Cargando comentarios..." />
+    return <StateCard spinner title="Cargando comentarios…" />
   }
 
   if (comments.length === 0) {

@@ -107,7 +107,7 @@ export function InviteMemberDialog({
             </Text>
           )}
           clearLabel="Quitar equipo"
-          placeholder="Nombre del equipo..."
+          placeholder="Nombre del equipo…"
         />
       </FormField>
     </FormDialog>

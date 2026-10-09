@@ -109,7 +109,7 @@ export function LogsContent() {
       label: "Ruta",
       value: filters.path,
       onChange: (value) => setFilters((f) => ({ ...f, path: value })),
-      placeholder: "/admin/...",
+      placeholder: "/admin/…",
     },
     {
       kind: "date",
@@ -190,7 +190,7 @@ export function LogsContent() {
         </div>
       }
       query={{ data: entries, isPending, isError, refetch }}
-      loading="Cargando registro de actividad..."
+      loading="Cargando registro de actividad…"
       error={{
         icon: <OctagonX className="size-6" />,
         title: "No se pudo cargar el registro de actividad",

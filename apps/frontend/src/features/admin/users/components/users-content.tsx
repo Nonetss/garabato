@@ -101,7 +101,7 @@ export function UsersContent() {
       value: searchInput,
       onChange: setSearchInput,
       suggestions: searchSuggestions,
-      placeholder: "Nombre o email...",
+      placeholder: "Nombre o email…",
       isActive: () => hasSearch,
     },
   ]
@@ -143,7 +143,7 @@ export function UsersContent() {
           ) : undefined
         }
         query={{ data: rows, isPending, isError, refetch }}
-        loading="Cargando usuarios..."
+        loading="Cargando usuarios…"
         error={{
           icon: <UserX className="size-6" />,
           title: "No se pudo cargar la lista de usuarios",

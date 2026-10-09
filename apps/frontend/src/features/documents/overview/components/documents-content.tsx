@@ -570,7 +570,7 @@ export function DocumentsContent() {
           )
         }
         query={{ ...documentsQuery, data: documents }}
-        loading="Cargando documentos..."
+        loading="Cargando documentos…"
         error={{
           icon: <DocumentIcon className="size-6" />,
           title: "No se pudieron cargar los documentos",

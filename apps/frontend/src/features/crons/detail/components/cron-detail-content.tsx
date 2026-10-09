@@ -80,7 +80,7 @@ export function CronDetailContent({ jobId }: { jobId: string }) {
   }
 
   if (isPending || !job) {
-    return <StateCard spinner title="Cargando cron..." />
+    return <StateCard spinner title="Cargando cron…" />
   }
 
   const declaredInCode = job.source === "code"

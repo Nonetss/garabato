@@ -97,7 +97,7 @@ export function AddMemberDialog({
             </>
           )}
           clearLabel="Cambiar usuario"
-          placeholder="Nombre o email..."
+          placeholder="Nombre o email…"
         />
       </FormField>
 

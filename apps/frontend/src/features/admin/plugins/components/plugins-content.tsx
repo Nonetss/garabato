@@ -26,7 +26,7 @@ export function PluginsContent() {
         <HeroCount segments={[{ count: plugins.length, label: "activos" }]} />
       }
       query={{ data: plugins, isPending, isError, refetch }}
-      loading="Cargando plugins..."
+      loading="Cargando plugins…"
       error={{
         icon: <Blocks className="size-6" />,
         title: "No se pudieron cargar los plugins",
@@ -61,7 +61,7 @@ export function PluginsContent() {
                     className="mt-1 leading-relaxed"
                   >
                     {meta?.description ??
-                      `Plugin "${plugin.id}" registrado en Better Auth.`}
+                      `Plugin «${plugin.id}» registrado en Better Auth.`}
                   </Text>
                   <Text as="p" variant="data" tone="muted" className="mt-1.5">
                     {plugin.id}

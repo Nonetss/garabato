@@ -68,7 +68,7 @@ export function UserEmailPicker({
         id="log-filter-user"
         value={searchInput}
         onValueChange={setSearchInput}
-        placeholder="Nombre o email..."
+        placeholder="Nombre o email…"
         className="w-full"
       />
       {isSearchable ? (

@@ -20,7 +20,7 @@ interface CommentFormProps {
 }
 
 export function CommentForm({
-  placeholder = "Escribe un comentario...",
+  placeholder = "Escribe un comentario…",
   submitLabel = "Publicar",
   initialValue = "",
   autoFocus = false,

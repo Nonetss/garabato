@@ -119,7 +119,7 @@ export function TeamMembersSheet({
           </div>
 
           {isPending ? (
-            <StateCard spinner title="Cargando miembros..." />
+            <StateCard spinner title="Cargando miembros…" />
           ) : members.length === 0 ? (
             <Text as="p" variant="meta" tone="muted">
               Este equipo no tiene miembros todavía.

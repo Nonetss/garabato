@@ -117,7 +117,7 @@ export function CronRunTimeline({
       </div>
 
       {isPending ? (
-        <StateCard spinner title="Cargando ejecuciones..." />
+        <StateCard spinner title="Cargando ejecuciones…" />
       ) : runs.length === 0 ? (
         <StateCard
           icon={<Clock className="size-6" />}

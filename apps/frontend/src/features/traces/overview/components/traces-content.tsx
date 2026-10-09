@@ -188,7 +188,7 @@ export function TracesContent() {
           </div>
         }
         query={{ data: entries, isPending, isError, refetch }}
-        loading="Cargando trazas..."
+        loading="Cargando trazas…"
         error={{
           icon: <TracesIcon className="size-6" />,
           title: "No se pudieron cargar las trazas",

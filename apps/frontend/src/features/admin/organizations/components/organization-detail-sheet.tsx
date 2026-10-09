@@ -72,13 +72,13 @@ export function OrganizationDetailSheet({
           <SheetHeader>
             <SheetTitle>{org?.name ?? "Organización"}</SheetTitle>
             <SheetDescription className={textVariants({ role: "compact" })}>
-              {org ? `/${org.slug}` : "Cargando detalle..."}
+              {org ? `/${org.slug}` : "Cargando detalle…"}
             </SheetDescription>
           </SheetHeader>
 
           {isPending || !org ? (
             <div className="p-4">
-              <StateCard spinner title="Cargando organización..." />
+              <StateCard spinner title="Cargando organización…" />
             </div>
           ) : (
             <div className="flex flex-col gap-6 px-4 pb-6">

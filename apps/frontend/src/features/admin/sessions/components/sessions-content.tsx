@@ -203,7 +203,7 @@ export function SessionsContent() {
       description="Historial de accesos registrado por la aplicación."
       heroMeta={<HeroCount segments={[{ count: total, label: "registros" }]} />}
       query={{ data: sessions, isPending, isError, refetch }}
-      loading="Cargando historial de sesiones..."
+      loading="Cargando historial de sesiones…"
       error={{
         icon: <UserX className="size-6" />,
         title: "No se pudo cargar el historial de sesiones",

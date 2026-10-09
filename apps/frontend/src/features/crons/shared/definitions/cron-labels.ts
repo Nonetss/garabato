@@ -20,7 +20,7 @@ export const cronLabels = {
     "El job se ejecutará con los permisos de este usuario. Sin usuario, solo puede llamar a endpoints exclusivos de cron.",
   runsAsDefaultsToCallerHint:
     "Si no eliges a nadie, el job se ejecutará con tus propios permisos.",
-  runsAsSearchPlaceholder: "Buscar por nombre o email...",
+  runsAsSearchPlaceholder: "Buscar por nombre o email…",
   runsAsNoResults: "Sin resultados",
   runsAsClear: "Quitar usuario",
   payload: "Parámetros",
@@ -28,11 +28,11 @@ export const cronLabels = {
   declaredInCode:
     "Programado desde el código. No se puede editar, pausar, eliminar ni ejecutar a mano.",
   runNow: "Ejecutar ahora",
-  runNowPending: "Ejecutando...",
+  runNowPending: "Ejecutando…",
   create: "Nuevo cron",
   edit: "Editar",
   delete: "Eliminar",
   deleteTitle: "Eliminar cron",
   deleteDescription: (name: string) =>
-    `Se eliminará "${name}" y su historial de ejecuciones. Esta acción no se puede deshacer.`,
+    `Se eliminará «${name}» y su historial de ejecuciones. Esta acción no se puede deshacer.`,
 } as const

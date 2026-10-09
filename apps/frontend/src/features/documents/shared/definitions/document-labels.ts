@@ -50,7 +50,7 @@ export const documentLabels = {
   delete: "Eliminar",
   deleteTitle: "Eliminar documento",
   deleteDescription: (name: string) =>
-    `Se eliminará "${name}" con todas sus versiones de forma permanente. El registro de sus firmas se conserva.`,
+    `Se eliminará «${name}» con todas sus versiones de forma permanente. El registro de sus firmas se conserva.`,
   pages: "Páginas",
   size: "Tamaño",
   signatures: "Firmas",
@@ -76,7 +76,7 @@ export const documentLabels = {
   editFolderTitle: "Editar carpeta",
   deleteFolderTitle: "Eliminar carpeta",
   deleteFolderDescription: (name: string) =>
-    `Se eliminará la carpeta "${name}". Sus documentos y subcarpetas pasan a la carpeta que la contiene; no se elimina ningún documento.`,
+    `Se eliminará la carpeta «${name}». Sus documentos y subcarpetas pasan a la carpeta que la contiene; no se elimina ningún documento.`,
   folderNotFound: "Carpeta no encontrada",
   folderNotFoundDescription:
     "La carpeta no existe o se ha eliminado. Vuelve al inicio de la biblioteca.",
@@ -92,7 +92,7 @@ export const documentLabels = {
     if (count === 1) return "Mover documento"
     return `Mover ${count} documentos`
   },
-  moveFolderTitle: (name: string) => `Mover "${name}"`,
+  moveFolderTitle: (name: string) => `Mover «${name}»`,
   moveSubmit: "Mover",
   moveHere: "Mover aquí",
   tags: "Etiquetas",
@@ -117,11 +117,11 @@ export const documentLabels = {
   tagEditHint: "Cambia el nombre directamente; se guarda al salir del campo.",
   deleteTagTitle: "Eliminar etiqueta",
   deleteTagDescription: (name: string, count: number) => {
-    if (count === 0) return `Se eliminará la etiqueta "${name}".`
+    if (count === 0) return `Se eliminará la etiqueta «${name}».`
     if (count === 1) {
-      return `Se eliminará la etiqueta "${name}" y se quitará del documento que la lleva.`
+      return `Se eliminará la etiqueta «${name}» y se quitará del documento que la lleva.`
     }
-    return `Se eliminará la etiqueta "${name}" y se quitará de los ${count} documentos que la llevan.`
+    return `Se eliminará la etiqueta «${name}» y se quitará de los ${count} documentos que la llevan.`
   },
   pin: "Fijar",
   unpin: "Quitar de fijados",

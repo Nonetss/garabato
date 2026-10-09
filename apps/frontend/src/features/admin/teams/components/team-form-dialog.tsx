@@ -118,7 +118,7 @@ export function TeamFormDialog({
               </>
             )}
             clearLabel="Cambiar organización"
-            placeholder="Nombre o slug de la organización..."
+            placeholder="Nombre o slug de la organización…"
           />
         </FormField>
       ) : null}

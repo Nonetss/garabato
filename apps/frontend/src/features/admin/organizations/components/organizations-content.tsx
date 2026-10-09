@@ -45,7 +45,7 @@ export function OrganizationsContent() {
   const deleteDialog = useTargetConfirmDialog<Organization>({
     title: "Eliminar organización",
     description: (org) =>
-      `Esta acción no se puede deshacer. Se eliminarán "${org.name}" junto con sus miembros, equipos e invitaciones.`,
+      `Esta acción no se puede deshacer. Se eliminarán «${org.name}» junto con sus miembros, equipos e invitaciones.`,
     confirmLabel: "Eliminar",
     onConfirm: (org) => deleteOrganization.mutateAsync({ id: org.id }),
   })
@@ -90,7 +90,7 @@ export function OrganizationsContent() {
       value: search,
       onChange: setSearch,
       suggestions: searchSuggestions,
-      placeholder: "Nombre o slug...",
+      placeholder: "Nombre o slug…",
     },
   ]
   // Search applies live, so the sheet's draft total is the current count.
@@ -138,7 +138,7 @@ export function OrganizationsContent() {
           ) : undefined
         }
         query={{ data: filteredOrganizations, isPending, isError, refetch }}
-        loading="Cargando organizaciones..."
+        loading="Cargando organizaciones…"
         error={{
           icon: <Building2 className="size-6" />,
           title: "No se pudieron cargar las organizaciones",

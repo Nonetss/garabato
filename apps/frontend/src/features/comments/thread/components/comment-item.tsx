@@ -161,7 +161,7 @@ export function CommentItem({ comment, entity, depth = 0 }: CommentItemProps) {
               className="mt-2"
               compact
               autoFocus
-              placeholder="Escribe una respuesta..."
+              placeholder="Escribe una respuesta…"
               submitLabel="Responder"
               isPending={create.isPending}
               onCancel={() => setReplying(false)}

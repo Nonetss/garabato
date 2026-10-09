@@ -49,7 +49,7 @@ export function TeamsContent() {
   const deleteDialog = useTargetConfirmDialog<Team>({
     title: "Eliminar equipo",
     description: (team) =>
-      `Esta acción no se puede deshacer. Se eliminará el equipo "${team.name}".`,
+      `Esta acción no se puede deshacer. Se eliminará el equipo «${team.name}».`,
     confirmLabel: "Eliminar",
     onConfirm: (team) => deleteTeam.mutateAsync({ id: team.id }),
   })
@@ -102,7 +102,7 @@ export function TeamsContent() {
       value: search,
       onChange: setSearch,
       suggestions: searchSuggestions,
-      placeholder: "Nombre del equipo...",
+      placeholder: "Nombre del equipo…",
     },
     {
       kind: "select",
@@ -163,7 +163,7 @@ export function TeamsContent() {
           ) : undefined
         }
         query={{ data: filteredTeams, isPending, isError, refetch }}
-        loading="Cargando equipos..."
+        loading="Cargando equipos…"
         error={{
           icon: <UsersRound className="size-6" />,
           title: "No se pudieron cargar los equipos",

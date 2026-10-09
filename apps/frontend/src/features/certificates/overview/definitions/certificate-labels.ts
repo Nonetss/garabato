@@ -31,7 +31,7 @@ export const certificateLabels = {
   delete: "Eliminar",
   deleteTitle: "Eliminar certificado",
   deleteDescription: (alias: string) =>
-    `Se eliminará "${alias}" de forma permanente, incluida su contraseña si estaba recordada. Para volver a usarlo tendrás que importarlo de nuevo.`,
+    `Se eliminará «${alias}» de forma permanente, incluida su contraseña si estaba recordada. Para volver a usarlo tendrás que importarlo de nuevo.`,
   save: "Guardar",
   holder: "Titular",
   taxId: "NIF/NIE",
