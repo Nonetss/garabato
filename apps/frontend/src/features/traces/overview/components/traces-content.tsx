@@ -115,8 +115,8 @@ export function TracesContent() {
       searchable: true,
     },
     {
-      // Both ends of the range share one grid cell, so the panel keeps the
-      // other fields on one row.
+      // Both ends of the range share one grid cell, so at its widest the
+      // panel fits every filter on one row.
       kind: "custom",
       key: "trace-filter-dates",
       label: "Fechas",
@@ -177,7 +177,7 @@ export function TracesContent() {
         filters={
           <div className="space-y-3">
             <ResourceFilters
-              columns={2}
+              columns={4}
               filters={filterDescriptors}
               onClear={clearFilters}
             />
