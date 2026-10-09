@@ -3,6 +3,7 @@ import { z } from "zod"
 import { paginationCursor, paginationLimit } from "#shared/pagination"
 
 export const MAX_PDF_BYTES = 20 * 1024 * 1024
+export const MAX_MERGE_DOCUMENTS = 20
 
 const id = z.uuid()
 
@@ -131,6 +132,52 @@ export const documentInput = {
     reason: z.string().trim().max(200).optional(),
     location: z.string().trim().max(200).optional(),
     appearance,
+  }),
+
+  editPages: z.object({
+    documentId: id,
+    baseVersionId: id.describe(
+      "The version the user was editing; must still be the current one"
+    ),
+    pages: z
+      .array(
+        z.object({
+          page: z
+            .number()
+            .int()
+            .min(0)
+            .describe("0-based page of the current version"),
+          rotation: z
+            .union([
+              z.literal(0),
+              z.literal(90),
+              z.literal(180),
+              z.literal(270),
+            ])
+            .describe("Degrees added clockwise to the page's rotation"),
+        })
+      )
+      .max(10_000)
+      .describe(
+        "The resulting pages in order; pages left out are removed. At least one, none twice"
+      ),
+  }),
+
+  merge: z.object({
+    documentIds: z
+      .array(id)
+      .min(2)
+      .max(MAX_MERGE_DOCUMENTS)
+      .describe("2 to 20 of the caller's documents, in the order to join"),
+    name: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .describe("Name of the new document; `.pdf` is appended when missing"),
+    folderId: id
+      .optional()
+      .describe("Folder to put it in; the library root when omitted"),
   }),
 
   signatures: z

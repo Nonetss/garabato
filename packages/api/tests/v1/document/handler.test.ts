@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { createHash } from "node:crypto"
+import { PDFDocument } from "@cantoo/pdf-lib"
 import {
   type CertificateRow,
   certificateRow,
@@ -67,28 +68,55 @@ function bytesOf(value: unknown) {
   return value
 }
 
-// A stored document whose version 1 is `name`, sealed in the fake store.
-async function storedDocument(name: PdfFixture = "plain") {
-  const pdf = await pdfFixture(name)
+// A stored document whose version 1 is `pdf`, sealed in the fake store.
+async function storedPdf(
+  pdf: Uint8Array<ArrayBuffer>,
+  { id = DOC_ID, versionId = V1_ID, name = "contrato.pdf" } = {}
+) {
+  const scope: VaultScope = { kind: "document", id }
   const dataKey = vault.newDataKey()
   const document = documentRow({
-    id: DOC_ID,
+    id,
     userId: USER_ID,
-    encryptedDataKey: await vault.wrapDataKey(DOC_SCOPE, dataKey),
+    name,
+    encryptedDataKey: await vault.wrapDataKey(scope, dataKey),
   })
   const version = documentVersionRow({
-    id: V1_ID,
-    documentId: DOC_ID,
+    id: versionId,
+    documentId: id,
     number: 1,
-    objectKey: `documents/${DOC_ID}/v1`,
+    objectKey: `documents/${id}/v1`,
     sha256: sha256(pdf),
     sizeBytes: pdf.length,
   })
   fakeObjectStorage.objects.set(
     version.objectKey,
-    await vault.seal(dataKey, DOC_SCOPE, "v1", pdf)
+    await vault.seal(dataKey, scope, "v1", pdf)
   )
   return { pdf, dataKey, document, version }
+}
+
+// A stored document whose version 1 is the fixture `name`.
+async function storedDocument(name: PdfFixture = "plain") {
+  return storedPdf(await pdfFixture(name))
+}
+
+// Resolves with what `promise` rejects with, to inspect its message.
+async function rejection(promise: Promise<unknown>) {
+  return promise.then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  )
+}
+
+async function pageRotations(bytes: Uint8Array) {
+  const doc = await PDFDocument.load(bytes)
+  return doc.getPages().map((page) => page.getRotation().angle)
+}
+
+async function pageWidths(bytes: Uint8Array) {
+  const doc = await PDFDocument.load(bytes)
+  return doc.getPages().map((page) => Math.round(page.getWidth()))
 }
 
 // A certificate row holding the RSA fixture, optionally with its password.
@@ -183,6 +211,7 @@ describe("document.upload", () => {
     })
     expect(written("insert", 1)).toMatchObject({
       number: 1,
+      kind: "upload",
       sizeBytes: pdf.length,
       sha256: sha256(pdf),
     })
@@ -374,6 +403,7 @@ describe("document.get", () => {
     const signed = documentVersionRow({
       id: "00000000-0000-4000-8000-0000000000e2",
       number: 2,
+      kind: "signature",
     })
     fakeDb.queue("query.documents.findFirst", document)
     fakeDb.queue("query.documentVersions.findMany", [version, signed])
@@ -393,6 +423,10 @@ describe("document.get", () => {
 
     expect(result.tagIds).toEqual([TAG_A])
     expect(result.versions.map((entry) => entry.number)).toEqual([1, 2])
+    expect(result.versions.map((entry) => entry.kind)).toEqual([
+      "upload",
+      "signature",
+    ])
     expect(result).toMatchObject({ versionCount: 2, signatureCount: 1 })
     expect(result.signatures[0]).toMatchObject({
       versionNumber: 2,
@@ -929,6 +963,7 @@ describe("document.sign", () => {
     expect(written("insert", 0)).toMatchObject({
       documentId: DOC_ID,
       number: 2,
+      kind: "signature",
       sha256: sha256(signedPdf),
       sizeBytes: signedPdf.length,
     })
@@ -1117,6 +1152,434 @@ describe("document.sign", () => {
       "CONFLICT"
     )
     expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+})
+
+describe("document.editPages", () => {
+  const V2_ID = "00000000-0000-4000-8000-0000000000e2"
+
+  async function arrange({
+    pdf,
+    recordCount = 0,
+  }: {
+    pdf?: Uint8Array<ArrayBuffer>
+    recordCount?: number
+  } = {}) {
+    const stored = pdf ? await storedPdf(pdf) : await storedDocument()
+    fakeDb.queue("query.documents.findFirst", stored.document)
+    fakeDb.queue("query.documentVersions.findMany", [stored.version])
+    if (recordCount > 0) {
+      fakeDb.queue("select", [{ documentId: DOC_ID, total: recordCount }])
+    } else {
+      fakeDb.queue("select", [])
+    }
+    return stored
+  }
+
+  function queueCommit() {
+    fakeDb.queue("insert", [
+      documentVersionRow({ id: V2_ID, number: 2, kind: "pages" }),
+    ])
+    fakeDb.queue("update", [])
+  }
+
+  test("stores the reordered and rotated pages as version 2", async () => {
+    const { dataKey } = await arrange()
+    queueCommit()
+
+    const result = await documentHandler.editPages({
+      context,
+      input: {
+        documentId: DOC_ID,
+        baseVersionId: V1_ID,
+        pages: [
+          { page: 2, rotation: 0 },
+          { page: 0, rotation: 90 },
+          { page: 1, rotation: 0 },
+        ],
+      },
+    })
+
+    expect(result).toMatchObject({
+      version: { number: 2, kind: "pages" },
+      pageCount: 3,
+    })
+    const object = fakeObjectStorage.objects.get(`documents/${DOC_ID}/v2`)
+    const edited = await vault.open(dataKey, DOC_SCOPE, "v2", bytesOf(object))
+    expect(await pageRotations(edited)).toEqual([0, 90, 0])
+    expect(written("insert", 0)).toMatchObject({
+      documentId: DOC_ID,
+      number: 2,
+      kind: "pages",
+      sha256: sha256(edited),
+      sizeBytes: edited.length,
+      createdBy: USER_ID,
+    })
+    expect(written("update", 0)).toMatchObject({ pageCount: 3 })
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v1`)).toBe(true)
+  })
+
+  test("removes pages and updates the page count", async () => {
+    await arrange()
+    queueCommit()
+
+    const result = await documentHandler.editPages({
+      context,
+      input: {
+        documentId: DOC_ID,
+        baseVersionId: V1_ID,
+        pages: [
+          { page: 0, rotation: 0 },
+          { page: 2, rotation: 0 },
+        ],
+      },
+    })
+
+    expect(result.pageCount).toBe(2)
+    expect(written("update", 0)).toMatchObject({ pageCount: 2 })
+  })
+
+  test("rejects a list that changes nothing", async () => {
+    await arrange()
+
+    await expectErrorCode(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [0, 1, 2].map((page) => ({ page, rotation: 0 })),
+        },
+      }),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+
+  test("rejects an empty list", async () => {
+    await arrange()
+
+    await expectErrorCode(
+      documentHandler.editPages({
+        context,
+        input: { documentId: DOC_ID, baseVersionId: V1_ID, pages: [] },
+      }),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("rejects a document changed since it was opened", async () => {
+    const { document, version } = await storedDocument()
+    fakeDb.queue("query.documents.findFirst", document)
+    fakeDb.queue("query.documentVersions.findMany", [
+      version,
+      documentVersionRow({ id: V2_ID, number: 2, kind: "signature" }),
+    ])
+
+    const error = await rejection(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [{ page: 0, rotation: 0 }],
+        },
+      })
+    )
+
+    await expectErrorCode(Promise.reject(error), "CONFLICT")
+    expect(String(error)).toContain("recárgalo")
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("refuses a document with signature records", async () => {
+    await arrange({ recordCount: 1 })
+
+    const error = await rejection(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [{ page: 0, rotation: 0 }],
+        },
+      })
+    )
+
+    await expectErrorCode(Promise.reject(error), "CONFLICT")
+    expect(String(error)).toContain("tiene firmas")
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+
+  test("refuses an upload signed elsewhere", async () => {
+    await arrange({ pdf: await signedPdf() })
+
+    await expectErrorCode(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [{ page: 0, rotation: 0 }],
+        },
+      }),
+      "CONFLICT"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("answers NOT_FOUND for another user's document", async () => {
+    fakeDb.queue("query.documents.findFirst", undefined)
+
+    await expectErrorCode(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [{ page: 0, rotation: 0 }],
+        },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("maps a version race to CONFLICT and removes the object", async () => {
+    await arrange()
+    fakeDb.queueError("insert", { cause: { code: "23505" } })
+
+    await expectErrorCode(
+      documentHandler.editPages({
+        context,
+        input: {
+          documentId: DOC_ID,
+          baseVersionId: V1_ID,
+          pages: [{ page: 1, rotation: 0 }],
+        },
+      }),
+      "CONFLICT"
+    )
+    expect(fakeObjectStorage.objects.has(`documents/${DOC_ID}/v2`)).toBe(false)
+  })
+})
+
+describe("document.merge", () => {
+  const V2_ID = "00000000-0000-4000-8000-0000000000e2"
+
+  // `contrato.pdf` (3 A4 pages) and `anexo.pdf` (A4 then A5), both stored.
+  async function arrange({
+    annexPdf,
+    signedIds = [],
+  }: {
+    annexPdf?: Uint8Array<ArrayBuffer>
+    signedIds?: string[]
+  } = {}) {
+    const contract = await storedDocument()
+    const pdf = annexPdf ? annexPdf : await pdfFixture("mixed-sizes")
+    const annex = await storedPdf(pdf, {
+      id: DOC2_ID,
+      versionId: V2_ID,
+      name: "anexo.pdf",
+    })
+    fakeDb.queue("query.documents.findMany", [
+      contract.document,
+      annex.document,
+    ])
+    fakeDb.queue("query.documentVersions.findMany", [
+      contract.version,
+      annex.version,
+    ])
+    fakeDb.queue(
+      "select",
+      signedIds.map((documentId) => ({ documentId, total: 1 }))
+    )
+    return { contract, annex }
+  }
+
+  function queueCreate() {
+    fakeDb.queue("insert", [
+      documentRow({ id: "00000000-0000-4000-8000-0000000000d9" }),
+    ])
+    fakeDb.queue("insert", [documentVersionRow({ kind: "merge" })])
+  }
+
+  function storedObject(key: string) {
+    return bytesOf(fakeObjectStorage.objects.get(key))
+  }
+
+  test("joins the documents in the given order into a new one", async () => {
+    const { contract, annex } = await arrange()
+    const contractObject = storedObject(contract.version.objectKey)
+    const annexObject = storedObject(annex.version.objectKey)
+    queueCreate()
+
+    await documentHandler.merge({
+      context,
+      input: {
+        documentIds: [DOC2_ID, DOC_ID],
+        name: "contrato completo",
+      },
+    })
+
+    const document = written("insert", 0)
+    expect(document).toMatchObject({
+      userId: USER_ID,
+      name: "contrato completo.pdf",
+      pageCount: 5,
+      folderId: null,
+    })
+    const version = written("insert", 1)
+    expect(version).toMatchObject({ number: 1, kind: "merge" })
+
+    const id = field(document, "id")
+    if (typeof id !== "string") throw new Error("no id")
+    const scope: VaultScope = { kind: "document", id }
+    const dataKey = await vault.unwrapDataKey(
+      scope,
+      bytesOf(field(document, "encryptedDataKey"))
+    )
+    const merged = await vault.open(
+      dataKey,
+      scope,
+      "v1",
+      storedObject(`documents/${id}/v1`)
+    )
+    expect(await pageWidths(merged)).toEqual([595, 420, 595, 595, 595])
+    expect(field(version, "sha256")).toBe(sha256(merged))
+
+    expect(storedObject(contract.version.objectKey)).toEqual(contractObject)
+    expect(storedObject(annex.version.objectKey)).toEqual(annexObject)
+    expect(fakeDb.calls("update")).toEqual([])
+  })
+
+  test("creates it in one of the caller's folders", async () => {
+    await arrange()
+    fakeDb.queue("query.documentFolders.findFirst", documentFolderRow())
+    queueCreate()
+
+    await documentHandler.merge({
+      context,
+      input: {
+        documentIds: [DOC_ID, DOC2_ID],
+        name: "unido.pdf",
+        folderId: FOLDER_ID,
+      },
+    })
+
+    expect(written("insert", 0)).toMatchObject({
+      name: "unido.pdf",
+      folderId: FOLDER_ID,
+    })
+  })
+
+  test("stores nothing for a folder that isn't the caller's", async () => {
+    await arrange()
+    fakeDb.queue("query.documentFolders.findFirst", undefined)
+    const before = fakeObjectStorage.objects.size
+
+    await expectErrorCode(
+      documentHandler.merge({
+        context,
+        input: {
+          documentIds: [DOC_ID, DOC2_ID],
+          name: "unido",
+          folderId: FOLDER_ID,
+        },
+      }),
+      "NOT_FOUND"
+    )
+    expect(fakeDb.calls("insert")).toEqual([])
+    expect(fakeObjectStorage.objects.size).toBe(before)
+  })
+
+  test("refuses sources too large to merge before decrypting them", async () => {
+    const big = 31 * 1024 * 1024
+    fakeDb.queue("query.documents.findMany", [
+      documentRow({ id: DOC_ID }),
+      documentRow({ id: DOC2_ID }),
+    ])
+    fakeDb.queue("query.documentVersions.findMany", [
+      documentVersionRow({ documentId: DOC_ID, sizeBytes: big }),
+      documentVersionRow({ documentId: DOC2_ID, sizeBytes: big }),
+    ])
+
+    const error = await rejection(
+      documentHandler.merge({
+        context,
+        input: { documentIds: [DOC_ID, DOC2_ID], name: "unido" },
+      })
+    )
+
+    await expectErrorCode(Promise.reject(error), "BAD_REQUEST")
+    expect(String(error)).toContain("20 MiB")
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("rejects a document named twice", async () => {
+    await expectErrorCode(
+      documentHandler.merge({
+        context,
+        input: { documentIds: [DOC_ID, DOC_ID], name: "unido" },
+      }),
+      "BAD_REQUEST"
+    )
+    expect(fakeDb.calls()).toEqual([])
+  })
+
+  test("names the first signed source", async () => {
+    await arrange({ signedIds: [DOC2_ID] })
+
+    const error = await rejection(
+      documentHandler.merge({
+        context,
+        input: { documentIds: [DOC_ID, DOC2_ID], name: "unido" },
+      })
+    )
+
+    await expectErrorCode(Promise.reject(error), "CONFLICT")
+    expect(String(error)).toContain("«anexo.pdf» tiene firmas")
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("refuses a source signed elsewhere", async () => {
+    await arrange({ annexPdf: await signedPdf() })
+
+    const error = await rejection(
+      documentHandler.merge({
+        context,
+        input: { documentIds: [DOC_ID, DOC2_ID], name: "unido" },
+      })
+    )
+
+    await expectErrorCode(Promise.reject(error), "CONFLICT")
+    expect(String(error)).toContain("«anexo.pdf»")
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+
+  test("answers NOT_FOUND when a source isn't the caller's", async () => {
+    const { document } = await storedDocument()
+    fakeDb.queue("query.documents.findMany", [document])
+
+    await expectErrorCode(
+      documentHandler.merge({
+        context,
+        input: { documentIds: [DOC_ID, DOC2_ID], name: "unido" },
+      }),
+      "NOT_FOUND"
+    )
+    const [call] = fakeDb.calls("query.documents.findMany")
+    expect(call && stepArgs(call, "findMany")[0]).toEqual({
+      where: {
+        id: { in: [DOC_ID, DOC2_ID] },
+        userId: USER_ID,
+        deletedAt: { isNull: true },
+      },
+    })
+    expect(fakeDb.calls("insert")).toEqual([])
   })
 })
 

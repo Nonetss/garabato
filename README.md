@@ -51,6 +51,13 @@ certificate. Signatures are PAdES B-B; with a time-stamping authority set in
 `TSA_URL` they carry an RFC 3161 timestamp and reach B-T, which proves when
 the document was signed.
 
+**Fix the pages before signing.** "Editar páginas" reorders (by dragging or
+with the move buttons), rotates and removes pages, and saves the result as the
+next version; earlier versions stay downloadable. From the library, selecting
+two or more documents offers "Unir en un PDF", which joins them in the chosen
+order into a new document and leaves the sources untouched. Both refuse a
+document that carries signatures, since rewriting it would invalidate them.
+
 **Signature validity.** The document page checks every signature embedded in
 the PDF, also those made with other tools before uploading: integrity, the
 cryptographic signature, what it covers, the certificate's validity at the
@@ -122,9 +129,10 @@ a phone.
 - **Document signing**: a PDF library with thumbnails (`/documents`),
   organized in nested folders (with their own icon), colored tags and pinned
   documents, searchable and filterable across the whole library, with
-  multi-selection and drag-and-drop moves; a viewer
-  that places the visible signature, versions and a signature history
-  (`/documents/[id]`), and digital certificates stored encrypted
+  multi-selection, drag-and-drop moves and merging into one PDF; a viewer
+  that places the visible signature, edits the pages (reorder, rotate,
+  remove) into a new version, versions labelled by origin and a signature
+  history (`/documents/[id]`), and digital certificates stored encrypted
   (`/certificates`), and a log of every signature with its certificate,
   hashes and filters (`/signatures`). The home page (`/`) is a drop zone that
   opens the document ready to sign
@@ -147,7 +155,7 @@ Every page except login and signup requires a session.
 | Route | What it is |
 |---|---|
 | `/` | Drop a PDF and open it ready to sign |
-| `/documents`, `/documents/[id]` | The library (folders, tags, pins, search, multi-selection), then the viewer: place the signature, sign, versions and signature history |
+| `/documents`, `/documents/[id]` | The library (folders, tags, pins, search, multi-selection, merge into one PDF), then the viewer: edit the pages, place the signature, sign, versions and signature history |
 | `/certificates` | Import and keep the digital certificates used to sign |
 | `/signatures` | The signature log: every signature, filtered by certificate, document name and dates, with each record's full detail |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |

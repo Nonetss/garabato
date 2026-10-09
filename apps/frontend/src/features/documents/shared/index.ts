@@ -13,7 +13,11 @@ export {
   documentSigningStatus,
   formatPageCount,
 } from "@/features/documents/shared/definitions/document-facts"
-export { documentLabels } from "@/features/documents/shared/definitions/document-labels"
+export {
+  documentLabels,
+  versionKindLabels,
+  versionLabel,
+} from "@/features/documents/shared/definitions/document-labels"
 export {
   documentFoldersKey,
   useDocumentFolderCreate,
@@ -33,7 +37,9 @@ export {
   downloadDocumentVersion,
   useDocument,
   useDocumentDelete,
+  useDocumentEditPages,
   useDocumentFile,
+  useDocumentMerge,
   useDocumentPreviewFile,
   useDocumentRename,
   useDocumentSign,
@@ -57,6 +63,10 @@ export type {
   DocumentSummary,
   DocumentTag,
   DocumentVersion,
+  DocumentVersionKind,
+  EditPagesInput,
+  MergeDocumentsInput,
+  PageRotation,
   SignAppearance,
   SignatureRecord,
   SignInput,
@@ -73,6 +83,7 @@ export {
   folderHref,
   folderIconRef,
   folderPathLabel,
+  moveItem,
   pathOf,
   timestampDetail,
   timestampLine,

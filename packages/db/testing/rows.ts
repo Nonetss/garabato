@@ -215,6 +215,7 @@ export function documentVersionRow(
     id: "00000000-0000-4000-8000-0000000000e1",
     documentId: "00000000-0000-4000-8000-0000000000d1",
     number: 1,
+    kind: "upload",
     objectKey: "documents/00000000-0000-4000-8000-0000000000d1/v1",
     sizeBytes: 1024,
     sha256: "0".repeat(64),

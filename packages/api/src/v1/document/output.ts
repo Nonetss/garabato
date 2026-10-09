@@ -3,6 +3,11 @@ import { z } from "zod"
 const version = z.object({
   id: z.uuid(),
   number: z.number().int(),
+  kind: z
+    .enum(["upload", "merge", "signature", "pages"])
+    .describe(
+      "What produced the version: the upload, a merge, a signature or a page edit"
+    ),
   sizeBytes: z.number().int(),
   sha256: z.string().describe("SHA-256 of the PDF, hex"),
   createdAt: z.string(),
@@ -173,6 +178,14 @@ export const documentOutput = {
   updateTags: batchResult,
   setPinned: batchResult,
   sign: z.object({ version, signature: signatureRecord }),
+  editPages: z.object({
+    version,
+    pageCount: z
+      .number()
+      .int()
+      .describe("The document's page count after the edit"),
+  }),
+  merge: documentSummary,
   signatures: z.array(signatureRecord),
   signatureLog: z.object({
     records: z.array(signatureLogRecord).describe("Newest first"),

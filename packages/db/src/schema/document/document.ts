@@ -96,7 +96,11 @@ export const documents = pgTable(
   ]
 )
 
-// Immutable versions: 1 is the upload, each signature adds the next one.
+/** What produced a document version. */
+export type DocumentVersionKind = "upload" | "merge" | "signature" | "pages"
+
+// Immutable versions: 1 is the upload or the merge, each signature or page
+// edit adds the next one.
 export const documentVersions = pgTable(
   "document_versions",
   {
@@ -105,6 +109,7 @@ export const documentVersions = pgTable(
       .notNull()
       .references(() => documents.id, { onDelete: "cascade" }),
     number: integer("number").notNull(),
+    kind: text("kind").$type<DocumentVersionKind>().notNull(),
     // Key of the sealed bytes in the object store.
     objectKey: text("object_key").notNull(),
     sizeBytes: integer("size_bytes").notNull(),

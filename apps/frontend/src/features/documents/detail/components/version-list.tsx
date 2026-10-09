@@ -7,13 +7,8 @@ import {
   SoftCardListItem,
 } from "@/components/shared/data-display/soft-card-list"
 import { IconButton } from "@/components/shared/form/icon-button"
-import type { DocumentVersion } from "@/features/documents/shared"
+import { type DocumentVersion, versionLabel } from "@/features/documents/shared"
 import { formatDateTime, formatFileSize } from "@/lib/format"
-
-function versionLabel(version: DocumentVersion) {
-  if (version.number === 1) return "v1 · original"
-  return `v${version.number} · firmada`
-}
 
 interface VersionListProps {
   versions: DocumentVersion[]

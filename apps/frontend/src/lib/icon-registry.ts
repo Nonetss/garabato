@@ -89,6 +89,15 @@ const actionIcons = {
   tags: Lucide.Tags,
   pin: Lucide.Pin,
   unpin: Lucide.PinOff,
+  editPages: Lucide.LayoutGrid,
+  merge: Lucide.Combine,
+  rotateLeft: Lucide.RotateCcw,
+  rotateRight: Lucide.RotateCw,
+  moveBefore: Lucide.ArrowLeft,
+  moveAfter: Lucide.ArrowRight,
+  moveUp: Lucide.ArrowUp,
+  moveDown: Lucide.ArrowDown,
+  restore: Lucide.Undo2,
 } as const
 
 const controlIcons = {
