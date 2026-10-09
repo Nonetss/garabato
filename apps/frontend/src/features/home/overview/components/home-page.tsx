@@ -6,7 +6,7 @@ export function HomePage() {
   return (
     <QueryProvider>
       <div className="flex flex-1 flex-col bg-desk">
-        <PageShell maxWidth="6xl" className="py-4 sm:py-8">
+        <PageShell maxWidth="7xl" className="sm:py-8">
           <HomeContent />
         </PageShell>
       </div>

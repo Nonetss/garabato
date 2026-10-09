@@ -5,6 +5,7 @@ const MAX_WIDTH = {
   "3xl": "max-w-3xl",
   "4xl": "max-w-4xl",
   "6xl": "max-w-6xl",
+  "7xl": "max-w-7xl",
   /** Full width on mobile and tablet; capped at 80% from `lg`. */
   "80%": "lg:max-w-[80%]",
   /** Fill the sidebar inset — tables and canvases on desktop. */
