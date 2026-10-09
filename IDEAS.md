@@ -45,3 +45,24 @@ Notas:
 - El diálogo de certificado lo lanza el gateway (Caddy, `client_auth` con las CA aceptadas: FNMT, DNIe…), que pasa el certificado al backend. Mejor en un subdominio aparte para que no salte en toda la app.
 - Hace falta un certificado de sello de empresa para firmar en nombre del servidor.
 - Si en el futuro se quiere que el PDF lleve la firma del certificado del propio firmante, eso requiere firma en tres fases: su .p12 abierto en el navegador, AutoFirma o firma en la nube.
+
+## Organizaciones y equipos para compartir certificados
+
+Que los usuarios creen sus propias organizaciones y equipos y compartan certificados con ellos, con permisos sobre quién puede usarlos.
+
+- Hoy las organizaciones y los equipos ya existen (plugin `organization()` de Better Auth con `teams`), pero solo los gestiona el admin desde el panel. Habría que abrir la gestión a los usuarios: crear una organización (queda como `owner`), invitar miembros, crear equipos y asignar gente.
+- Compartir un certificado con:
+  - Toda una organización: lo pueden usar todos sus miembros.
+  - Un equipo concreto de una organización: solo los miembros de ese equipo.
+  - Usuarios sueltos, quizá, dentro de una organización.
+- El certificado sigue teniendo un dueño (el usuario que lo importó). Compartir no lo mueve, da acceso. El dueño puede dejar de compartirlo cuando quiera, y si lo borra deja de estar disponible para todos.
+- Permisos separados por acción, como mínimo:
+  - Usar: firmar documentos con él.
+  - Ver: ver sus datos (titular, emisor, caducidad), sin poder firmar.
+  - Gestionar: cambiar con quién se comparte, renombrarlo, borrarlo.
+- Los roles de organización (`owner`, `admin`, `member`) decidirían quién puede compartir en nombre de la organización y quién gestiona equipos. Encajaría como permisos de aplicación en `packages/auth/src/permissions.ts`.
+- Contraseña del certificado: si el dueño la recordó, los demás firman sin saberla. Si no, cada uno tendría que conocerla, o compartir exige recordarla. Hay que decidir cuál.
+- En el selector de certificados del documento, los compartidos aparecen junto a los propios, indicando de quién son y por qué organización o equipo llegan.
+- El registro de firmas guarda quién firmó de verdad (el usuario) además del certificado usado, para saber quién usó un certificado compartido.
+- Aviso legal: compartir un certificado de persona física es dejar que otros firmen como esa persona. Tiene sentido sobre todo para certificados de representante o de sello de empresa. Se podría avisar al compartir uno personal, o limitar qué tipos se pueden compartir.
+- Más adelante se podría compartir también documentos con el mismo modelo de organización y equipo.
