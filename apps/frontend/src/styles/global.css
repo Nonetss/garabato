@@ -871,14 +871,15 @@ html.theme-transitioning::view-transition-new(root) {
 }
 
 /* A certificate's validity line rules itself from the issue date to today
-   (`certificate-validity-line.tsx`). The vertical inset leaves room for the
-   status dot's ring standing on the line's end. */
+   (`certificate-validity-line.tsx`). The clip reaches past every edge so
+   the status dot and its ring stay whole wherever today falls, even right
+   on the issue date, where half the dot overhangs the line's start. */
 @keyframes validity-draw {
   from {
-    clip-path: inset(-0.5rem 100% -0.5rem 0);
+    clip-path: inset(-0.75rem calc(100% + 0.75rem) -0.75rem -0.75rem);
   }
   to {
-    clip-path: inset(-0.5rem -0.5rem -0.5rem 0);
+    clip-path: inset(-0.75rem);
   }
 }
 
