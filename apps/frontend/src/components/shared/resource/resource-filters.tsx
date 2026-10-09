@@ -2,6 +2,7 @@ import { getIcon } from "@/lib/icon-registry"
 
 const ExcludeIcon = getIcon("controls", "exclude")
 const ChevronDown = getIcon("controls", "chevronDown")
+const Check = getIcon("controls", "check")
 
 import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
@@ -22,6 +23,14 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import {
@@ -43,6 +52,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { foldText } from "@/lib/fold-text"
 import { cn } from "@/lib/utils"
 
 export interface ResourceFilterOption {
@@ -102,6 +112,9 @@ export type ResourceFilterDescriptor =
       onChange: (value: string) => void
       options: ResourceFilterOption[]
       placeholder?: string
+      /** Adds a text box to the open list that narrows the options by label
+       *  (accent-insensitive), for lists too long to scan by eye. */
+      searchable?: boolean
       /** Value that means "no filter" — what clearing this field's chip
        *  resets to. Defaults to `""`. */
       defaultValue?: string
@@ -387,6 +400,88 @@ function FacetFilterPopover({
   )
 }
 
+/**
+ * A `select` descriptor with `searchable`: an input-sized trigger showing the
+ * chosen option that opens the options in a popover with a text box to
+ * narrow them, so a long list (certificates, users…) is found by typing
+ * instead of scrolling. Picking an option applies it and closes the list.
+ */
+function SearchableSelectFilter({
+  filter,
+}: {
+  filter: ResourceFilterDescriptor & { kind: "select" }
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = filter.options.find(
+    (option) => option.value === filter.value
+  )
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        render={
+          <Button
+            id={filter.key}
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal"
+          />
+        }
+      >
+        <span
+          className={cn(
+            "flex min-w-0 items-center gap-2",
+            selected === undefined && "text-muted-foreground"
+          )}
+        >
+          {selected?.icon}
+          <span className="truncate">
+            {selected?.label ?? filter.placeholder}
+          </span>
+        </span>
+        <ChevronDown className="size-4 shrink-0 opacity-50" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-(--anchor-width) min-w-72 p-0">
+        <Command
+          filter={(itemValue, search) =>
+            foldText(itemValue).includes(foldText(search.trim())) ? 1 : 0
+          }
+        >
+          <CommandInput
+            placeholder={`Buscar en ${filter.label.toLowerCase()}…`}
+          />
+          <CommandList>
+            <CommandEmpty>Sin resultados</CommandEmpty>
+            <CommandGroup>
+              {filter.options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={`${option.label} ${option.value}`}
+                  onSelect={() => {
+                    filter.onChange(option.value)
+                    setOpen(false)
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "opacity-0",
+                      option.value === filter.value && "opacity-100"
+                    )}
+                  />
+                  {option.icon}
+                  <span className="truncate">{option.label}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function renderFilterControl(filter: ResourceFilterDescriptor): ReactNode {
   switch (filter.kind) {
     case "search":
@@ -413,6 +508,7 @@ function renderFilterControl(filter: ResourceFilterDescriptor): ReactNode {
         />
       )
     case "select":
+      if (filter.searchable) return <SearchableSelectFilter filter={filter} />
       return (
         <Select
           items={filter.options}

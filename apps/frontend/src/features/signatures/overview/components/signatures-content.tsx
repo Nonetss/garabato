@@ -97,6 +97,7 @@ export function SignaturesContent() {
       placeholder: "Todos los certificados",
       options: certificateOptions(certificates),
       defaultValue: ALL_CERTIFICATES,
+      searchable: true,
     },
     {
       // Both ends of the range share one grid cell, so the panel keeps three
