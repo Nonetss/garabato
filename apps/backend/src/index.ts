@@ -22,6 +22,13 @@ const HTTP_DRAIN_TIMEOUT_MS = 5_000
 /** Below Docker's default 10 s stop grace period, so we exit before a SIGKILL. */
 const SHUTDOWN_TIMEOUT_MS = 8_000
 
+/**
+ * Largest body Bun reads on any route (`/api/auth/*` included) before
+ * answering 413. Kept above `MAX_UPLOAD_BODY_BYTES` (21 MiB), so the oRPC
+ * handlers' own limits keep answering first with the API error body.
+ */
+const MAX_SERVER_BODY_BYTES = 25 * 1024 * 1024
+
 async function bootstrap() {
   await seed(auth)
   await startCron()
@@ -65,7 +72,11 @@ declare global {
 // `fetch`; the stable `id` makes Bun reload the running server in place
 // instead of binding the port again. No `port`: Bun resolves it exactly as it
 // did for the default export (PORT, else 3000).
-globalThis.__backendServer = Bun.serve({ id: "backend", fetch: app.fetch })
+globalThis.__backendServer = Bun.serve({
+  id: "backend",
+  fetch: app.fetch,
+  maxRequestBodySize: MAX_SERVER_BODY_BYTES,
+})
 
 if (!globalThis.__backendBootstrapped) {
   globalThis.__backendBootstrapped = true
