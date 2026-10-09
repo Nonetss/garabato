@@ -194,6 +194,7 @@ const en = {
     tagline: "Sign PDFs with your own certificates.",
     releases: "Releases",
     issues: "Issues",
+    license: "License (AGPL-3.0)",
   },
   docs: {
     title: "Documentation",
@@ -387,6 +388,7 @@ const es: Dictionary = {
     tagline: "Firma PDFs con tus propios certificados.",
     releases: "Versiones",
     issues: "Incidencias",
+    license: "Licencia (AGPL-3.0)",
   },
   docs: {
     title: "Documentación",
