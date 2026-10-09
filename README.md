@@ -45,7 +45,16 @@ certificate. Signatures are PAdES B-B; with a time-stamping authority set in
 `TSA_URL` they carry an RFC 3161 timestamp and reach B-T, which proves when
 the document was signed.
 
-![A contract signed twice: two visible stamps on the last page, three versions and two signature records](doc/screenshots/viewer.webp)
+**Signature validity.** The document page checks every signature embedded in
+the PDF, also those made with other tools before uploading: integrity, the
+cryptographic signature, what it covers, the certificate's validity at the
+signing time and whether its issuer chains to a trusted root (the Mozilla
+store plus the FNMT and DNIe roots). Revocation is not checked.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/viewer-dark.webp">
+  <img alt="A contract signed twice: two visible stamps on the last page, three versions and two signature records" src="doc/screenshots/viewer.webp">
+</picture>
 
 **Certificates** are imported from PKCS#12 files and stored encrypted, with
 their validity at a glance.
