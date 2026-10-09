@@ -38,6 +38,8 @@ export const certificateLabels = {
   expires: "Caduca",
   passwordRememberedNote: "Contraseña recordada",
   passwordAsked: "Se pide al firmar",
+  search: "Buscar",
+  searchPlaceholder: "Nombre, titular, NIF/NIE o emisor",
 } as const
 
 export const certificateStatusLabels: Record<

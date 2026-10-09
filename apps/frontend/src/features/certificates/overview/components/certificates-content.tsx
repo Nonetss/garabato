@@ -5,6 +5,12 @@ const UploadIcon = getIcon("actions", "upload")
 
 import { useState } from "react"
 import { HeroCount } from "@/components/shared/layout/page-hero"
+import { FilterChips } from "@/components/shared/resource/filter-chips"
+import {
+  chipsFor,
+  type ResourceFilterDescriptor,
+  ResourceFilters,
+} from "@/components/shared/resource/resource-filters"
 import { ResourceOverview } from "@/components/shared/resource/resource-overview"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -22,6 +28,7 @@ import {
   useCertificateForgetPassword,
   useCertificates,
 } from "@/features/certificates/overview/hooks/use-certificates"
+import { filterCertificates } from "@/features/certificates/overview/model/filters"
 import type { Certificate } from "@/features/certificates/overview/model/types"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
@@ -37,6 +44,7 @@ export function CertificatesContent() {
   const deleteCertificate = useCertificateDelete()
 
   const [importOpen, setImportOpen] = useState(false)
+  const [query, setQuery] = useState("")
   const signaturesSheet = useTargetDialog<Certificate>()
   const renameDialog = useTargetDialog<Certificate>()
   const rememberDialog = useTargetDialog<Certificate>()
@@ -52,6 +60,22 @@ export function CertificatesContent() {
   const usableCount = certificates.filter(
     (certificate) => certificate.status !== "expired"
   ).length
+
+  const filterDescriptors: ResourceFilterDescriptor[] = [
+    {
+      kind: "search",
+      key: "certificate-filter-query",
+      label: certificateLabels.search,
+      value: query,
+      onChange: setQuery,
+      placeholder: certificateLabels.searchPlaceholder,
+    },
+  ]
+  const clearFilters = () => setQuery("")
+  // Filtering only applies while there is something to filter: with no
+  // certificates left, the page shows its import prompt, not "no matches".
+  const filtering = certificates.length > 0 && query.trim() !== ""
+  const listed = filterCertificates(certificates, query)
 
   const gridContext: CertificateGridContext = {
     onShowSignatures: signaturesSheet.open,
@@ -87,7 +111,22 @@ export function CertificatesContent() {
             </div>
           ) : null
         }
-        query={{ data: certificates, isPending, isError, refetch }}
+        filters={
+          certificates.length > 0 ? (
+            <div className="space-y-3">
+              <ResourceFilters
+                columns={1}
+                filters={filterDescriptors}
+                onClear={clearFilters}
+              />
+              <FilterChips
+                chips={chipsFor(filterDescriptors)}
+                onClear={clearFilters}
+              />
+            </div>
+          ) : null
+        }
+        query={{ data: listed, isPending, isError, refetch }}
         loading="Cargando certificados..."
         error={{
           icon: <CertificateIcon className="size-6" />,
@@ -102,6 +141,13 @@ export function CertificatesContent() {
           description:
             "Importa el archivo .p12 o .pfx de tu certificado digital para poder firmar documentos con él.",
           action: importButton,
+        }}
+        hasActiveFilters={filtering}
+        filteredEmpty={{
+          icon: <CertificateIcon className="size-6" />,
+          title: "Ningún certificado coincide con la búsqueda",
+          description: "Prueba con otro nombre, titular, NIF/NIE o emisor.",
+          onClear: clearFilters,
         }}
       >
         {(data) => (
