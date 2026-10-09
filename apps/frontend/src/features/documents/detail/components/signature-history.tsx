@@ -3,7 +3,10 @@ import {
   SoftCardList,
   SoftCardListItem,
 } from "@/components/shared/data-display/soft-card-list"
-import type { SignatureRecord } from "@/features/documents/shared"
+import {
+  type SignatureRecord,
+  timestampLine,
+} from "@/features/documents/shared"
 import { formatDateTime, formatPages } from "@/lib/format"
 
 function placementLabel(record: SignatureRecord) {
@@ -11,9 +14,22 @@ function placementLabel(record: SignatureRecord) {
   return `Visible en página ${formatPages(record.pages)}`
 }
 
-function reasonNote(record: SignatureRecord) {
+function reasonLine(record: SignatureRecord) {
   if (!record.reason) return null
   return `Motivo: ${record.reason}`
+}
+
+/** The timestamp and the reason, one per line; null when neither is set. */
+function signatureNote(record: SignatureRecord) {
+  const lines = [timestampLine(record), reasonLine(record)].filter(
+    (line) => line !== null
+  )
+  if (lines.length === 0) return null
+  return lines.map((line) => (
+    <span key={line} className="block">
+      {line}
+    </span>
+  ))
 }
 
 /** The document's signature records, newest first. */
@@ -40,7 +56,7 @@ export function SignatureHistory({ records }: { records: SignatureRecord[] }) {
               · v{record.versionNumber} · {placementLabel(record)}
             </>
           }
-          note={reasonNote(record)}
+          note={signatureNote(record)}
         />
       ))}
     </SoftCardList>

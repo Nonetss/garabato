@@ -75,6 +75,10 @@ export type SignatureRecord = {
   sha256Before: string
   sha256After: string
   ipAddress: string | null
+  /** Time the TSA asserted (PAdES B-T); null for a B-B signature. */
+  timestampedAt: string | null
+  /** Name of the TSA that issued the timestamp; null for B-B. */
+  timestampAuthority: string | null
 }
 
 export type DocumentDetail = DocumentSummary & {

@@ -74,4 +74,6 @@ export {
   folderIconRef,
   folderPathLabel,
   pathOf,
+  timestampDetail,
+  timestampLine,
 } from "@/features/documents/shared/public"
