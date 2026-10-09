@@ -95,7 +95,7 @@ DATABASE_URL='postgresql://user:password@db.example.com:5432/garabato'
 
 | Volume | Holds |
 | --- | --- |
-| `db_data` | Users, certificates (encrypted), the document library, versions and the signature log. |
+| `db_data` | Users, certificates (encrypted), the document library, versions, the signature records and the traces. |
 | `minio_data` | The encrypted PDFs, when you use the bundled MinIO. |
 | `loki_data` | The activity log shown at `/admin/logs`, kept for 30 days. |
 

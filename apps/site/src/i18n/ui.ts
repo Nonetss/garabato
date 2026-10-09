@@ -77,9 +77,9 @@ const en = {
         alt: "The certificates page: three certificates with holder, tax id, issuer and validity bar",
       },
       signatures: {
-        title: "A log of every signature.",
-        body: "Every signature with its document, certificate, version, placement and hashes, filterable by certificate, document name and dates.",
-        alt: "The signature log: one row per signature with document, certificate, date, version and placement",
+        title: "A trace of everything you do.",
+        body: "Every signature with its document, certificate, version, placement and hashes, next to every import, upload, merge, page edit, download, rename, move and deletion, filterable by type, certificate, name and dates.",
+        alt: "The traces page: one row per action with its type, document or certificate, date and detail",
       },
     } satisfies Record<
       TourStopId,
@@ -170,7 +170,7 @@ const en = {
       },
       {
         term: "Nothing is overwritten.",
-        text: "A signature produces a new version of the document and a record in the signature log. Earlier versions stay downloadable, and another user's documents and certificates answer as not found.",
+        text: "A signature produces a new version of the document and a signature record, listed in the traces. Earlier versions stay downloadable, and another user's documents and certificates answer as not found.",
       },
     ],
     docsLink: "Read the architecture docs",
@@ -273,9 +273,9 @@ const es: Dictionary = {
         alt: "La página de certificados: tres certificados con titular, NIF, emisor y barra de validez",
       },
       signatures: {
-        title: "Un registro de cada firma.",
-        body: "Todas las firmas con su documento, certificado, versión, posición y hashes, filtrables por certificado, nombre del documento y fechas.",
-        alt: "El registro de firmas: una fila por firma con documento, certificado, fecha, versión y posición",
+        title: "Una traza de todo lo que haces.",
+        body: "Todas las firmas con su documento, certificado, versión, posición y hashes, junto a cada importación, subida, unión, edición de páginas, descarga, renombrado, movimiento y borrado, filtrables por tipo, certificado, nombre y fechas.",
+        alt: "La página de trazas: una fila por acción con su tipo, documento o certificado, fecha y detalle",
       },
     },
     dashboardAlt:

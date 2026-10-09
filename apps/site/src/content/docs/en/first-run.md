@@ -25,11 +25,11 @@ In the viewer, pick the certificate you will sign with, then choose the kind of 
 
 Add an optional **Motivo** (reason) and **Lugar** (place), enter the certificate password if it is not remembered, and sign.
 
-The signature is a PAdES baseline signature (`ETSI.CAdES.detached`, SHA-256) that embeds the issuer chain, so validators can build the certificate path. If the deployment sets a time-stamping authority (`TSA_URL`), it also carries a timestamp that proves when it was signed (B-T), and the history and the signature log show it.
+The signature is a PAdES baseline signature (`ETSI.CAdES.detached`, SHA-256) that embeds the issuer chain, so validators can build the certificate path. If the deployment sets a time-stamping authority (`TSA_URL`), it also carries a timestamp that proves when it was signed (B-T), and the history and the traces show it.
 
 ## 4. Download and keep track
 
-Every signature creates a **new version** of the document; earlier versions stay available under **Versiones** and each one can be downloaded. The viewer lists who signed with which certificate, and **Firmas** (`/signatures`) keeps a log of every signature, filterable by certificate, document name and dates.
+Every signature creates a **new version** of the document; earlier versions stay available under **Versiones** and each one can be downloaded. The viewer lists who signed with which certificate, and **Trazas** (`/traces`) keeps every signature next to every other action on documents and certificates (imports, uploads, merges, page edits, downloads, renames, moves and deletions), filterable by type, certificate, name and dates.
 
 Sign again with another certificate and the new signature is added on top of the previous ones, in a new version.
 

@@ -77,12 +77,14 @@ their validity at a glance.
   <img alt="The certificates page: three certificates with holder, tax id, issuer and validity bar" src="doc/screenshots/certificates.webp">
 </picture>
 
-**The signature log** lists every signature with its certificate, version and
-placement, filterable by certificate, document name and dates.
+**The traces** list everything done with documents and certificates: every
+signature with its certificate, version and placement, plus imports, uploads,
+merges, page edits, downloads, renames, moves and deletions, filterable by
+type, certificate, name and dates.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/signatures-dark.webp">
-  <img alt="The signature log: one row per signature with document, certificate, date, version and placement" src="doc/screenshots/signatures.webp">
+  <img alt="The traces page: one row per action with its type, document or certificate, date and detail" src="doc/screenshots/signatures.webp">
 </picture>
 
 **Light, dark or system theme, and mobile.** The captures above follow your
@@ -133,8 +135,8 @@ a phone.
   that places the visible signature, edits the pages (reorder, rotate,
   remove) into a new version, versions labelled by origin and a signature
   history (`/documents/[id]`), and digital certificates stored encrypted
-  (`/certificates`), and a log of every signature with its certificate,
-  hashes and filters (`/signatures`). The home page (`/`) is a drop zone that
+  (`/certificates`), and a trail of every signature and every action on
+  documents and certificates, with hashes and filters (`/traces`). The home page (`/`) is a drop zone that
   opens the document ready to sign
 - **Astro + TailwindCSS**: SSR frontend with React islands and shadcn/ui (`base-nova` on Base UI), light/dark/system theme
 - **Hono + oRPC**: type-safe RPC and OpenAPI endpoints (`/rpc/v1`, `/api/v1`), versioned routing, CSRF protection, admin-only API docs at `/scalar`
@@ -157,7 +159,7 @@ Every page except login and signup requires a session.
 | `/` | Drop a PDF and open it ready to sign |
 | `/documents`, `/documents/[id]` | The library (folders, tags, pins, search, multi-selection, merge into one PDF), then the viewer: edit the pages, place the signature, sign, versions and signature history |
 | `/certificates` | Import and keep the digital certificates used to sign |
-| `/signatures` | The signature log: every signature, filtered by certificate, document name and dates, with each record's full detail |
+| `/traces` | The trail: every signature, certificate import, upload, merge, page edit, download, rename, move and deletion, filtered by type, certificate, name and dates, with each entry's full detail |
 | `/login`, `/signup` | Sign in and create an account (email/password, plus OIDC when configured) |
 | `/me` | The signed-in user's account: name, email, role, changing the name and password |
 | `/config/profile`, `/config/appearance` | Profile settings and theme |

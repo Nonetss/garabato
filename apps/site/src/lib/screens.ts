@@ -53,7 +53,7 @@ export const tourScreens: (Screen & { id: TourStopId })[] = [
   },
   {
     id: "signatures",
-    route: "/signatures",
+    route: "/traces",
     image: signatures,
     dark: signaturesDark,
   },

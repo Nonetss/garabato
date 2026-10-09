@@ -11,7 +11,7 @@ Garabato is a monorepo with two apps behind a Caddy gateway, plus PostgreSQL and
 | Gateway | Caddy | `80` (published as `FRONTEND_PORT`) | Public HTTP entry point. The only place that maps paths to apps. |
 | Frontend | Astro SSR, React | `4321` (internal) | The web interface. |
 | Backend | Bun, Hono, oRPC, Better Auth, Drizzle | `3000` (internal) | Authentication, the API, signing. Owns the database and the object store. |
-| PostgreSQL | PostgreSQL 17 | `5432` (internal) | Users, certificates, the library, versions and the signature log. |
+| PostgreSQL | PostgreSQL 17 | `5432` (internal) | Users, certificates, the library, versions, the signature records and the traces. |
 | MinIO | S3-compatible | `9000` (internal only, nothing published) | The encrypted PDFs. Optional: any external S3-compatible store works. |
 | Loki | Grafana Loki | `3100` (internal) | Optional activity log, browsable at `/admin/logs`. |
 

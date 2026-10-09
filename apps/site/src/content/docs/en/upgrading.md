@@ -31,7 +31,7 @@ Three things together make an installation. Back them up at the same time, so th
 
 | What | Where | Why |
 | --- | --- | --- |
-| The database | the `db_data` volume, or your external PostgreSQL | Users, certificates, the library, versions and the signature log. |
+| The database | the `db_data` volume, or your external PostgreSQL | Users, certificates, the library, versions, the signature records and the traces. |
 | The documents | the `minio_data` volume, or your bucket | The encrypted PDFs of every version. |
 | `.env` | next to `compose.prod.yml` | Above all `CERTIFICATE_ENCRYPTION_KEY`. |
 

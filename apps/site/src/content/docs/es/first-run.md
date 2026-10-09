@@ -25,11 +25,11 @@ En el visor, elige el certificado con el que vas a firmar y el tipo de firma:
 
 Añade si quieres un **Motivo** y un **Lugar**, escribe la contraseña del certificado si no está recordada y firma.
 
-La firma es PAdES básica (`ETSI.CAdES.detached`, SHA-256) e incluye la cadena del emisor, para que los validadores puedan construir la ruta de certificación. Si el despliegue define una autoridad de sellado de tiempo (`TSA_URL`), lleva además un sello que demuestra cuándo se firmó (B-T), y el historial y el registro de firmas lo muestran.
+La firma es PAdES básica (`ETSI.CAdES.detached`, SHA-256) e incluye la cadena del emisor, para que los validadores puedan construir la ruta de certificación. Si el despliegue define una autoridad de sellado de tiempo (`TSA_URL`), lleva además un sello que demuestra cuándo se firmó (B-T), y el historial y las trazas lo muestran.
 
 ## 4. Descarga y sigue el rastro
 
-Cada firma crea una **nueva versión** del documento; las anteriores siguen disponibles en **Versiones** y todas se pueden descargar. El visor indica quién firmó y con qué certificado, y **Firmas** (`/signatures`) guarda el registro de todas las firmas, filtrable por certificado, nombre del documento y fechas.
+Cada firma crea una **nueva versión** del documento; las anteriores siguen disponibles en **Versiones** y todas se pueden descargar. El visor indica quién firmó y con qué certificado, y **Trazas** (`/traces`) guarda todas las firmas junto al resto de acciones sobre documentos y certificados (importaciones, subidas, uniones, ediciones de páginas, descargas, renombrados, movimientos y borrados), filtrables por tipo, certificado, nombre y fechas.
 
 Si vuelves a firmar con otro certificado, la nueva firma se añade sobre las anteriores, en otra versión.
 

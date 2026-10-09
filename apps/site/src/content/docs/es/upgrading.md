@@ -31,7 +31,7 @@ Una instalación son tres cosas. Haz copia de las tres a la vez, para que encaje
 
 | Qué | Dónde | Por qué |
 | --- | --- | --- |
-| La base de datos | el volumen `db_data`, o tu PostgreSQL externo | Usuarios, certificados, la biblioteca, las versiones y el registro de firmas. |
+| La base de datos | el volumen `db_data`, o tu PostgreSQL externo | Usuarios, certificados, la biblioteca, las versiones, los registros de firma y las trazas. |
 | Los documentos | el volumen `minio_data`, o tu bucket | Los PDF cifrados de cada versión. |
 | `.env` | junto a `compose.prod.yml` | Sobre todo `CERTIFICATE_ENCRYPTION_KEY`. |
 

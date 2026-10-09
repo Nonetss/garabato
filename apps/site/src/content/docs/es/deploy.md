@@ -95,7 +95,7 @@ DATABASE_URL='postgresql://usuario:contraseña@db.example.com:5432/garabato'
 
 | Volumen | Contiene |
 | --- | --- |
-| `db_data` | Usuarios, certificados (cifrados), la biblioteca de documentos, las versiones y el registro de firmas. |
+| `db_data` | Usuarios, certificados (cifrados), la biblioteca de documentos, las versiones, los registros de firma y las trazas. |
 | `minio_data` | Los PDF cifrados, si usas el MinIO incluido. |
 | `loki_data` | El registro de actividad de `/admin/logs`, guardado 30 días. |
 
