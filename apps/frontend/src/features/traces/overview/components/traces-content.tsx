@@ -5,7 +5,6 @@ const DocumentIcon = getIcon("navigation", "documents")
 
 import { InfiniteScrollSentinel } from "@/components/shared/data-display/infinite-scroll-sentinel"
 import { HeroCount } from "@/components/shared/layout/page-hero"
-import { EntityList } from "@/components/shared/resource/entity-list"
 import { FilterChips } from "@/components/shared/resource/filter-chips"
 import {
   chipsFor,
@@ -21,10 +20,7 @@ import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SignatureDetailSheet } from "@/features/traces/overview/components/signature-detail-sheet"
 import { TraceDetailSheet } from "@/features/traces/overview/components/trace-detail-sheet"
-import {
-  type TracesRowContext,
-  traceDefinition,
-} from "@/features/traces/overview/definitions/trace.definition"
+import { TraceTimeline } from "@/features/traces/overview/components/trace-timeline"
 import { useTraces } from "@/features/traces/overview/hooks/use-traces"
 import {
   ALL_CERTIFICATES,
@@ -165,14 +161,12 @@ export function TracesContent() {
     })
   }
 
-  const rowContext: TracesRowContext = {
-    onOpen: (entry) => {
-      if (entry.type === "document.signed") {
-        signatureDetail.open(entry.signature)
-        return
-      }
-      traceDetail.open(entry)
-    },
+  const openEntry = (entry: TrailEntry) => {
+    if (entry.type === "document.signed") {
+      signatureDetail.open(entry.signature)
+      return
+    }
+    traceDetail.open(entry)
   }
 
   return (
@@ -228,11 +222,7 @@ export function TracesContent() {
       >
         {(data) => (
           <div>
-            <EntityList
-              items={data}
-              context={rowContext}
-              definition={traceDefinition}
-            />
+            <TraceTimeline entries={data} onOpen={openEntry} />
             <InfiniteScrollSentinel
               sentinelRef={sentinelRef}
               hasNextPage={hasNextPage}

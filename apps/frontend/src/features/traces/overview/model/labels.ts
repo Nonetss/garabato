@@ -7,6 +7,7 @@ import type {
   TrailEntry,
   TrailType,
 } from "@/features/traces/overview/model/types"
+import { getDateBucketLabel } from "@/lib/format"
 
 /** The Spanish name of each entry type. */
 export const TRAIL_TYPE_LABELS: Record<TrailType, string> = {
@@ -43,29 +44,80 @@ export function traceSubject(entry: TrailEntry) {
   return names.join(" · ")
 }
 
-function versionLabel(entry: TrailEntry) {
-  if (entry.version === null) return ""
-  return `v${entry.version.number}`
+function versionNumber(entry: TrailEntry) {
+  if (entry.version === null) return "?"
+  return String(entry.version.number)
 }
 
-function documentCount(count: number) {
-  if (count === 1) return "1 documento"
-  return `${count} documentos`
+// "a.pdf, b.pdf y c.pdf"; past three names, "a.pdf, b.pdf y 3 más".
+function namesList(names: string[]) {
+  if (names.length <= 3) {
+    const last = names.at(-1)
+    if (names.length < 2 || last === undefined) return names.join("")
+    return `${names.slice(0, -1).join(", ")} y ${last}`
+  }
+  return `${names.slice(0, 2).join(", ")} y ${names.length - 2} más`
 }
 
-/** One line on what the entry changed: names, folders, version, placement. */
-export function traceSummary(entry: TrailEntry) {
+function certificateAlias(entry: TrailEntry) {
+  if (entry.certificate === null) return "un certificado"
+  return `«${entry.certificate.alias}»`
+}
+
+/** One sentence on what happened, for the timeline. */
+export function traceDescription(entry: TrailEntry) {
   switch (entry.type) {
-    case "certificate.renamed":
+    case "document.signed":
+      return `Firmado con ${certificateAlias(entry)} · v${entry.signature.versionNumber} · ${placementLabel(entry.signature)}`
+    case "document.uploaded":
+      return "Subido como versión 1"
+    case "document.merged":
+      return `Unión de ${namesList(entry.details.sources.map((source) => source.name))}`
+    case "document.pagesEdited":
+      return `Páginas reordenadas, giradas o quitadas en la versión ${versionNumber(entry)}`
+    case "document.downloaded":
+      return `Descargada la versión ${versionNumber(entry)}`
     case "document.renamed":
+    case "certificate.renamed":
       return `${entry.details.from} → ${entry.details.to}`
     case "document.moved":
       return `${folderLabel(entry.details.from)} → ${folderLabel(entry.details.to)}`
-    case "document.merged":
-      return documentCount(entry.details.sources.length)
-    case "document.signed":
-      return `v${entry.signature.versionNumber} · ${placementLabel(entry.signature)}`
-    default:
-      return versionLabel(entry)
+    case "document.deleted":
+      return "Borrado junto con sus versiones; sus firmas siguen registradas"
+    case "certificate.imported":
+      return entry.certificate?.holder ?? ""
+    case "certificate.passwordRemembered":
+      return "La contraseña queda guardada cifrada para firmar sin escribirla"
+    case "certificate.passwordForgotten":
+      return "Se borró la contraseña guardada"
+    case "certificate.deleted":
+      return "Se borraron el archivo y la contraseña; sus firmas siguen registradas"
   }
+}
+
+/** How strongly the timeline marks the entry: signatures stand out,
+ *  deletions read as destructive. */
+export function traceTone(
+  type: TrailType
+): "primary" | "destructive" | "muted" {
+  if (type === "document.signed") return "primary"
+  if (type === "document.deleted" || type === "certificate.deleted") {
+    return "destructive"
+  }
+  return "muted"
+}
+
+export type TraceGroup = { label: string; entries: TrailEntry[] }
+
+/** Splits the trail (newest first) into recency groups: "Hoy", "Esta
+ *  semana", "Este mes"… */
+export function groupByRecency(entries: TrailEntry[]): TraceGroup[] {
+  const groups: TraceGroup[] = []
+  for (const entry of entries) {
+    const label = getDateBucketLabel(entry.occurredAt)
+    const last = groups.at(-1)
+    if (last?.label === label) last.entries.push(entry)
+    else groups.push({ label, entries: [entry] })
+  }
+  return groups
 }

@@ -16,6 +16,7 @@ import {
   formatFileSize,
   formatPages,
   formatRelativeDay,
+  formatRelativeTime,
   getDateBucketLabel,
 } from "@/lib/format"
 
@@ -115,5 +116,28 @@ describe("formatPages", () => {
     expect(formatPages([2, 0])).toBe("1, 3")
     expect(formatPages([0, 1])).toBe("1, 2")
     expect(formatPages([2, 1, 0])).toBe("1–3")
+  })
+})
+
+describe("formatRelativeTime", () => {
+  test("counts minutes and hours within the last day", () => {
+    expect(formatRelativeTime("2026-03-15T11:59:40.000Z")).toBe(
+      "hace un momento"
+    )
+    expect(formatRelativeTime("2026-03-15T11:55:00.000Z")).toBe(
+      "hace 5 minutos"
+    )
+    expect(formatRelativeTime("2026-03-14T16:00:00.000Z")).toBe("hace 20 horas")
+  })
+
+  test("counts calendar days within the week", () => {
+    expect(formatRelativeTime("2026-03-14T06:00:00.000Z")).toBe("ayer")
+    expect(formatRelativeTime("2026-03-13T12:00:00.000Z")).toBe("anteayer")
+    expect(formatRelativeTime("2026-03-10T12:00:00.000Z")).toBe("hace 5 días")
+  })
+
+  test("falls back to the date after a week, and a dash when invalid", () => {
+    expect(formatRelativeTime("2026-03-01T12:00:00.000Z")).toBe("1 mar 2026")
+    expect(formatRelativeTime("not a date")).toBe("—")
   })
 })

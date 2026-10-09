@@ -98,6 +98,35 @@ export function formatRelativeDay(date: string | Date): string {
   return d.toLocaleDateString("es-ES")
 }
 
+const relativeTime = new Intl.RelativeTimeFormat("es", { numeric: "auto" })
+
+/**
+ * Relative moment for timelines: "hace un momento", "hace 5 minutos",
+ * "hace 20 horas" within the last day, then calendar days ("ayer",
+ * "anteayer", "hace 3 días") within the week, then `formatDate`.
+ *
+ * Returns "—" for invalid input so callers can render it directly.
+ */
+export function formatRelativeTime(date: string | Date): string {
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return "—"
+
+  const now = new Date()
+  const minutes = Math.floor((now.getTime() - d.getTime()) / 60_000)
+  if (minutes < 1) return "hace un momento"
+  if (minutes < 60) return relativeTime.format(-minutes, "minute")
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return relativeTime.format(-hours, "hour")
+
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  const compare = new Date(d)
+  compare.setHours(0, 0, 0, 0)
+  const days = Math.round((today.getTime() - compare.getTime()) / 86_400_000)
+  if (days < 7) return relativeTime.format(-days, "day")
+  return formatDate(d)
+}
+
 export function formatDayHeader(day: string): string {
   return day.charAt(0).toUpperCase() + day.slice(1)
 }

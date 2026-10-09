@@ -1,9 +1,18 @@
-import { describe, expect, test } from "bun:test"
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  setSystemTime,
+  test,
+} from "bun:test"
 import {
   folderLabel,
+  groupByRecency,
   TRAIL_TYPE_LABELS,
+  traceDescription,
   traceSubject,
-  traceSummary,
+  traceTone,
 } from "@/features/traces/overview/model/labels"
 import type { TrailEntry } from "@/features/traces/overview/model/types"
 
@@ -51,10 +60,10 @@ describe("traceSubject", () => {
   })
 })
 
-describe("traceSummary", () => {
+describe("traceDescription", () => {
   test("shows both names of a rename", () => {
     expect(
-      traceSummary({
+      traceDescription({
         ...common,
         type: "document.renamed",
         details: { from: "borrador.pdf", to: "contrato.pdf" },
@@ -64,7 +73,7 @@ describe("traceSummary", () => {
 
   test("shows the folders of a move, the root as Biblioteca", () => {
     expect(
-      traceSummary({
+      traceDescription({
         ...common,
         type: "document.moved",
         details: { from: { id: FOLDER_ID, name: "2025" }, to: null },
@@ -72,9 +81,9 @@ describe("traceSummary", () => {
     ).toBe("2025 → Biblioteca")
   })
 
-  test("counts the merged documents", () => {
+  test("names the merged documents", () => {
     expect(
-      traceSummary({
+      traceDescription({
         ...common,
         type: "document.merged",
         details: {
@@ -84,15 +93,19 @@ describe("traceSummary", () => {
           ],
         },
       })
-    ).toBe("2 documentos")
+    ).toBe("Unión de a.pdf y b.pdf")
   })
 
-  test("shows the version of a download and nothing without one", () => {
+  test("names the version of a download and what a deletion keeps", () => {
     expect(
-      traceSummary({ ...common, type: "document.downloaded", details: null })
-    ).toBe("v3")
+      traceDescription({
+        ...common,
+        type: "document.downloaded",
+        details: null,
+      })
+    ).toBe("Descargada la versión 3")
     expect(
-      traceSummary({
+      traceDescription({
         ...common,
         type: "certificate.deleted",
         details: null,
@@ -100,12 +113,14 @@ describe("traceSummary", () => {
         certificate,
         version: null,
       })
-    ).toBe("")
+    ).toBe(
+      "Se borraron el archivo y la contraseña; sus firmas siguen registradas"
+    )
   })
 
-  test("shows the version and placement of a signature", () => {
+  test("names the certificate, version and placement of a signature", () => {
     expect(
-      traceSummary({
+      traceDescription({
         ...common,
         type: "document.signed",
         details: null,
@@ -140,7 +155,7 @@ describe("traceSummary", () => {
           certificateNotAfter: "2027-01-01T00:00:00.000Z",
         },
       })
-    ).toBe("v2 · Visible en páginas 1, 3")
+    ).toBe("Firmado con «FNMT personal» · v2 · Visible en páginas 1, 3")
   })
 })
 
@@ -154,5 +169,42 @@ describe("labels", () => {
       "Certificado importado"
     )
     expect(TRAIL_TYPE_LABELS["document.signed"]).toBe("Documento firmado")
+  })
+})
+
+describe("traceTone", () => {
+  test("marks signatures and deletions", () => {
+    expect(traceTone("document.signed")).toBe("primary")
+    expect(traceTone("certificate.deleted")).toBe("destructive")
+    expect(traceTone("document.downloaded")).toBe("muted")
+  })
+})
+
+describe("groupByRecency", () => {
+  beforeEach(() => setSystemTime(new Date("2026-10-09T12:00:00.000Z")))
+  afterEach(() => setSystemTime())
+
+  test("keeps the order and splits it into recency groups", () => {
+    const entry = (id: string, occurredAt: string): TrailEntry => ({
+      ...common,
+      id,
+      occurredAt,
+      type: "document.uploaded",
+      details: null,
+    })
+    const groups = groupByRecency([
+      entry("a", "2026-10-09T10:00:00.000Z"),
+      entry("b", "2026-10-08T10:00:00.000Z"),
+      entry("c", "2026-10-07T10:00:00.000Z"),
+      entry("d", "2026-09-20T10:00:00.000Z"),
+    ])
+
+    expect(
+      groups.map((group) => [group.label, group.entries.map((item) => item.id)])
+    ).toEqual([
+      ["Hoy", ["a"]],
+      ["Esta semana", ["b", "c"]],
+      ["Este mes", ["d"]],
+    ])
   })
 })
