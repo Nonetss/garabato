@@ -21,10 +21,27 @@ import { cn } from "@/lib/utils"
  * Container variants: the fields follow the panel's own width, not the
  * viewport.
  */
-const columnsClass: Record<1 | 2 | 3, string> = {
+const columnsClass: Record<FilterColumns, string> = {
   1: "grid-cols-1",
   2: "grid-cols-1 @lg:grid-cols-2",
   3: "grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3",
+  4: "grid-cols-1 @lg:grid-cols-2 @3xl:grid-cols-3 @5xl:grid-cols-4",
+}
+
+/** The most fields per row a filter grid reaches at its widest. */
+export type FilterColumns = 1 | 2 | 3 | 4
+
+const COLUMN_STEPS: FilterColumns[] = [1, 2, 3, 4]
+
+// Never more columns than fields, so a short form doesn't leave empty cells.
+function effectiveColumns(
+  columns: FilterColumns,
+  fieldCount: number
+): FilterColumns {
+  const fitting = COLUMN_STEPS.filter(
+    (step) => step <= columns && step <= fieldCount
+  )
+  return fitting.at(-1) ?? 1
 }
 
 /** One labelled control inside a `CollapsibleFilters` grid. */
@@ -67,7 +84,7 @@ export function CollapsibleFilters({
   activeCount?: number
   onClear?: () => void
   clearLabel?: string
-  columns?: 1 | 2 | 3
+  columns?: FilterColumns
   count?: ReactNode
   defaultOpen?: boolean
   children: ReactNode
@@ -75,8 +92,7 @@ export function CollapsibleFilters({
 }) {
   const [expanded, setExpanded] = useState(defaultOpen)
   const hasActive = activeCount > 0
-  const fieldCount = Math.min(3, Math.max(1, Children.count(children)))
-  const effectiveColumns = Math.min(columns, fieldCount) as 1 | 2 | 3
+  const gridColumns = effectiveColumns(columns, Children.count(children))
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -103,10 +119,7 @@ export function CollapsibleFilters({
           <AccordionContent className="pb-2">
             <div className="@container space-y-3">
               <div
-                className={cn(
-                  "grid min-w-0 gap-3",
-                  columnsClass[effectiveColumns]
-                )}
+                className={cn("grid min-w-0 gap-3", columnsClass[gridColumns])}
               >
                 {children}
               </div>

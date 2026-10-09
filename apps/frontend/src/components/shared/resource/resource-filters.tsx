@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import {
   CollapsibleFilters,
+  type FilterColumns,
   FilterField,
 } from "@/components/shared/form/collapsible-filters"
 import type { SuggestInputItem } from "@/components/shared/form/suggest-input"
@@ -738,7 +739,7 @@ export function ResourceFilters({
   onClear?: () => void
   count?: ReactNode
   title?: string
-  columns?: 1 | 2 | 3
+  columns?: FilterColumns
   defaultOpen?: boolean
   className?: string
   /** Rendered in the mobile action bar next to "Filtros". */
