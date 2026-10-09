@@ -18,6 +18,7 @@ import {
   optionalText,
 } from "@/features/certificates/overview/model/form"
 import { useDialogForm } from "@/hooks/use-dialog-form"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { useOnOpen } from "@/hooks/use-on-open"
 
 /** Mirrors the API cap; real PKCS#12 files are 5–20 KiB. */
@@ -71,6 +72,10 @@ export function ImportCertificateDialog({
   const importCertificate = useCertificateImport()
   const form = useDialogForm(open, emptyValues)
   const [file, setFile] = useState<File | null>(null)
+  const fine = useFinePointer()
+  const prompt = fine
+    ? certificateLabels.filePrompt
+    : certificateLabels.filePromptTouch
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   useOnOpen(open, () => {
@@ -135,7 +140,7 @@ export function ImportCertificateDialog({
           accept=".p12,.pfx,application/x-pkcs12"
           file={file}
           onFileChange={handleFileChange}
-          prompt={certificateLabels.filePrompt}
+          prompt={prompt}
           requirements={certificateLabels.fileRequirements}
           fileIcon={CertificateIcon}
           disabled={importCertificate.isPending}

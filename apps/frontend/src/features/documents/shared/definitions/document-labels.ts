@@ -31,11 +31,13 @@ export const documentLabels = {
     "El PDF se guarda cifrado. Debe ocupar como máximo 20 MB y no estar protegido con contraseña.",
   file: "Archivo PDF",
   filePrompt: "Arrastra el PDF aquí o haz clic para elegirlo",
+  filePromptTouch: "Toca para elegir el PDF",
   fileRequirements: "PDF · hasta 20 MB · sin contraseña",
   fileRequired: "Elige un archivo PDF",
   fileTooLarge: "El PDF ocupa más de 20 MB",
   fileNotPdf: "Ese archivo no es un PDF",
   dropTitle: "Suelta un PDF para firmarlo",
+  dropTitleTouch: "Elige un PDF para firmarlo",
   dropActive: "Suéltalo para subirlo",
   dropDescription:
     "Hasta 20 MB y sin contraseña. Se guarda cifrado y se abre listo para firmar.",

@@ -12,6 +12,7 @@ import {
   pdfFileProblem,
   useDocumentUpload,
 } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { useOnOpen } from "@/hooks/use-on-open"
 
 const FILE_INPUT_ID = "document-upload-file"
@@ -35,6 +36,10 @@ export function UploadDocumentDialog({
 }: UploadDocumentDialogProps) {
   const upload = useDocumentUpload()
   const [file, setFile] = useState<File | null>(null)
+  const fine = useFinePointer()
+  const prompt = fine
+    ? documentLabels.filePrompt
+    : documentLabels.filePromptTouch
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   useOnOpen(open, () => {
@@ -95,7 +100,7 @@ export function UploadDocumentDialog({
           accept=".pdf,application/pdf"
           file={file}
           onFileChange={handleFileChange}
-          prompt={documentLabels.filePrompt}
+          prompt={prompt}
           requirements={documentLabels.fileRequirements}
           fileIcon={DocumentIcon}
           disabled={upload.isPending}

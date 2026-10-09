@@ -97,15 +97,17 @@ function DocumentCard({
           className="transition-transform duration-300 ease-out group-hover:-translate-y-1"
         />
       </AppLink>
-      {/* Shown on hover and focus, and always once something is selected. */}
+      {/* Shown on hover and focus, and always once something is selected.
+          Touch has no hover, so there it always shows, with a 44px hit area
+          that doesn't open the sheet by a near miss. */}
       <Checkbox
         checked={selected}
         onCheckedChange={() => selection.onToggle(document)}
         aria-label={documentLabels.select(document.name)}
         className={cn(
-          "absolute top-2.5 left-2.5 size-5 bg-background transition-opacity",
+          "absolute top-2.5 left-2.5 size-5 bg-background transition-opacity pointer-coarse:after:absolute pointer-coarse:after:-inset-3",
           !(selected || selection.active) &&
-            "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100"
+            "opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
         )}
       />
 

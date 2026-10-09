@@ -14,8 +14,9 @@ import { IconButton } from "@/components/shared/form/icon-button"
 import { Button } from "@/components/ui/button"
 import { documentLabels } from "@/features/documents/shared"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { cn } from "@/lib/utils"
 
-// Icon-only (named with `Hint`) on narrow viewports, labelled from `md`.
+// Icon-only on narrow viewports, a 44px cell each, labelled from `md`.
 function BarAction({
   label,
   Icon,
@@ -35,7 +36,8 @@ function BarAction({
         label={label}
         icon={Icon}
         onClick={onClick}
-        className={className}
+        size="icon"
+        className={cn("h-11 w-full", className)}
       />
     )
   }
@@ -56,8 +58,9 @@ type BarActionEntry = {
 
 /**
  * The actions for the selected documents, fixed to the bottom edge while a
- * selection exists. On narrow viewports it takes the filter bar's place
- * and its buttons collapse to icons named with `Hint`.
+ * selection exists. On narrow viewports it takes the filter bar's place:
+ * the count on one line, the actions below as an even row of 44px icon
+ * cells (up to seven never fit beside the count on a phone).
  */
 export function SelectionBar({
   count,
@@ -112,13 +115,28 @@ export function SelectionBar({
     })
   }
 
+  // A full-width row of equal cells below the count on narrow viewports.
+  const actionsClass = compact
+    ? "grid w-full auto-cols-fr grid-flow-col"
+    : "ml-auto flex items-center gap-1"
+
+  const deleteAction = (
+    <BarAction
+      label={documentLabels.delete}
+      Icon={DeleteIcon}
+      onClick={onDelete}
+      compact={compact}
+      className="text-destructive hover:text-destructive"
+    />
+  )
+
   return (
     <div
       role="toolbar"
       aria-label={documentLabels.selectedCount(count)}
-      className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:inset-x-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:rounded-lg md:border md:pb-3 md:shadow-lg"
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pt-2 pr-[max(1rem,env(safe-area-inset-right))] pb-[calc(0.5rem+env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] backdrop-blur-sm md:inset-x-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 md:rounded-lg md:border md:px-4 md:pt-3 md:pb-3 md:shadow-lg"
     >
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1 md:flex-nowrap">
         <IconButton
           label={documentLabels.clearSelection}
           icon={CloseIcon}
@@ -131,7 +149,7 @@ export function SelectionBar({
         >
           {documentLabels.selectedCount(count)}
         </Text>
-        <div className="ml-auto flex items-center gap-1">
+        <div className={actionsClass}>
           {actions.map(({ key, label, Icon, onClick }) => (
             <BarAction
               key={key}
@@ -141,13 +159,7 @@ export function SelectionBar({
               compact={compact}
             />
           ))}
-          <BarAction
-            label={documentLabels.delete}
-            Icon={DeleteIcon}
-            onClick={onDelete}
-            compact={compact}
-            className="text-destructive hover:text-destructive"
-          />
+          {deleteAction}
         </div>
       </div>
     </div>

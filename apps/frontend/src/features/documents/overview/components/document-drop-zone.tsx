@@ -12,6 +12,7 @@ import {
   pdfFileProblem,
   useDocumentUpload,
 } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { getAppSurface } from "@/lib/app-surfaces"
 import { navigate } from "@/lib/navigate"
 import { cn } from "@/lib/utils"
@@ -26,6 +27,12 @@ function problemMessage(problem: PdfFileProblem) {
 function errorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message
   return "Ha ocurrido un error inesperado"
+}
+
+// A phone has nothing to drop: there the sheet asks to pick a file.
+function idleTitle(fine: boolean) {
+  if (fine) return documentLabels.dropTitle
+  return documentLabels.dropTitleTouch
 }
 
 /** The document's page with signing already open (`?firmar=1`). */
@@ -46,6 +53,7 @@ export function DocumentDropZone({ className }: { className?: string }) {
   const [error, setError] = useState<string | null>(null)
 
   const busy = uploadingName !== null
+  const fine = useFinePointer()
 
   const start = async (file: File | undefined) => {
     if (!file || busy) return
@@ -91,9 +99,7 @@ export function DocumentDropZone({ className }: { className?: string }) {
   }
 
   const rubricMotion = busy ? "loop" : "write"
-  const headline = dragging
-    ? documentLabels.dropActive
-    : documentLabels.dropTitle
+  const headline = dragging ? documentLabels.dropActive : idleTitle(fine)
 
   return (
     <section
@@ -108,7 +114,7 @@ export function DocumentDropZone({ className }: { className?: string }) {
     >
       <div
         className={cn(
-          "flex min-h-96 flex-1 flex-col items-center justify-center gap-6 rounded-md border-[1.5px] border-dashed px-6 py-14 text-center transition-colors duration-200",
+          "flex min-h-80 flex-1 flex-col items-center justify-center gap-6 rounded-md border-[1.5px] border-dashed px-6 py-10 text-center transition-colors duration-200 @md:min-h-96 @md:py-14",
           dragging ? "border-primary/60 bg-primary/5" : "border-border"
         )}
       >

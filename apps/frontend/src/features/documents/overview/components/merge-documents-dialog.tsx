@@ -20,6 +20,7 @@ import {
   useDocumentMerge,
 } from "@/features/documents/shared"
 import { useDialogForm } from "@/hooks/use-dialog-form"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { useOnOpen } from "@/hooks/use-on-open"
 import { cn } from "@/lib/utils"
 
@@ -45,6 +46,7 @@ function OrderRow({
   document,
   position,
   total,
+  draggable,
   dropTarget,
   onDragStart,
   onDragEnter,
@@ -55,6 +57,8 @@ function OrderRow({
   document: DocumentSummary
   position: number
   total: number
+  /** Native drag only on fine pointers; touch reorders with the buttons. */
+  draggable: boolean
   dropTarget: boolean
   onDragStart: () => void
   onDragEnter: () => void
@@ -78,18 +82,21 @@ function OrderRow({
 
   return (
     <li
-      draggable
+      draggable={draggable}
       onDragStart={handleDragStart}
       onDragEnter={onDragEnter}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragEnd={onDragEnd}
       className={cn(
-        "flex cursor-grab items-center gap-2 rounded-md border bg-card px-2 py-1.5 active:cursor-grabbing",
+        "flex items-center gap-2 rounded-md border bg-card px-2 py-1.5",
+        draggable && "cursor-grab active:cursor-grabbing",
         dropTarget && "border-primary ring-2 ring-primary/30"
       )}
     >
-      <GripIcon className="size-4 shrink-0 text-muted-foreground" />
+      {draggable ? (
+        <GripIcon className="size-4 shrink-0 text-muted-foreground" />
+      ) : null}
       <Text variant="meta" tone="muted" className="w-5 shrink-0 tabular-nums">
         {position + 1}
       </Text>
@@ -143,6 +150,7 @@ export function MergeDocumentsDialog({
   const [order, setOrder] = useState(documents)
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
+  const fine = useFinePointer()
   const form = useDialogForm(
     open,
     { name: "" },
@@ -198,6 +206,7 @@ export function MergeDocumentsDialog({
               document={document}
               position={position}
               total={order.length}
+              draggable={fine}
               dropTarget={dragFrom !== null && dragOver === position}
               onDragStart={() => setDragFrom(position)}
               onDragEnter={() => setDragOver(position)}

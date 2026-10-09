@@ -66,7 +66,7 @@ export function FormDialog<TValues extends object = never>({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "max-h-[calc(100vh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-lg",
+          "max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-lg",
           className
         )}
       >

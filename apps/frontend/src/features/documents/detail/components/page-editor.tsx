@@ -29,6 +29,7 @@ import {
   type PageRotation,
   useDocumentEditPages,
 } from "@/features/documents/shared"
+import { useFinePointer } from "@/hooks/use-fine-pointer"
 import { useOnOpen } from "@/hooks/use-on-open"
 import { cn } from "@/lib/utils"
 
@@ -114,6 +115,8 @@ interface PageTileProps {
   page: EditorPage
   position: number
   total: number
+  /** Native drag only on fine pointers; touch reorders with the buttons. */
+  draggable: boolean
   dropTarget: boolean
   onDragStart: () => void
   onDragEnter: () => void
@@ -129,6 +132,7 @@ function PageTile({
   page,
   position,
   total,
+  draggable,
   dropTarget,
   onDragStart,
   onDragEnter,
@@ -156,65 +160,75 @@ function PageTile({
   }
 
   return (
+    // A row (thumbnail beside its controls) in a narrow editor, a tile
+    // from `@md`.
     <li
-      draggable
+      draggable={draggable}
       onDragStart={handleDragStart}
       onDragEnter={onDragEnter}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragEnd={onDragEnd}
       className={cn(
-        "flex cursor-grab flex-col rounded-lg border bg-desk active:cursor-grabbing",
+        "flex rounded-lg border bg-desk @md:flex-col",
+        draggable && "cursor-grab active:cursor-grabbing",
         dropTarget && "border-primary ring-2 ring-primary/30"
       )}
     >
-      <div className={cn(page.removed && "opacity-35 grayscale")}>
+      <div
+        className={cn(
+          "w-28 shrink-0 @md:w-auto",
+          page.removed && "opacity-35 grayscale"
+        )}
+      >
         <PageThumbnail pdf={pdf} pageNumber={number} rotation={page.rotation} />
       </div>
-      <div className="flex items-center justify-between gap-2 border-t px-2 pt-1.5">
-        <Text variant="meta" className="tabular-nums">
-          {documentLabels.pageNumber(number)}
-        </Text>
-        {page.removed ? (
-          <Text variant="status" tone="destructive">
-            {documentLabels.pageRemoved}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1 border-l py-1.5 @md:gap-0 @md:border-t @md:border-l-0 @md:py-0">
+        <div className="flex items-center justify-between gap-2 px-2 @md:pt-1.5">
+          <Text variant="meta" className="tabular-nums">
+            {documentLabels.pageNumber(number)}
           </Text>
-        ) : null}
-      </div>
-      <div className="flex flex-wrap items-center gap-0.5 px-1 pb-1">
-        <IconButton
-          label={documentLabels.moveBefore}
-          accessibleLabel={label(documentLabels.moveBefore)}
-          icon={MoveBeforeIcon}
-          disabled={position === 0}
-          onClick={() => onMove(position - 1)}
-        />
-        <IconButton
-          label={documentLabels.moveAfter}
-          accessibleLabel={label(documentLabels.moveAfter)}
-          icon={MoveAfterIcon}
-          disabled={position === total - 1}
-          onClick={() => onMove(position + 1)}
-        />
-        <IconButton
-          label={documentLabels.rotateLeft}
-          accessibleLabel={label(documentLabels.rotateLeft)}
-          icon={RotateLeftIcon}
-          disabled={page.removed}
-          onClick={() => onRotate("left")}
-        />
-        <IconButton
-          label={documentLabels.rotateRight}
-          accessibleLabel={label(documentLabels.rotateRight)}
-          icon={RotateRightIcon}
-          disabled={page.removed}
-          onClick={() => onRotate("right")}
-        />
-        <RemoveToggle
-          removed={page.removed}
-          label={label}
-          onClick={onToggleRemove}
-        />
+          {page.removed ? (
+            <Text variant="status" tone="destructive">
+              {documentLabels.pageRemoved}
+            </Text>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-5 justify-items-center px-1 @md:flex @md:flex-wrap @md:items-center @md:gap-0.5 @md:pb-1">
+          <IconButton
+            label={documentLabels.moveBefore}
+            accessibleLabel={label(documentLabels.moveBefore)}
+            icon={MoveBeforeIcon}
+            disabled={position === 0}
+            onClick={() => onMove(position - 1)}
+          />
+          <IconButton
+            label={documentLabels.moveAfter}
+            accessibleLabel={label(documentLabels.moveAfter)}
+            icon={MoveAfterIcon}
+            disabled={position === total - 1}
+            onClick={() => onMove(position + 1)}
+          />
+          <IconButton
+            label={documentLabels.rotateLeft}
+            accessibleLabel={label(documentLabels.rotateLeft)}
+            icon={RotateLeftIcon}
+            disabled={page.removed}
+            onClick={() => onRotate("left")}
+          />
+          <IconButton
+            label={documentLabels.rotateRight}
+            accessibleLabel={label(documentLabels.rotateRight)}
+            icon={RotateRightIcon}
+            disabled={page.removed}
+            onClick={() => onRotate("right")}
+          />
+          <RemoveToggle
+            removed={page.removed}
+            label={label}
+            onClick={onToggleRemove}
+          />
+        </div>
       </div>
     </li>
   )
@@ -235,7 +249,7 @@ function RemoveToggle({
         label={documentLabels.restorePage}
         accessibleLabel={label(documentLabels.restorePage)}
         icon={RestoreIcon}
-        className="ml-auto"
+        className="@md:ml-auto"
         onClick={onClick}
       />
     )
@@ -245,7 +259,7 @@ function RemoveToggle({
       label={documentLabels.removePage}
       accessibleLabel={label(documentLabels.removePage)}
       icon={RemoveIcon}
-      className="ml-auto text-destructive hover:text-destructive"
+      className="text-destructive hover:text-destructive @md:ml-auto"
       onClick={onClick}
     />
   )
@@ -304,6 +318,7 @@ export function PageEditor({
   const editPages = useDocumentEditPages(documentId)
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOver, setDragOver] = useState<number | null>(null)
+  const fine = useFinePointer()
 
   useOnOpen(open, editor.reset)
 
@@ -327,7 +342,7 @@ export function PageEditor({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[calc(100vh-2rem)] flex-col gap-0 p-0 sm:max-w-5xl">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col gap-0 p-0 sm:max-w-5xl">
         <DialogHeader className="gap-1.5 border-b px-6 py-5 text-left">
           <DialogTitle>{documentLabels.editPagesTitle}</DialogTitle>
           <DialogDescription
@@ -337,8 +352,8 @@ export function PageEditor({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="@container min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          <ol className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-4 @4xl:grid-cols-5">
+        <div className="@container min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          <ol className="grid gap-3 @md:grid-cols-3 @2xl:grid-cols-4 @4xl:grid-cols-5">
             {editor.pages.map((page, position) => (
               <PageTile
                 key={page.source}
@@ -346,6 +361,7 @@ export function PageEditor({
                 page={page}
                 position={position}
                 total={editor.pages.length}
+                draggable={fine}
                 dropTarget={dragFrom !== null && dragOver === position}
                 onDragStart={() => setDragFrom(position)}
                 onDragEnter={() => setDragOver(position)}
@@ -362,7 +378,7 @@ export function PageEditor({
           </ol>
         </div>
 
-        <DialogFooter className="items-center border-t px-6 py-4 sm:justify-between">
+        <DialogFooter className="flex-col border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 space-y-1">
             <SummaryLine summary={editor.summary} />
             {editPages.error ? (
@@ -371,7 +387,7 @@ export function PageEditor({
               </Text>
             ) : null}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 *:flex-1 sm:*:flex-none">
             <Button
               type="button"
               variant="outline"
