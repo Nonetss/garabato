@@ -2,15 +2,16 @@ import { openapi } from "@orpc/openapi"
 import { protectedProcedure } from "#index"
 import { documentHandler } from "#v1/document/handler"
 import { documentInput } from "#v1/document/input"
+import { heavyDocumentProcedure } from "#v1/document/operation-limit"
 import { documentOutput } from "#v1/document/output"
 
 export const documentRouter = {
-  upload: protectedProcedure
+  upload: heavyDocumentProcedure
     .meta(
       openapi({
         summary: "Upload a PDF document",
         description:
-          "Uploads a PDF (multipart, at most 20 MiB, not password-protected) into the caller's document library as version 1, in `folderId` or the library root. It is stored encrypted in object storage.",
+          "Uploads a PDF (multipart, at most 20 MiB, not password-protected) into the caller's document library as version 1, in `folderId` or the library root. It is stored encrypted in object storage. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
         tags: ["Documents"],
         method: "POST",
         successStatus: 201,
@@ -81,12 +82,12 @@ export const documentRouter = {
       documentHandler.exportVersion({ context, input })
     ),
 
-  verifySignatures: protectedProcedure
+  verifySignatures: heavyDocumentProcedure
     .meta(
       openapi({
         summary: "Check the signatures of a document version",
         description:
-          "Checks every signature embedded in the current version, or in `versionId`, whoever made it: integrity, the CMS signature, coverage, the signer certificate's validity at the signing time (the timestamp's when present) and its chain to a trusted root (the runtime's Mozilla store plus bundled Spanish roots). Revocation is not checked. Changes nothing.",
+          "Checks every signature embedded in the current version, or in `versionId`, whoever made it: integrity, the CMS signature, coverage, the signer certificate's validity at the signing time (the timestamp's when present) and its chain to a trusted root (the runtime's Mozilla store plus bundled Spanish roots). Revocation is not checked. Changes nothing. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
         tags: ["Documents"],
         method: "GET",
       })
@@ -191,12 +192,12 @@ export const documentRouter = {
       documentHandler.setPinned({ context, input })
     ),
 
-  sign: protectedProcedure
+  sign: heavyDocumentProcedure
     .meta(
       openapi({
         summary: "Sign a document",
         description:
-          "Signs the current version with one of the caller's valid certificates (PAdES B-B, incremental update) and stores the result as the next version, with a signature record. `baseVersionId` must still be the current version, otherwise CONFLICT. The password is the one sent or, when omitted, the remembered one.",
+          "Signs the current version with one of the caller's valid certificates (PAdES B-B, incremental update) and stores the result as the next version, with a signature record. `baseVersionId` must still be the current version, otherwise CONFLICT. The password is the one sent or, when omitted, the remembered one. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
         tags: ["Documents"],
         method: "POST",
         successStatus: 201,
@@ -206,12 +207,12 @@ export const documentRouter = {
     .output(documentOutput.sign)
     .handler(({ context, input }) => documentHandler.sign({ context, input })),
 
-  editPages: protectedProcedure
+  editPages: heavyDocumentProcedure
     .meta(
       openapi({
         summary: "Edit the pages of a document",
         description:
-          "Stores the next version of one of the caller's documents with its pages reordered, rotated (degrees added clockwise) and removed as `pages` lists them, and updates the document's page count. Earlier versions are kept. `baseVersionId` must still be the current version, otherwise CONFLICT. A document with signatures, recorded or embedded, answers CONFLICT, since rewriting it would invalidate them. A list that keeps no page, names a page twice or out of range, or changes nothing answers BAD_REQUEST.",
+          "Stores the next version of one of the caller's documents with its pages reordered, rotated (degrees added clockwise) and removed as `pages` lists them, and updates the document's page count. Earlier versions are kept. `baseVersionId` must still be the current version, otherwise CONFLICT. A document with signatures, recorded or embedded, answers CONFLICT, since rewriting it would invalidate them. A list that keeps no page, names a page twice or out of range, or changes nothing answers BAD_REQUEST. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
         tags: ["Documents"],
         method: "POST",
         successStatus: 201,
@@ -223,12 +224,12 @@ export const documentRouter = {
       documentHandler.editPages({ context, input })
     ),
 
-  merge: protectedProcedure
+  merge: heavyDocumentProcedure
     .meta(
       openapi({
         summary: "Merge documents into a new one",
         description:
-          "Creates a new document, in `folderId` or the library root, holding every page of the current version of 2 to 20 of the caller's documents in the given order; its version 1 has origin `merge`. The sources are left unchanged. An unknown or deleted document answers NOT_FOUND, a repeated one or a result over 20 MiB BAD_REQUEST, and a signed one CONFLICT.",
+          "Creates a new document, in `folderId` or the library root, holding every page of the current version of 2 to 20 of the caller's documents in the given order; its version 1 has origin `merge`. The sources are left unchanged. An unknown or deleted document answers NOT_FOUND, a repeated one or a result over 20 MiB BAD_REQUEST, and a signed one CONFLICT. Shares a per-user limit with the other heavy document operations (2 at once, 30 per minute): over it answers TOO_MANY_REQUESTS.",
         tags: ["Documents"],
         method: "POST",
         successStatus: 201,

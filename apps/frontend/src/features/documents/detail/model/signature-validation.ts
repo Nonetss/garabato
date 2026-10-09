@@ -1,4 +1,5 @@
 import type { AppRouterClient } from "@nonete/api/router"
+import { ORPCError } from "@orpc/client"
 import type { StatusDotTone } from "@/components/shared/data-display/status-dot"
 
 export type SignatureValidation = Awaited<
@@ -67,4 +68,18 @@ export function signerName(report: SignatureReport) {
 export function emptyHistoryMessage(embeddedSignatures: number) {
   if (embeddedSignatures === 0) return "Este documento todavía no tiene firmas."
   return "Aún no se ha firmado en Garabato. El PDF ya traía firmas hechas fuera; su validez está más abajo."
+}
+
+const VALIDATION_FAILED_MESSAGE = "No se pudieron comprobar las firmas."
+
+/**
+ * The line shown when the check fails: the API's own message when the caller
+ * is over the heavy-operation limit (it says to wait), a generic one
+ * otherwise.
+ */
+export function validationErrorMessage(error: unknown): string {
+  if (error instanceof ORPCError && error.code === "TOO_MANY_REQUESTS") {
+    return error.message
+  }
+  return VALIDATION_FAILED_MESSAGE
 }

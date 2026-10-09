@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { ORPCError } from "@orpc/client"
 import {
   checkRows,
   checkTone,
@@ -6,6 +7,7 @@ import {
   emptyHistoryMessage,
   type SignatureReport,
   signerName,
+  validationErrorMessage,
   verdictLabel,
   verdictTone,
 } from "@/features/documents/detail/model/signature-validation"
@@ -97,5 +99,28 @@ describe("signing state with embedded signatures", () => {
       "Este documento todavía no tiene firmas."
     )
     expect(emptyHistoryMessage(1)).toContain("firmas hechas fuera")
+  })
+})
+
+describe("validationErrorMessage", () => {
+  test("shows the API message when over the operation limit", () => {
+    const error = new ORPCError("TOO_MANY_REQUESTS", {
+      message: "Espera un momento",
+    })
+
+    expect(validationErrorMessage(error)).toBe("Espera un momento")
+  })
+
+  test("falls back to a generic message for other failures", () => {
+    const error = new ORPCError("INTERNAL_SERVER_ERROR", {
+      message: "Internal Server Error",
+    })
+
+    expect(validationErrorMessage(error)).toBe(
+      "No se pudieron comprobar las firmas."
+    )
+    expect(validationErrorMessage(null)).toBe(
+      "No se pudieron comprobar las firmas."
+    )
   })
 })

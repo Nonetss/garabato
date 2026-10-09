@@ -18,6 +18,7 @@ import {
   coverageSummary,
   type SignatureReport,
   signerName,
+  validationErrorMessage,
   verdictLabel,
   verdictTone,
 } from "@/features/documents/detail/model/signature-validation"
@@ -152,7 +153,7 @@ function ValidationBody({
   documentId: string
   versionId: string
 }) {
-  const { data, isPending, isError, refetch } = useSignatureValidation(
+  const { data, error, isPending, isError, refetch } = useSignatureValidation(
     documentId,
     versionId
   )
@@ -160,7 +161,7 @@ function ValidationBody({
     return (
       <div className="flex items-center justify-between gap-3">
         <Text as="p" variant="compact" tone="destructive">
-          No se pudieron comprobar las firmas.
+          {validationErrorMessage(error)}
         </Text>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
           Reintentar
