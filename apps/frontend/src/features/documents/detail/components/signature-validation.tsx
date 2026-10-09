@@ -29,11 +29,13 @@ function dateTime(iso: string | null) {
 
 function ReportSummary({ report }: { report: SignatureReport }) {
   return (
-    <span className="flex min-w-0 flex-col items-start gap-1 text-left">
-      <StatusTag dotTone={verdictTone(report.verdict)}>
+    // `flex-1 min-w-0` keeps the summary inside the trigger, so a long holder
+    // name wraps instead of pushing the chevron out of the card.
+    <span className="flex min-w-0 flex-1 flex-col gap-1 text-left">
+      <StatusTag dotTone={verdictTone(report.verdict)} className="self-start">
         {verdictLabel(report.verdict)}
       </StatusTag>
-      <Text variant="title" className="truncate">
+      <Text variant="title" className="wrap-break-word">
         {signerName(report)}
       </Text>
       <Text variant="compact" tone="muted" className="tabular-nums">
@@ -75,7 +77,7 @@ function ReportDetail({ report }: { report: SignatureReport }) {
                   tone={checkTone(check.passed)}
                   className="mt-1.5 shrink-0"
                 />
-                <span className="min-w-0">
+                <span className="min-w-0 wrap-break-word">
                   <Text as="p" variant="title">
                     {label}
                   </Text>
@@ -93,7 +95,7 @@ function ReportDetail({ report }: { report: SignatureReport }) {
           <Text as="dt" variant="compact" tone="muted">
             Emisor
           </Text>
-          <Text as="dd" variant="compact">
+          <Text as="dd" variant="compact" className="min-w-0 wrap-break-word">
             {report.signer.issuer}
           </Text>
           {report.signer.taxId ? (
@@ -128,7 +130,11 @@ function ReportDetail({ report }: { report: SignatureReport }) {
               <Text as="dt" variant="compact" tone="muted">
                 Sello
               </Text>
-              <Text as="dd" variant="compact">
+              <Text
+                as="dd"
+                variant="compact"
+                className="min-w-0 wrap-break-word"
+              >
                 {report.timestamp.authority}
               </Text>
             </>
