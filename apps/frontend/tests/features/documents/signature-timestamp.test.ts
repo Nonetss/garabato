@@ -24,7 +24,7 @@ describe("signature timestamp labels", () => {
   test("a B-T signature shows the TSA's time and name", () => {
     const record = { timestampedAt: TIME, timestampAuthority: "FreeTSA" }
     expect(timestampLine(record)).toBe(`Sello de tiempo: ${formatted}`)
-    expect(timestampDetail(record)).toBe(`${formatted} · FreeTSA`)
+    expect(timestampDetail(record)).toBe(`${formatted}\u00A0· FreeTSA`)
   })
 
   test("a token without an authority name shows only the time", () => {

@@ -1,5 +1,5 @@
 import type { SignatureRecord } from "@/features/documents/shared/model/types"
-import { formatDateTime } from "@/lib/format"
+import { formatDateTime, joinFacts } from "@/lib/format"
 
 type TimestampedRecord = Pick<
   SignatureRecord,
@@ -24,5 +24,5 @@ export function timestampDetail(record: TimestampedRecord): string {
   if (record.timestampedAt === null) return "Sin sello de tiempo"
   const time = timestampTime(record.timestampedAt)
   if (record.timestampAuthority === null) return time
-  return `${time} · ${record.timestampAuthority}`
+  return joinFacts([time, record.timestampAuthority])
 }

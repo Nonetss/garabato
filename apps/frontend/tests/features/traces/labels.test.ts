@@ -155,7 +155,9 @@ describe("traceDescription", () => {
           certificateNotAfter: "2027-01-01T00:00:00.000Z",
         },
       })
-    ).toBe("Firmado con «FNMT personal» · v2 · Visible en páginas 1, 3")
+    ).toBe(
+      "Firmado con «FNMT personal»\u00A0· v2\u00A0· Visible en páginas 1, 3"
+    )
   })
 })
 

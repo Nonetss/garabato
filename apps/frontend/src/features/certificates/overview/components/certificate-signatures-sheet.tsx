@@ -14,7 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Certificate } from "@/features/certificates/overview/model/types"
 import { useHydratedQuery } from "@/hooks/use-hydrated-query"
-import { formatDateTime } from "@/lib/format"
+import { formatDateTime, joinFacts } from "@/lib/format"
 import { orpc } from "@/lib/orpc"
 
 type SignatureEntry = {
@@ -67,12 +67,11 @@ function SignatureList({ certificateId }: { certificateId: string }) {
         <SoftCardListItem
           key={entry.id}
           title={<DocumentName entry={entry} />}
-          description={
-            <>
-              {formatDateTime(entry.signedAt, { includeYear: true })} · v
-              {entry.versionNumber} · {placementLabel(entry)}
-            </>
-          }
+          description={joinFacts([
+            formatDateTime(entry.signedAt, { includeYear: true }),
+            `v${entry.versionNumber}`,
+            placementLabel(entry),
+          ])}
         />
       ))}
     </SoftCardList>

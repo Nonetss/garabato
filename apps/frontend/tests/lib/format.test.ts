@@ -7,6 +7,7 @@ import {
   test,
 } from "bun:test"
 import {
+  formatCount,
   formatDate,
   formatDateTime,
   formatDayHeader,
@@ -18,6 +19,8 @@ import {
   formatRelativeDay,
   formatRelativeTime,
   getDateBucketLabel,
+  joinFacts,
+  NBSP,
 } from "@/lib/format"
 
 const NOW = new Date("2026-03-15T12:00:00.000Z")
@@ -103,9 +106,29 @@ describe("relative labels", () => {
 
 describe("formatFileSize", () => {
   test("keeps bytes whole and uses one decimal above them", () => {
-    expect(formatFileSize(512)).toBe("512 B")
-    expect(formatFileSize(1536)).toBe("1,5 KB")
-    expect(formatFileSize(20 * 1024 * 1024)).toBe("20 MB")
+    expect(formatFileSize(512)).toBe("512\u00A0B")
+    expect(formatFileSize(1536)).toBe("1,5\u00A0KB")
+    expect(formatFileSize(20 * 1024 * 1024)).toBe("20\u00A0MB")
+  })
+})
+
+describe("formatCount", () => {
+  test("binds the number to its singular or plural noun", () => {
+    expect(formatCount(1, "página", "páginas")).toBe(`1${NBSP}página`)
+    expect(formatCount(0, "página", "páginas")).toBe(`0${NBSP}páginas`)
+    expect(formatCount(12, "página", "páginas")).toBe(`12${NBSP}páginas`)
+  })
+})
+
+describe("joinFacts", () => {
+  test("keeps each middle dot on the line of the fact before it", () => {
+    expect(joinFacts(["3 páginas", "412 KB"])).toBe(`3 páginas${NBSP}· 412 KB`)
+    expect(joinFacts(["a", "b", "c"])).toBe(`a${NBSP}· b${NBSP}· c`)
+  })
+
+  test("returns a single fact alone and nothing for none", () => {
+    expect(joinFacts(["v1"])).toBe("v1")
+    expect(joinFacts([])).toBe("")
   })
 })
 

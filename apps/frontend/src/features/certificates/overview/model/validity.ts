@@ -1,3 +1,5 @@
+import { NBSP } from "@/lib/format"
+
 const DAY_MS = 86_400_000
 
 export type CertificateValidity = {
@@ -34,9 +36,9 @@ export function certificateValidity(
 /** "Quedan 812 días", "Caduca hoy", "Caducó hace 3 días". */
 export function remainingLabel({ daysLeft, expired }: CertificateValidity) {
   if (expired && daysLeft >= 0) return "Caducó hoy"
-  if (daysLeft > 1) return `Quedan ${daysLeft} días`
-  if (daysLeft === 1) return "Queda 1 día"
+  if (daysLeft > 1) return `Quedan ${daysLeft}${NBSP}días`
+  if (daysLeft === 1) return `Queda 1${NBSP}día`
   if (daysLeft === 0) return "Caduca hoy"
   if (daysLeft === -1) return "Caducó ayer"
-  return `Caducó hace ${-daysLeft} días`
+  return `Caducó hace ${-daysLeft}${NBSP}días`
 }

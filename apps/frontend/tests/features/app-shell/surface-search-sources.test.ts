@@ -17,10 +17,10 @@ describe("document search source", () => {
 
   test("describes pages and signing status", () => {
     expect(documentSearchDescription({ pageCount: 1, signatureCount: 0 })).toBe(
-      "1 página · Sin firmar"
+      "1\u00A0página\u00A0· Sin firmar"
     )
     expect(documentSearchDescription({ pageCount: 3, signatureCount: 2 })).toBe(
-      "3 páginas · Firmado"
+      "3\u00A0páginas\u00A0· Firmado"
     )
   })
 })
@@ -35,9 +35,9 @@ describe("document folder search source", () => {
   })
 
   test("describes the parent path and document count", () => {
-    expect(folderSearchDescription("", 1)).toBe("1 documento")
+    expect(folderSearchDescription("", 1)).toBe("1\u00A0documento")
     expect(folderSearchDescription("Clientes / 2026", 3)).toBe(
-      "Clientes / 2026 · 3 documentos"
+      "Clientes / 2026\u00A0· 3\u00A0documentos"
     )
   })
 })

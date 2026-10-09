@@ -156,6 +156,22 @@ export function getDateBucketLabel(date: string | Date): string {
   return "Más de 3 meses"
 }
 
+/** No-break space. Binds a number to its unit ("412 KB", "3 páginas") so a
+ *  narrow column never strands the unit on the next line. */
+export const NBSP = "\u00A0"
+
+/** "3 páginas · 412 KB": facts joined by a middle dot that stays on the line
+ *  of the fact before it, so a wrapped line never starts with "·". */
+export function joinFacts(facts: string[]): string {
+  return facts.join(`${NBSP}· `)
+}
+
+/** "1 página", "3 páginas", with the number bound to its noun. */
+export function formatCount(count: number, one: string, many: string): string {
+  if (count === 1) return `1${NBSP}${one}`
+  return `${count}${NBSP}${many}`
+}
+
 const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB"]
 
 /** "1,2 MB" style sizes, base 1024. */
@@ -167,7 +183,7 @@ export function formatFileSize(bytes: number): string {
     unit++
   }
   const digits = unit === 0 ? 0 : 1
-  return `${value.toLocaleString("es-ES", { maximumFractionDigits: digits })} ${FILE_SIZE_UNITS[unit]}`
+  return `${value.toLocaleString("es-ES", { maximumFractionDigits: digits })}${NBSP}${FILE_SIZE_UNITS[unit]}`
 }
 
 /** 1-based page list for display: "1", "1–3", "1, 3". */

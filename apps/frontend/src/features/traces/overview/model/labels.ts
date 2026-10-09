@@ -7,7 +7,7 @@ import type {
   TrailEntry,
   TrailType,
 } from "@/features/traces/overview/model/types"
-import { getDateBucketLabel } from "@/lib/format"
+import { getDateBucketLabel, joinFacts } from "@/lib/format"
 
 /** The Spanish name of each entry type. */
 export const TRAIL_TYPE_LABELS: Record<TrailType, string> = {
@@ -41,7 +41,7 @@ export function traceSubject(entry: TrailEntry) {
   if (entry.certificate) {
     names.push(deletedAware(entry.certificate.alias, entry.certificate.deleted))
   }
-  return names.join(" · ")
+  return joinFacts(names)
 }
 
 function versionNumber(entry: TrailEntry) {
@@ -68,7 +68,11 @@ function certificateAlias(entry: TrailEntry) {
 export function traceDescription(entry: TrailEntry) {
   switch (entry.type) {
     case "document.signed":
-      return `Firmado con ${certificateAlias(entry)} · v${entry.signature.versionNumber} · ${placementLabel(entry.signature)}`
+      return joinFacts([
+        `Firmado con ${certificateAlias(entry)}`,
+        `v${entry.signature.versionNumber}`,
+        placementLabel(entry.signature),
+      ])
     case "document.uploaded":
       return "Subido como versión 1"
     case "document.merged":

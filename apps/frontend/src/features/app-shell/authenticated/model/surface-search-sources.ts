@@ -15,6 +15,7 @@ import {
   type SurfaceSearchSourceId,
 } from "@/lib/app-surfaces"
 import { foldText } from "@/lib/fold-text"
+import { formatCount, joinFacts } from "@/lib/format"
 import { orpc } from "@/lib/orpc"
 
 /** One record behind a dynamic surface, as the navbar search lists it. */
@@ -167,10 +168,9 @@ export function documentSearchDescription(document: {
   pageCount: number
   signatureCount: number
 }): string {
-  const pages =
-    document.pageCount === 1 ? "1 página" : `${document.pageCount} páginas`
-  if (document.signatureCount === 0) return `${pages} · Sin firmar`
-  return `${pages} · Firmado`
+  const pages = formatCount(document.pageCount, "página", "páginas")
+  if (document.signatureCount === 0) return joinFacts([pages, "Sin firmar"])
+  return joinFacts([pages, "Firmado"])
 }
 
 /** A folder's line in the search: "Clientes / 2026 · 3 documentos", the
@@ -179,10 +179,9 @@ export function folderSearchDescription(
   parentPath: string,
   documentCount: number
 ): string {
-  const documents =
-    documentCount === 1 ? "1 documento" : `${documentCount} documentos`
+  const documents = formatCount(documentCount, "documento", "documentos")
   if (parentPath === "") return documents
-  return `${parentPath} · ${documents}`
+  return joinFacts([parentPath, documents])
 }
 
 export const surfaceSearchSources = {

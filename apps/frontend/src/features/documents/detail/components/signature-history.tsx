@@ -9,7 +9,7 @@ import {
   type SignatureRecord,
   timestampLine,
 } from "@/features/documents/shared"
-import { formatDateTime, formatPages } from "@/lib/format"
+import { formatDateTime, formatPages, joinFacts } from "@/lib/format"
 
 function placementLabel(record: SignatureRecord) {
   if (!record.visible) return "Firma invisible"
@@ -59,15 +59,14 @@ export function SignatureHistory({
         <SoftCardListItem
           key={record.id}
           title={record.certificateHolder}
-          description={
-            <>
-              {formatDateTime(record.signedAt, {
-                includeYear: true,
-                includeSeconds: true,
-              })}{" "}
-              · v{record.versionNumber} · {placementLabel(record)}
-            </>
-          }
+          description={joinFacts([
+            formatDateTime(record.signedAt, {
+              includeYear: true,
+              includeSeconds: true,
+            }),
+            `v${record.versionNumber}`,
+            placementLabel(record),
+          ])}
           note={signatureNote(record)}
         />
       ))}

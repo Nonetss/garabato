@@ -18,7 +18,7 @@ import {
   traceSubject,
 } from "@/features/traces/overview/model/labels"
 import type { TrailEntry } from "@/features/traces/overview/model/types"
-import { formatDateTime } from "@/lib/format"
+import { formatDateTime, joinFacts } from "@/lib/format"
 
 function DocumentLink({
   id,
@@ -45,11 +45,7 @@ function CertificateName({ entry }: { entry: TrailEntry }) {
   const { alias, holder, deleted } = entry.certificate
   const name = deletedAware(alias, deleted)
   if (holder === alias) return <span>{name}</span>
-  return (
-    <span>
-      {name} · {holder}
-    </span>
-  )
+  return <span>{joinFacts([name, holder])}</span>
 }
 
 function renameDetails(entry: TrailEntry) {

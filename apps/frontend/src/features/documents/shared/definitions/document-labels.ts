@@ -2,6 +2,7 @@ import type {
   DocumentVersion,
   DocumentVersionKind,
 } from "@/features/documents/shared/model/types"
+import { formatCount, joinFacts } from "@/lib/format"
 
 /** How the version list names each origin. */
 export const versionKindLabels: Record<DocumentVersionKind, string> = {
@@ -15,15 +16,10 @@ export const versionKindLabels: Record<DocumentVersionKind, string> = {
 export function versionLabel(
   version: Pick<DocumentVersion, "number" | "kind">
 ) {
-  return `v${version.number} · ${versionKindLabels[version.kind]}`
+  return joinFacts([`v${version.number}`, versionKindLabels[version.kind]])
 }
 
 // `1 página`, `3 páginas`.
-function counted(count: number, one: string, many: string) {
-  if (count === 1) return `1 ${one}`
-  return `${count} ${many}`
-}
-
 export const documentLabels = {
   upload: "Subir PDF",
   uploadSubmit: "Subir",
@@ -134,8 +130,7 @@ export const documentLabels = {
   select: (name: string) => `Seleccionar ${name}`,
   selectAll: "Seleccionar todo",
   selectedCount: (count: number) => {
-    if (count === 1) return "1 seleccionado"
-    return `${count} seleccionados`
+    return formatCount(count, "seleccionado", "seleccionados")
   },
   clearSelection: "Quitar selección",
   deleteManyTitle: (count: number) => `Eliminar ${count} documentos`,
@@ -170,10 +165,10 @@ export const documentLabels = {
   pageAction: (action: string, number: number) =>
     `${action} (página ${number})`,
   pageSummary: (pages: number, removed: number, rotated: number) => {
-    const parts = [counted(pages, "página", "páginas")]
-    if (removed > 0) parts.push(counted(removed, "quitada", "quitadas"))
-    if (rotated > 0) parts.push(counted(rotated, "girada", "giradas"))
-    return parts.join(" · ")
+    const parts = [formatCount(pages, "página", "páginas")]
+    if (removed > 0) parts.push(formatCount(removed, "quitada", "quitadas"))
+    if (rotated > 0) parts.push(formatCount(rotated, "girada", "giradas"))
+    return joinFacts(parts)
   },
   noPagesLeft: "Deja al menos una página para poder guardar.",
   cancel: "Cancelar",

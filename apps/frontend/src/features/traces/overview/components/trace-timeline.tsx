@@ -9,7 +9,12 @@ import {
   traceTone,
 } from "@/features/traces/overview/model/labels"
 import type { TrailEntry } from "@/features/traces/overview/model/types"
-import { formatDateTime, formatRelativeTime } from "@/lib/format"
+import {
+  formatDateTime,
+  formatRelativeTime,
+  joinFacts,
+  NBSP,
+} from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 const bubbleTone = {
@@ -24,7 +29,7 @@ function metaLine(entry: TrailEntry) {
     includeSeconds: true,
   })
   if (entry.ipAddress === null) return moment
-  return `${moment} · IP ${entry.ipAddress}`
+  return joinFacts([moment, `IP${NBSP}${entry.ipAddress}`])
 }
 
 function TimelineItem({
