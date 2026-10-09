@@ -4,6 +4,11 @@ import {
   type UseQueryOptions,
 } from "@tanstack/react-query"
 import {
+  buildFolderIndex,
+  FOLDER_PARAM,
+  folderPathLabel,
+} from "@/features/documents/shared/public"
+import {
   type AppSurface,
   appSurfaceList,
   isSurfacePathActive,
@@ -16,6 +21,11 @@ import { orpc } from "@/lib/orpc"
 export interface SurfaceSearchEntry {
   /** Values for the surface path's `[param]` segments. */
   params: Record<string, string>
+  /**
+   * Query-string values appended to the path, for records a concrete surface
+   * opens through its query (a library folder: `/documents?carpeta=<id>`).
+   */
+  query?: Record<string, string>
   label: string
   description?: string
   /**
@@ -163,6 +173,18 @@ export function documentSearchDescription(document: {
   return `${pages} · Firmado`
 }
 
+/** A folder's line in the search: "Clientes / 2026 · 3 documentos", the
+ *  folders above it first (none for a top-level folder). */
+export function folderSearchDescription(
+  parentPath: string,
+  documentCount: number
+): string {
+  const documents =
+    documentCount === 1 ? "1 documento" : `${documentCount} documentos`
+  if (parentPath === "") return documents
+  return `${parentPath} · ${documents}`
+}
+
 export const surfaceSearchSources = {
   "cron-jobs": defineSearchSource("Tareas programadas", ({ enabled }) =>
     orpc.v1.cron.list.queryOptions({
@@ -186,6 +208,23 @@ export const surfaceSearchSources = {
         })),
     })
   ),
+  "document-folders": defineSearchSource("Carpetas", ({ enabled }) =>
+    orpc.v1.documentFolder.list.queryOptions({
+      enabled,
+      select: (folders) => {
+        const index = buildFolderIndex(folders)
+        return folders.map((folder) => ({
+          params: {},
+          query: { [FOLDER_PARAM]: folder.id },
+          label: folder.name,
+          description: folderSearchDescription(
+            folderPathLabel(index, folder.parentId),
+            folder.documentCount
+          ),
+        }))
+      },
+    })
+  ),
 } satisfies Record<SurfaceSearchSourceId, SurfaceSearchSourceShape>
 
 export interface SearchSourceSurface {
@@ -195,14 +234,22 @@ export interface SearchSourceSurface {
   trail: string[]
 }
 
+/** A path up to its first `[param]` segment; a concrete path whole. */
+function staticPrefixOf(path: string): string {
+  const firstParam = path.indexOf("[")
+  if (firstParam === -1) return path
+  return path.slice(0, firstParam - 1)
+}
+
 /**
  * Labels of the concrete-path surfaces a record's route sits under
  * (`/crons/[id]` → "Crons"; a deeper route lists every section above it,
- * outermost first). Shown before the record's label and matched like it, so
- * typing a section's name lists its records.
+ * outermost first; a concrete surface whose records open through its query
+ * lists itself last). Shown before the record's label and matched like it,
+ * so typing a section's name lists its records.
  */
 function getRecordTrail(surface: AppSurface): string[] {
-  const staticPrefix = surface.path.slice(0, surface.path.indexOf("[") - 1)
+  const staticPrefix = staticPrefixOf(surface.path)
   return appSurfaceList
     .filter(
       (other) =>
@@ -230,14 +277,14 @@ export function serverSearchText(search: string, sectionLabels: string[]) {
 }
 
 /**
- * Dynamic surfaces whose records the navbar search lists for this user:
- * a `[param]` path with a `searchSource`, `adminOnly` ones only for admins.
+ * Surfaces whose records the navbar search lists for this user: those with a
+ * `searchSource`, `adminOnly` ones only for admins.
  */
 export function getSearchSourceSurfaces(
   isAdmin: boolean
 ): SearchSourceSurface[] {
   return appSurfaceList.flatMap((surface) => {
-    if (!surface.searchSource || !surface.path.includes("[")) return []
+    if (!surface.searchSource) return []
     if (surface.adminOnly && !isAdmin) return []
     return [
       {
@@ -265,4 +312,19 @@ export function fillSurfacePath(
   })
   if (missing) return null
   return filled
+}
+
+/**
+ * Where a record opens: the surface path filled from `params`, then `query`
+ * as its search string; `null` when a `[param]` segment has no value.
+ */
+export function surfaceRecordHref(
+  path: string,
+  entry: Pick<SurfaceSearchEntry, "params" | "query">
+): string | null {
+  const filled = fillSurfacePath(path, entry.params)
+  if (filled === null || entry.query === undefined) return filled
+  const search = new URLSearchParams(entry.query).toString()
+  if (search === "") return filled
+  return `${filled}?${search}`
 }

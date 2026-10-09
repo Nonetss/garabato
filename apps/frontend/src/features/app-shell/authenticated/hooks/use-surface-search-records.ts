@@ -1,9 +1,9 @@
 import { useQueries } from "@tanstack/react-query"
 import { useMemo } from "react"
 import {
-  fillSurfacePath,
   getSearchSourceSurfaces,
   serverSearchText,
+  surfaceRecordHref,
   surfaceSearchSources,
 } from "@/features/app-shell/authenticated/model/surface-search-sources"
 import { useDebouncedValue } from "@/hooks/use-debounced-value"
@@ -23,7 +23,7 @@ interface UseSurfaceSearchRecordsOptions {
 }
 
 /**
- * Records behind the dynamic surfaces that declare a `searchSource`, as one
+ * Records behind the surfaces that declare a `searchSource`, as one
  * search group per source. Full-list sources reuse each list page's query
  * (shared cache, so an already loaded list costs no request); server-searched
  * ones ask their entity's `search` for the debounced text, minus the words
@@ -55,7 +55,7 @@ export function useSurfaceSearchRecords({
     const heading = surfaceSearchSources[source].heading
     const icon = resolveIconRef(surface.icon)
     const items = entries.flatMap((entry) => {
-      const href = fillSurfacePath(surface.path, entry.params)
+      const href = surfaceRecordHref(surface.path, entry)
       if (href == null) return []
       return [
         {

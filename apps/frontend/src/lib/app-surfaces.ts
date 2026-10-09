@@ -35,7 +35,10 @@ export type SurfaceId =
  * `[param]` surface. Resolved by the registry in
  * `features/app-shell/authenticated/model/surface-search-sources.ts`.
  */
-export type SurfaceSearchSourceId = "cron-jobs" | "documents"
+export type SurfaceSearchSourceId =
+  | "cron-jobs"
+  | "documents"
+  | "document-folders"
 
 /** Navigation placement for a surface that appears in the navbar/sidebars. */
 export interface SurfaceNavConfig {
@@ -80,10 +83,11 @@ export interface AppSurface {
    */
   search?: false
   /**
-   * Makes a dynamic `[param]` surface reachable from the navbar search by
-   * listing its records (each document). A plain-data
-   * key — like `icon` — so this module stays safe to import from Astro
-   * frontmatter; ignored on concrete paths.
+   * Lists this surface's records in the navbar search: on a dynamic `[param]`
+   * surface each record fills the segments (each document), on a concrete
+   * one it opens the surface with its own query string (each library folder,
+   * `?carpeta=<id>`). A plain-data key — like `icon` — so this module stays
+   * safe to import from Astro frontmatter.
    */
   searchSource?: SurfaceSearchSourceId
 }
@@ -163,6 +167,7 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
     description: "Sube tus PDF y fírmalos con tus certificados.",
     icon: iconRef("navigation", "documents"),
     nav: { primary: true },
+    searchSource: "document-folders",
   },
   "document-detail": {
     id: "document-detail",
