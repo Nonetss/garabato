@@ -9,6 +9,7 @@ const FolderIcon = getIcon("entities", "folder")
 import { useMemo, useState } from "react"
 import { Text } from "@/components/shared/brand/typography"
 import { StateCard } from "@/components/shared/feedback/state-card"
+import { IconButton } from "@/components/shared/form/icon-button"
 import {
   SegmentedPicker,
   type SegmentedPickerOption,
@@ -369,11 +370,10 @@ export function DocumentsContent() {
       {documentLabels.upload}
     </Button>
   )
+  const openNewFolder = () =>
+    folderDialog.open({ kind: "create", parentId: folderId })
   const newFolderButton = (
-    <Button
-      variant="outline"
-      onClick={() => folderDialog.open({ kind: "create", parentId: folderId })}
-    >
+    <Button variant="outline" onClick={openNewFolder}>
       <NewFolderIcon className="size-4" />
       {documentLabels.newFolder}
     </Button>
@@ -479,11 +479,20 @@ export function DocumentsContent() {
         surface="documents"
         heroAction={
           <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => setManageTagsOpen(true)}>
-              <TagsIcon className="size-4" />
-              {documentLabels.manageTags}
-            </Button>
-            {newFolderButton}
+            <IconButton
+              label={documentLabels.manageTags}
+              icon={TagsIcon}
+              variant="outline"
+              size="icon"
+              onClick={() => setManageTagsOpen(true)}
+            />
+            <IconButton
+              label={documentLabels.newFolder}
+              icon={NewFolderIcon}
+              variant="outline"
+              size="icon"
+              onClick={openNewFolder}
+            />
             {uploadButton}
           </div>
         }
