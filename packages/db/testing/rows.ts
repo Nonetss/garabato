@@ -13,6 +13,7 @@ import type {
   organization,
   session,
   team,
+  traceEvents,
   user,
 } from "#schema"
 import type { cronJob, cronRun } from "#schema/cron"
@@ -34,6 +35,7 @@ export type EntityIconRow = typeof entityIcons.$inferSelect
 export type OrganizationRow = typeof organization.$inferSelect
 export type MemberRow = typeof member.$inferSelect
 export type TeamRow = typeof team.$inferSelect
+export type TraceEventRow = typeof traceEvents.$inferSelect
 
 export const NOW = new Date("2026-01-01T00:00:00.000Z")
 
@@ -245,6 +247,23 @@ export function documentSignatureRow(
     ipAddress: null,
     timestampedAt: null,
     timestampAuthority: null,
+    ...overrides,
+  }
+}
+
+export function traceEventRow(
+  overrides: Partial<TraceEventRow> = {}
+): TraceEventRow {
+  return {
+    id: "00000000-0000-4000-8000-0000000000a1",
+    userId: "user-1",
+    type: "document.uploaded",
+    occurredAt: NOW,
+    documentId: "00000000-0000-4000-8000-0000000000d1",
+    certificateId: null,
+    versionId: "00000000-0000-4000-8000-0000000000e1",
+    ipAddress: null,
+    details: null,
     ...overrides,
   }
 }
