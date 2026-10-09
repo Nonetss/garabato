@@ -17,7 +17,7 @@ import { useSignUp } from "@/features/auth/sign-up/hooks/use-sign-up"
 
 const ERROR_ID = "sign-up-error"
 
-export function SignUpPage() {
+export function SignUpForm() {
   const {
     name,
     setName,

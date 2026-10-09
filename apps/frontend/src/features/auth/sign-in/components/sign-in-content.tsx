@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Marker, MarkerContent } from "@/components/ui/marker"
 import { Spinner } from "@/components/ui/spinner"
-import { useAuthConfig } from "@/features/auth/sign-in/hooks/use-auth-config"
+import { useAuthConfig } from "@/features/auth/shared"
 import { useSignIn } from "@/features/auth/sign-in/hooks/use-sign-in"
 import { cn } from "@/lib/utils"
 
@@ -162,22 +162,24 @@ export function SignInContent() {
         ) : null}
       </CardContent>
 
-      <CardFooter className="border-t px-7 pb-7">
-        <Text
-          as="p"
-          variant="compact"
-          tone="muted"
-          className="w-full text-center"
-        >
-          ¿No tienes cuenta?{" "}
-          <AppLink
-            href="/signup"
-            className="font-medium text-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground"
+      {authConfig?.signUpEnabled ? (
+        <CardFooter className="border-t px-7 pb-7">
+          <Text
+            as="p"
+            variant="compact"
+            tone="muted"
+            className="w-full text-center"
           >
-            Regístrate
-          </AppLink>
-        </Text>
-      </CardFooter>
+            ¿No tienes cuenta?{" "}
+            <AppLink
+              href="/signup"
+              className="font-medium text-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground"
+            >
+              Regístrate
+            </AppLink>
+          </Text>
+        </CardFooter>
+      ) : null}
     </Card>
   )
 }
