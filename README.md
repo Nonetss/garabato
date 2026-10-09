@@ -31,13 +31,19 @@ certificates issued by a throwaway CA and generated PDFs.
 **Drop a PDF to sign it.** The home page is a drop zone, next to the
 certificates you will sign with.
 
-![The home page: a drop zone for a PDF and the list of certificates the user signs with](doc/screenshots/home.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/home-dark.webp">
+  <img alt="The home page: a drop zone for a PDF and the list of certificates the user signs with" src="doc/screenshots/home.webp">
+</picture>
 
 **Place the signature and sign.** Pick a certificate, choose a visible or
 invisible signature, drag a rectangle on the page and add an optional reason
 and place.
 
-![The viewer in signing mode: a rectangle drawn on the page and the signing panel with the certificate, reason and place](doc/screenshots/sign.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/sign-dark.webp">
+  <img alt="The viewer in signing mode: a rectangle drawn on the page and the signing panel with the certificate, reason and place" src="doc/screenshots/sign.webp">
+</picture>
 
 **Every signature is a new version.** The viewer shows the visible stamps,
 the version history (each one downloadable) and who signed with which
@@ -53,26 +59,42 @@ store plus the FNMT and DNIe roots). Revocation is not checked.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/viewer-dark.webp">
-  <img alt="A contract signed twice: two visible stamps on the last page, three versions and two signature records" src="doc/screenshots/viewer.webp">
+  <img alt="A contract signed twice: two visible stamps on the last page, three versions, two signature records and their validity" src="doc/screenshots/viewer.webp">
 </picture>
 
 **Certificates** are imported from PKCS#12 files and stored encrypted, with
 their validity at a glance.
 
-![The certificates page: three certificates with holder, tax id, issuer and validity bar](doc/screenshots/certificates.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/certificates-dark.webp">
+  <img alt="The certificates page: three certificates with holder, tax id, issuer and validity bar" src="doc/screenshots/certificates.webp">
+</picture>
 
 **The signature log** lists every signature with its certificate, version and
 placement, filterable by certificate, document name and dates.
 
-![The signature log: one row per signature with document, certificate, date, version and placement](doc/screenshots/signatures.webp)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/signatures-dark.webp">
+  <img alt="The signature log: one row per signature with document, certificate, date, version and placement" src="doc/screenshots/signatures.webp">
+</picture>
 
-**Dark theme and mobile.** Light, dark or system theme, and a layout that
-works on a phone.
+**Light, dark or system theme, and mobile.** The captures above follow your
+GitHub theme; here is the signed contract in the other one, and the layout on
+a phone.
 
 <p>
-  <img alt="The signed contract in the dark theme" src="doc/screenshots/viewer-dark.webp" width="66%">
-  <img alt="The document library on a phone" src="doc/screenshots/mobile-documents.webp" width="16%">
-  <img alt="A signed invoice on a phone" src="doc/screenshots/mobile-viewer.webp" width="16%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/viewer.webp">
+    <img alt="The signed contract in the other theme" src="doc/screenshots/viewer-dark.webp" width="66%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/mobile-documents-dark.webp">
+    <img alt="The document library on a phone" src="doc/screenshots/mobile-documents.webp" width="16%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/screenshots/mobile-viewer-dark.webp">
+    <img alt="A signed invoice on a phone" src="doc/screenshots/mobile-viewer.webp" width="16%">
+  </picture>
 </p>
 
 ## How it fits together
