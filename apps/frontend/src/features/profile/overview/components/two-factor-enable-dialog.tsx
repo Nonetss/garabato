@@ -127,9 +127,14 @@ export function TwoFactorEnableDialog({
 
         <BackupCodesList codes={enrolment.backupCodes} />
 
-        <FormField label="Código de la aplicación" htmlFor="two-factor-code">
+        <FormField
+          label="Código de la aplicación"
+          htmlFor="two-factor-code"
+          className="text-center"
+        >
           <TotpCodeInput
             id="two-factor-code"
+            className="justify-center"
             disabled={confirm.isPending}
             value={code}
             onChange={setCode}
