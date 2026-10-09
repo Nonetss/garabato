@@ -74,11 +74,11 @@ function commonNameOf(name: pkijs.RelativeDistinguishedNames) {
   return value
 }
 
-/** The TSA certificate's CN, then the token's `tsa` name, then the host. */
+/** The TSA certificate's CN, then the token's `tsa` name, then `fallback`. */
 function authorityOf(
   signer: pkijs.Certificate | null | undefined,
   tstInfo: pkijs.TSTInfo,
-  url: string
+  fallback: string
 ) {
   if (signer) {
     const name = commonNameOf(signer.subject)
@@ -91,7 +91,7 @@ function authorityOf(
     const name = commonNameOf(tstInfo.tsa.value)
     if (name) return name
   }
-  return new URL(url).host
+  return fallback
 }
 
 async function post(
@@ -130,6 +130,18 @@ function parseResponse(der: ArrayBuffer) {
     throw new TimestampError(
       "mismatch",
       "TSA answer is not a TimeStampResp",
+      error
+    )
+  }
+}
+
+function signedDataOf(token: pkijs.ContentInfo) {
+  try {
+    return new pkijs.SignedData({ schema: token.content })
+  } catch (error) {
+    throw new TimestampError(
+      "mismatch",
+      "Timestamp token is not a SignedData",
       error
     )
   }
@@ -177,6 +189,35 @@ async function verifiedSigner(
   }
 }
 
+/** A token whose signature verified over the data it timestamps. */
+export type VerifiedTimestamp = {
+  tstInfo: pkijs.TSTInfo
+  time: Date
+  authority: string
+}
+
+/**
+ * Checks an RFC 3161 token against the data it should timestamp: its
+ * TSTInfo parses, its imprint matches `data` (with whatever hash algorithm
+ * the token names) and its signature verifies with the certificate it
+ * carries. `fallbackAuthority` names the TSA when neither the certificate
+ * nor the token does. Throws `TimestampError` (`mismatch`) otherwise.
+ */
+export async function verifyTimestampToken(
+  token: pkijs.ContentInfo,
+  data: Uint8Array<ArrayBuffer>,
+  fallbackAuthority: string
+): Promise<VerifiedTimestamp> {
+  const signedData = signedDataOf(token)
+  const tstInfo = tstInfoOf(signedData)
+  const signer = await verifiedSigner(signedData, data)
+  return {
+    tstInfo,
+    time: tstInfo.genTime,
+    authority: authorityOf(signer, tstInfo, fallbackAuthority),
+  }
+}
+
 /**
  * Asks an RFC 3161 TSA for a token over the SHA-256 of `data` and checks it
  * before returning: granted status, the same message imprint and nonce as
@@ -217,8 +258,8 @@ export async function requestTimestamp(
     throw new TimestampError("mismatch", "TSA granted without a token")
   }
 
-  const signedData = new pkijs.SignedData({ schema: token.content })
-  const tstInfo = tstInfoOf(signedData)
+  const verified = await verifyTimestampToken(token, data, new URL(url).host)
+  const tstInfo = verified.tstInfo
   const imprint = tstInfo.messageImprint
   if (
     imprint.hashAlgorithm.algorithmId !== OID_SHA256 ||
@@ -231,10 +272,5 @@ export async function requestTimestamp(
     throw new TimestampError("mismatch", "Token nonce differs from request")
   }
 
-  const signer = await verifiedSigner(signedData, data)
-  return {
-    token,
-    time: tstInfo.genTime,
-    authority: authorityOf(signer, tstInfo, url),
-  }
+  return { token, time: verified.time, authority: verified.authority }
 }

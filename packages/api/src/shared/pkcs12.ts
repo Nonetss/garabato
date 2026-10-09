@@ -240,6 +240,31 @@ function metadataOf(
   }
 }
 
+/** What a signature report shows about a certificate it finds in a PDF. */
+export type CertificateHolder = Pick<
+  CertificateMetadata,
+  | "commonName"
+  | "taxId"
+  | "issuerCommonName"
+  | "serialNumber"
+  | "notBefore"
+  | "notAfter"
+>
+
+/** Reads the holder data of any X.509 certificate given as DER. */
+export function describeCertificate(der: Uint8Array): CertificateHolder {
+  const certificate = new X509Certificate(der)
+  const subject = nameFields(certificate.subject)
+  return {
+    commonName: commonNameOf(certificate.subject),
+    taxId: taxIdOf(subject.get("serialNumber")),
+    issuerCommonName: commonNameOf(certificate.issuer),
+    serialNumber: certificate.serialNumber,
+    notBefore: certificate.validFromDate,
+    notAfter: certificate.validToDate,
+  }
+}
+
 /**
  * Opens a PKCS#12 file and returns the public metadata of the certificate
  * that matches its only private key. Throws `Pkcs12Error` when the password
