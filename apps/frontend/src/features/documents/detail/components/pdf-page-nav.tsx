@@ -14,14 +14,14 @@ interface PdfPageNavProps {
   onGoTo: (index: number) => void
 }
 
-/** First / previous / next / last controls along the bottom of the viewer. */
+/** First / previous / next / last controls in the viewer's bottom bar. */
 export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
   const atFirst = current <= 0
   const atLast = current >= count - 1
   return (
     <nav
       aria-label="Páginas del documento"
-      className="sticky bottom-0 z-10 flex shrink-0 items-center justify-center gap-0.5 rounded-b-lg border-t bg-background/90 py-1 backdrop-blur"
+      className="flex items-center gap-0.5"
     >
       <IconButton
         className="rounded-full"
@@ -41,7 +41,7 @@ export function PdfPageNav({ current, count, onGoTo }: PdfPageNavProps) {
         as="span"
         variant="compact"
         tone="muted"
-        className="min-w-16 px-1 text-center tabular-nums"
+        className="min-w-14 px-1 text-center tabular-nums"
         aria-live="polite"
       >
         {current + 1} / {count}

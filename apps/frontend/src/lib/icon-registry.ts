@@ -123,6 +123,8 @@ const controlIcons = {
   exclude: Lucide.Ban,
   grip: Lucide.GripVertical,
   separator: Lucide.Minus,
+  zoomIn: Lucide.ZoomIn,
+  zoomOut: Lucide.ZoomOut,
 } as const
 
 const statusIcons = {
