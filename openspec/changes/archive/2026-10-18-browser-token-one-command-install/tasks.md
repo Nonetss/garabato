@@ -14,7 +14,7 @@
 
 ## 3. Docker
 
-- [ ] 3.1 Add the `module` stage to `apps/backend/Dockerfile` (bookworm, both targets, cache mounts) and copy the two files into the runtime stage; verify `docker build -f apps/backend/Dockerfile .` succeeds, both files exist in the image and `file` reports x86-64 and aarch64 ELF shared objects — run only with the user's permission, since it builds Docker images
+- [x] 3.1 Add the `module` stage to `apps/backend/Dockerfile` (bookworm, both targets, cache mounts) and copy the two files into the runtime stage; verify `docker build -f apps/backend/Dockerfile .` succeeds, both files exist in the image and `file` reports x86-64 and aarch64 ELF shared objects — run only with the user's permission, since it builds Docker images — 2026-10-18: built with the user's permission; the image holds x86-64 and aarch64 ELF modules (both need glibc ≥ 2.34) plus `install/`, no Rust toolchain; the test image was removed
 - [x] 3.2 Update the `stack` skill (`references/docker.md`, `references/workspaces.md`, `references/commands.md`) for the module stage, the served files and the install scripts; verify every cited path exists
 
 - [x] 3.3 Serve the module from the Docker dev stack too: `compose.dev.yml` mounts `./native/pkcs11/dist` read-only on the backend and syncs `native/pkcs11/install` (found when the user's first run got a 404 on the module download); verify `docker compose -f compose.dev.yml config` and `references/docker.md`
@@ -25,5 +25,5 @@
 
 ## 5. Wrap-up
 
-- [ ] 5.1 Ask the user to connect a laptop with the command against their Garabato and record the outcome here
+- [x] 5.1 Ask the user to connect a laptop with the command against their Garabato and record the outcome here — 2026-10-18: installed with the one command against the Docker dev stack (after the 3.3 fix); Firefox 158 completed TLS 1.3 client authentication with the user's FNMT certificate on certauth.cryptomix.com
 - [x] 5.2 Run `openspec validate browser-token-one-command-install --strict`; verify it passes
