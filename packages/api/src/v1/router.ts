@@ -15,6 +15,7 @@ import { logsRouter } from "#v1/logs/router"
 import { organizationRouter } from "#v1/organization/router"
 import { pluginsRouter } from "#v1/plugins/router"
 import { privateRouter } from "#v1/private/router"
+import { releaseRouter } from "#v1/release/router"
 import { sessionHistoryRouter } from "#v1/session-history/router"
 import { traceRouter } from "#v1/trace/router"
 
@@ -32,6 +33,7 @@ export const appRouter = {
   private: privateRouter,
   organization: organizationRouter,
   plugins: pluginsRouter,
+  release: releaseRouter,
   cron: cronRouter,
   sessionHistory: sessionHistoryRouter,
   trace: traceRouter,
