@@ -423,8 +423,6 @@ dependencies = [
 [[package]]
 name = "native-pkcs11"
 version = "0.2.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d9aab59dd7fad80ce56afefd0c0bae9d2479552b1eadbf6039b3b0fb68236c5"
 dependencies = [
  "cached",
  "native-pkcs11-core",

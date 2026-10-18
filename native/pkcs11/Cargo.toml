@@ -19,3 +19,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 ureq = { version = "2", features = ["json", "native-certs"] }
 x509-cert = "0.2.5"
+
+# native-pkcs11 0.2.27 with one change (no cdylib), so it links on Windows;
+# see vendor/native-pkcs11/Cargo.toml.
+[patch.crates-io]
+native-pkcs11 = { path = "vendor/native-pkcs11" }
