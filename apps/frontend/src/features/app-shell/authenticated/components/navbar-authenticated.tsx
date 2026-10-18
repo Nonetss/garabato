@@ -223,59 +223,62 @@ export function NavbarAuthenticated({
         scrolled ? "border-border shadow-sm" : "border-border/40"
       )}
     >
-      <nav
-        aria-label="Navegación principal"
-        className="flex h-navbar w-full items-center justify-between gap-3 px-4 md:gap-4 md:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-x-8 xl:gap-x-10"
-      >
-        <AppLink
-          href="/"
-          className="group flex shrink-0 items-center gap-2 font-semibold text-foreground text-sm tracking-tight lg:justify-self-start"
-        >
-          <AppLogo
-            alt={nameApp}
-            className="transition-transform duration-300 group-hover:scale-110"
-          />
-          <span className="hidden sm:inline">{nameApp}</span>
-        </AppLink>
-
-        {/* Desktop: lg+ - segmented nav (NavigationMenu) */}
-        <div className="hidden min-w-0 items-center gap-6 lg:flex lg:justify-self-start">
-          <Separator orientation="vertical" className="h-5 w-px self-center" />
-          <NavigationMenu align="center" className="max-w-none">
-            <NavigationMenuList className="gap-1">
-              {navLinks.map((item) => (
-                <NavSectionItem
-                  key={item.href}
-                  item={item}
-                  currentPath={currentPath}
-                  className={
-                    item.primary === true ? undefined : "hidden xl:block"
-                  }
-                />
-              ))}
-              <OverflowMenu items={restNavLinks} currentPath={currentPath} />
-            </NavigationMenuList>
-          </NavigationMenu>
-        </div>
-
-        {/* Mobile/tablet: < lg - mobile menu */}
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
-          <ThemeToggle />
-          <UserNav user={user} />
-          <NavbarSearchTrigger variant="icon" onOpen={openSearch} />
-          <NavbarMobileMenu navLinks={navLinks} currentPath={currentPath} />
-        </div>
-
-        {/* Desktop: lg+ actions */}
-        <div className="hidden shrink-0 items-center gap-2 lg:flex lg:justify-self-end">
-          <NavbarSearchTrigger variant="field" onOpen={openSearch} />
-          <ThemeToggle />
-          <UserNav user={user} />
-        </div>
-      </nav>
-      {/* The search reads record lists through the browser-wide query client,
-          sharing its cache with the page islands. */}
+      {/* The search and the account menu read through the browser-wide query
+          client, sharing its cache with the page islands. */}
       <QueryProvider>
+        <nav
+          aria-label="Navegación principal"
+          className="flex h-navbar w-full items-center justify-between gap-3 px-4 md:gap-4 md:px-6 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-x-8 xl:gap-x-10"
+        >
+          <AppLink
+            href="/"
+            className="group flex shrink-0 items-center gap-2 font-semibold text-foreground text-sm tracking-tight lg:justify-self-start"
+          >
+            <AppLogo
+              alt={nameApp}
+              className="transition-transform duration-300 group-hover:scale-110"
+            />
+            <span className="hidden sm:inline">{nameApp}</span>
+          </AppLink>
+
+          {/* Desktop: lg+ - segmented nav (NavigationMenu) */}
+          <div className="hidden min-w-0 items-center gap-6 lg:flex lg:justify-self-start">
+            <Separator
+              orientation="vertical"
+              className="h-5 w-px self-center"
+            />
+            <NavigationMenu align="center" className="max-w-none">
+              <NavigationMenuList className="gap-1">
+                {navLinks.map((item) => (
+                  <NavSectionItem
+                    key={item.href}
+                    item={item}
+                    currentPath={currentPath}
+                    className={
+                      item.primary === true ? undefined : "hidden xl:block"
+                    }
+                  />
+                ))}
+                <OverflowMenu items={restNavLinks} currentPath={currentPath} />
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+
+          {/* Mobile/tablet: < lg - mobile menu */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
+            <ThemeToggle />
+            <UserNav user={user} />
+            <NavbarSearchTrigger variant="icon" onOpen={openSearch} />
+            <NavbarMobileMenu navLinks={navLinks} currentPath={currentPath} />
+          </div>
+
+          {/* Desktop: lg+ actions */}
+          <div className="hidden shrink-0 items-center gap-2 lg:flex lg:justify-self-end">
+            <NavbarSearchTrigger variant="field" onOpen={openSearch} />
+            <ThemeToggle />
+            <UserNav user={user} />
+          </div>
+        </nav>
         <SurfaceSearchDialog
           open={searchOpen}
           onOpenChange={setSearchOpen}

@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 
 const LogIn = getIcon("auth", "loginAction")
 const LogOut = getIcon("actions", "logout")
+const OpenExternal = getIcon("actions", "openExternal")
 const UserCircle2 = getIcon("identity", "userCircle")
 const UserIcon = getIcon("identity", "userIcon")
 
@@ -23,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useReleaseStatus } from "@/features/app-shell/authenticated/hooks/use-release-status"
 import { authClient } from "@/lib/auth-client"
 import { navigate } from "@/lib/navigate"
 import { userDisplayName } from "@/lib/user-display"
@@ -32,6 +34,12 @@ export interface UserNavProps {
 }
 
 export function UserNav({ user }: UserNavProps) {
+  const release = useReleaseStatus(user !== null)
+  const update = release.data?.update ?? null
+  const triggerLabel = update
+    ? `Menú de cuenta (versión ${update.version} disponible)`
+    : "Menú de cuenta"
+
   if (!user) {
     return (
       <Hint label="Iniciar sesión" side="bottom">
@@ -49,9 +57,17 @@ export function UserNav({ user }: UserNavProps) {
     <DropdownMenu>
       <Hint label="Menú de cuenta" side="bottom">
         <DropdownMenuTrigger
-          render={<NavbarAction aria-label="Menú de cuenta" />}
+          render={
+            <NavbarAction aria-label={triggerLabel} className="relative" />
+          }
         >
           <UserIcon className="size-4 shrink-0" aria-hidden />
+          {update ? (
+            <span
+              aria-hidden
+              className="absolute top-1 right-1 size-2 rounded-full bg-primary ring-2 ring-background"
+            />
+          ) : null}
         </DropdownMenuTrigger>
       </Hint>
       <DropdownMenuContent align="end" sideOffset={8} className="w-56 min-w-56">
@@ -97,6 +113,33 @@ export function UserNav({ user }: UserNavProps) {
           <LogOut className="size-4 shrink-0" aria-hidden />
           Cerrar sesión
         </DropdownMenuItem>
+        {release.data ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>
+                <Text as="p" variant="compact" tone="muted">
+                  Versión {release.data.current}
+                </Text>
+              </DropdownMenuLabel>
+              {update ? (
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2 text-primary"
+                  render={
+                    <a
+                      href={update.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                >
+                  <OpenExternal className="size-4 shrink-0" aria-hidden />
+                  Versión {update.version} disponible
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuGroup>
+          </>
+        ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   )
