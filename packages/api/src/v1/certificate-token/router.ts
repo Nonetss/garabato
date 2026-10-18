@@ -57,7 +57,9 @@ export const certificateTokenRouter = {
     )
     .input(certificateTokenInput.redeem)
     .output(certificateTokenOutput.redeem)
-    .handler(({ input }) => certificateTokenHandler.redeem({ input })),
+    .handler(({ context, input }) =>
+      certificateTokenHandler.redeem({ context, input })
+    ),
 
   installScript: publicProcedure
     .meta(

@@ -1,24 +1,14 @@
-import type { db } from "@nonete/db"
 import {
-  type TraceDetails,
-  type TraceType,
-  traceEvents,
-} from "@nonete/db/schema"
+  type TraceExecutor,
+  type TraceToWrite,
+  writeTraces,
+} from "@nonete/db/trace-writer"
 
 import type { Context } from "#context"
 import { clientIp } from "#shared/client-ip"
 
 /** One action to trace; the user, time and client IP are filled in. */
-export type TraceInput = {
-  type: TraceType
-  documentId?: string
-  certificateId?: string
-  versionId?: string
-  details?: TraceDetails
-}
-
-/** `db` or the transaction the traced action runs in. */
-type TraceExecutor = Pick<typeof db, "insert">
+export type TraceInput = TraceToWrite
 
 /**
  * Writes the traces of the caller's action. Pass the action's transaction so
@@ -30,17 +20,5 @@ export async function recordTraces(
   userId: string,
   traces: TraceInput[]
 ) {
-  if (traces.length === 0) return
-  const ipAddress = clientIp(context)
-  await executor.insert(traceEvents).values(
-    traces.map((trace) => ({
-      userId,
-      type: trace.type,
-      documentId: trace.documentId,
-      certificateId: trace.certificateId,
-      versionId: trace.versionId,
-      ipAddress,
-      details: trace.details,
-    }))
-  )
+  await writeTraces(executor, userId, clientIp(context), traces)
 }

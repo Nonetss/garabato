@@ -187,6 +187,75 @@ describe("trace.list", () => {
     })
   })
 
+  test("keeps the details of browser and account traces", async () => {
+    const key = { id: "key-1", name: "Firefox portátil" }
+    fakeDb.queue("select", [
+      trailRow(1, {
+        type: "browser.connected",
+        details: { key, platform: "linux-x86_64" },
+      }),
+      trailRow(2, {
+        type: "browser.unlockFailed",
+        details: { key, reason: "locked-out" },
+      }),
+      trailRow(3, {
+        type: "browser.installRefused",
+        details: { name: "Zen", reason: "used" },
+      }),
+      trailRow(4, { type: "browser.locked", details: { key } }),
+      trailRow(5, {
+        type: "account.signedIn",
+        details: { method: "password", userAgent: "Firefox" },
+      }),
+      trailRow(6, {
+        type: "account.signInFailed",
+        details: { reason: "wrong-password" },
+      }),
+      trailRow(7, {
+        type: "account.nameChanged",
+        details: { from: "Ana", to: "Ana López" },
+      }),
+      trailRow(8, { type: "account.twoFactorDisabled" }),
+    ])
+    fakeDb.queue("select", [{ total: 8 }])
+
+    const result = await traceHandler.list({
+      context,
+      input: listInput({ limit: 10 }),
+    })
+
+    // unknown[]: the trail's entry union is too wide for a typed comparison.
+    const details: unknown[] = result.entries.map((entry) => [
+      entry.type,
+      entry.details,
+    ])
+    expect(details).toEqual([
+      ["browser.connected", { key, platform: "linux-x86_64" }],
+      ["browser.unlockFailed", { key, reason: "locked-out" }],
+      ["browser.installRefused", { name: "Zen", reason: "used" }],
+      ["browser.locked", { key }],
+      ["account.signedIn", { method: "password", userAgent: "Firefox" }],
+      ["account.signInFailed", { reason: "wrong-password" }],
+      ["account.nameChanged", { from: "Ana", to: "Ana López" }],
+      ["account.twoFactorDisabled", null],
+    ])
+  })
+
+  test("refuses a connection trace without its platform", async () => {
+    fakeDb.queue("select", [
+      trailRow(1, {
+        type: "browser.connected",
+        details: { key: { id: "key-1", name: "Zen" } },
+      }),
+    ])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    await expectErrorCode(
+      traceHandler.list({ context, input: listInput() }),
+      "INTERNAL_SERVER_ERROR"
+    )
+  })
+
   test("refuses a sign-in trace without its token key", async () => {
     fakeDb.queue("select", [
       trailRow(1, { type: "certificate.usedToSignIn", certificateId: CERT_ID }),

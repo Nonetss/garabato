@@ -246,6 +246,45 @@ function signInOf(row: TrailRow) {
   return { key: details.key }
 }
 
+function connectedOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("key" in details) || !("platform" in details)) {
+    return malformed(row)
+  }
+  return { key: details.key, platform: details.platform }
+}
+
+function unlockFailedOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("key" in details) || !("reason" in details)) {
+    return malformed(row)
+  }
+  return { key: details.key, reason: details.reason }
+}
+
+function installRefusedOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("name" in details)) return malformed(row)
+  return { name: details.name, reason: details.reason }
+}
+
+function signedInOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("method" in details)) return malformed(row)
+  return { method: details.method, userAgent: details.userAgent }
+}
+
+function signInFailedOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("reason" in details) || "key" in details) {
+    return malformed(row)
+  }
+  if (details.reason !== "wrong-password" && details.reason !== "banned") {
+    return malformed(row)
+  }
+  return { reason: details.reason }
+}
+
 function toEntry(
   row: TrailRow,
   signatures: Map<string, SignatureLogRecord>
@@ -254,7 +293,22 @@ function toEntry(
   switch (row.type) {
     case "certificate.renamed":
     case "document.renamed":
+    case "account.nameChanged":
       return { ...common, type: row.type, details: renameOf(row) }
+    case "browser.disconnected":
+    case "browser.unlocked":
+    case "browser.locked":
+      return { ...common, type: row.type, details: signInOf(row) }
+    case "browser.connected":
+      return { ...common, type: row.type, details: connectedOf(row) }
+    case "browser.unlockFailed":
+      return { ...common, type: row.type, details: unlockFailedOf(row) }
+    case "browser.installRefused":
+      return { ...common, type: row.type, details: installRefusedOf(row) }
+    case "account.signedIn":
+      return { ...common, type: row.type, details: signedInOf(row) }
+    case "account.signInFailed":
+      return { ...common, type: row.type, details: signInFailedOf(row) }
     case "document.moved":
       return { ...common, type: row.type, details: moveOf(row) }
     case "document.merged":

@@ -309,8 +309,10 @@ export const certificateTokenHandler = {
   },
 
   redeem: async ({
+    context,
     input,
   }: {
+    context: Context
     input: z.infer<typeof certificateTokenInput.redeem>
   }) => {
     await requireInstalls()
@@ -323,15 +325,38 @@ export const certificateTokenHandler = {
       })
     }
     const pending = installCodes.redeem(input.code)
-    if (!pending) throw errors.NOT_FOUND({ message: EXPIRED_CODE_MESSAGE })
+    if (!pending) {
+      // A used or expired command whose owner is still known is worth a
+      // trace: someone ran it. A code never issued has no one to tell.
+      const refusal = installCodes.refusal(input.code)
+      if (refusal) {
+        await recordTraces(db, context, refusal.userId, [
+          {
+            type: "browser.installRefused",
+            details: { name: refusal.name, reason: refusal.reason },
+          },
+        ])
+      }
+      throw errors.NOT_FOUND({ message: EXPIRED_CODE_MESSAGE })
+    }
     try {
       await requireTwoFactor(pending.userId)
+      const platform = `${input.os}-${input.arch}`
       const created = await createTokenKey(
         pending.userId,
         pending.name,
-        `${input.os}-${input.arch}`
+        platform
       )
       installCodes.complete(pending.code, created.id)
+      await recordTraces(db, context, pending.userId, [
+        {
+          type: "browser.connected",
+          details: {
+            key: { id: created.id, name: pending.name },
+            platform,
+          },
+        },
+      ])
       return { url: publicUrl(), key: created.key, moduleSha256: module.sha256 }
     } catch (error) {
       installCodes.release(pending.code)
@@ -447,7 +472,8 @@ export const certificateTokenHandler = {
     input: z.infer<typeof certificateTokenInput.revokeKey>
   }) => {
     const keys = await ownTokenKeys(context)
-    if (!keys.some((key) => key.id === input.id)) {
+    const key = keys.find((candidate) => candidate.id === input.id)
+    if (!key) {
       throw errors.NOT_FOUND({ message: KEY_NOT_FOUND_MESSAGE })
     }
     const { success } = await auth.api.deleteApiKey({
@@ -455,6 +481,14 @@ export const certificateTokenHandler = {
       body: { keyId: input.id },
     })
     tokenWindows.close(input.id)
+    if (success) {
+      await recordTraces(db, context, key.referenceId, [
+        {
+          type: "browser.disconnected",
+          details: { key: { id: key.id, name: key.name ?? "" } },
+        },
+      ])
+    }
     return { id: input.id, success }
   },
 
@@ -485,9 +519,16 @@ export const certificateTokenHandler = {
     context: TokenContext
     input: z.infer<typeof certificateTokenInput.unlock>
   }) => {
-    const { userId, keyId } = context.token
+    const { userId, keyId, keyName } = context.token
+    const key = { id: keyId, name: keyName }
     const lockedUntil = tokenWindows.lockedUntil(userId)
     if (lockedUntil) {
+      await recordTraces(db, context, userId, [
+        {
+          type: "browser.unlockFailed",
+          details: { key, reason: "locked-out" },
+        },
+      ])
       throw errors.TOO_MANY_REQUESTS({
         message: `Demasiados códigos incorrectos. Vuelve a intentarlo dentro de ${minutesUntil(lockedUntil)} minutos`,
       })
@@ -502,14 +543,31 @@ export const certificateTokenHandler = {
     const step = matchTotpStep(secret, input.code, Date.now())
     if (step === null || !tokenWindows.spendStep(userId, step)) {
       tokenWindows.recordFailure(userId)
+      await recordTraces(db, context, userId, [
+        {
+          type: "browser.unlockFailed",
+          details: { key, reason: "wrong-code" },
+        },
+      ])
       throw errors.BAD_REQUEST({ message: "Código incorrecto" })
     }
     tokenWindows.clearFailures(userId)
-    return { expiresAt: toIso(tokenWindows.open(keyId)) }
+    const expiresAt = tokenWindows.open(keyId)
+    await recordTraces(db, context, userId, [
+      { type: "browser.unlocked", details: { key } },
+    ])
+    return { expiresAt: toIso(expiresAt) }
   },
 
   lock: async ({ context }: { context: TokenContext }) => {
-    tokenWindows.close(context.token.keyId)
+    const { userId, keyId, keyName } = context.token
+    tokenWindows.close(keyId)
+    await recordTraces(db, context, userId, [
+      {
+        type: "browser.locked",
+        details: { key: { id: keyId, name: keyName } },
+      },
+    ])
     return { locked: true }
   },
 

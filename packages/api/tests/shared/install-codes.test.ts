@@ -142,3 +142,33 @@ describe("state", () => {
     expect(codes.state("user-2", code)).toBeNull()
   })
 })
+
+describe("refusal", () => {
+  test("tells a used code from an expired one, with its owner", () => {
+    const { clock, codes } = setup()
+    const used = codes.start("user-1", "Firefox").code
+    codes.redeem(used)
+    const expired = codes.start("user-2", "Zen").code
+    const pending = codes.start("user-3", "Brave").code
+    clock.now += INSTALL_CODE_TTL_MS
+
+    expect(codes.refusal(used)).toEqual({
+      userId: "user-1",
+      name: "Firefox",
+      reason: "used",
+    })
+    expect(codes.refusal(expired)).toMatchObject({
+      userId: "user-2",
+      reason: "expired",
+    })
+    expect(codes.refusal(pending)?.reason).toBe("expired")
+  })
+
+  test("is null for a pending or unknown code", () => {
+    const { codes } = setup()
+    const { code } = codes.start("user-1", "Firefox")
+
+    expect(codes.refusal(code)).toBeNull()
+    expect(codes.refusal("00000000")).toBeNull()
+  })
+})

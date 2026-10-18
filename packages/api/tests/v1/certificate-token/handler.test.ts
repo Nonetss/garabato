@@ -17,7 +17,7 @@ import {
   userRow,
 } from "@nonete/db/testing"
 import { installCodes } from "#shared/install-codes"
-import { moduleFiles } from "#shared/token-module"
+import { MODULE_VERSION, moduleFiles } from "#shared/token-module"
 import { tokenWindows } from "#shared/token-window"
 import { totpAt } from "#shared/totp"
 import { type VaultScope, vault } from "#shared/vault"
@@ -160,9 +160,34 @@ function switchesOff(overrides: Partial<BrowserTokenSettingsRow>) {
   )
 }
 
+// What the install script's request looks like: no session, a client IP.
+function scriptContext() {
+  return {
+    ...anonymousContext(),
+    headers: new Headers({ "x-forwarded-for": "198.51.100.4" }),
+  }
+}
+
+// Every browser token action writes a trace; most tests do not look at it.
+function allowTraces() {
+  for (let i = 0; i < 8; i++) fakeDb.queue("insert", [])
+}
+
+// A written trace as [type, details], for comparing several in order.
+function typeAndDetails(value: unknown) {
+  if (typeof value !== "object" || value === null) return [null, null]
+  if (!("type" in value) || !("details" in value)) return [null, null]
+  return [value.type, value.details]
+}
+
+function tracesWritten() {
+  return fakeDb.calls("insert").flatMap((call) => stepArgs(call, "values")[0])
+}
+
 beforeEach(() => {
   fakeDb.reset()
   allowInstalls()
+  allowTraces()
 })
 
 afterEach(() => {
@@ -222,6 +247,7 @@ describe("emergency switches on installs", () => {
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
+        context: scriptContext(),
         input: { code, arch: "x86_64", os: "linux" },
       }),
       "SERVICE_UNAVAILABLE"
@@ -268,6 +294,7 @@ describe("certificateToken.redeem", () => {
     })
 
     const redeemed = await certificateTokenHandler.redeem({
+      context: scriptContext(),
       input: { code, arch: "x86_64", os: "linux" },
     })
 
@@ -279,7 +306,7 @@ describe("certificateToken.redeem", () => {
         expiresIn: 365 * 24 * 60 * 60,
         permissions: { certificateToken: ["use"] },
         rateLimitEnabled: false,
-        metadata: { moduleVersion: "0.2.0", platform: "linux-x86_64" },
+        metadata: { moduleVersion: MODULE_VERSION, platform: "linux-x86_64" },
       },
     })
     expect(redeemed).toEqual({
@@ -308,6 +335,7 @@ describe("certificateToken.redeem", () => {
     })
 
     const redeemed = await certificateTokenHandler.redeem({
+      context: scriptContext(),
       input: { code, arch: "x86_64", os: "windows" },
     })
 
@@ -327,11 +355,13 @@ describe("certificateToken.redeem", () => {
       key: "sk_token_value",
     })
     await certificateTokenHandler.redeem({
+      context: scriptContext(),
       input: { code, arch: "x86_64", os: "linux" },
     })
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
+        context: scriptContext(),
         input: { code, arch: "x86_64", os: "linux" },
       }),
       "NOT_FOUND"
@@ -344,6 +374,7 @@ describe("certificateToken.redeem", () => {
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
+        context: scriptContext(),
         input: { code: "00000000", arch: "x86_64", os: "linux" },
       }),
       "NOT_FOUND"
@@ -357,6 +388,7 @@ describe("certificateToken.redeem", () => {
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
+        context: scriptContext(),
         input: { code, arch: "aarch64", os: "linux" },
       }),
       "NOT_FOUND"
@@ -376,6 +408,7 @@ describe("certificateToken.redeem", () => {
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
+        context: scriptContext(),
         input: { code, arch: "x86_64", os: "linux" },
       }),
       "CONFLICT"
@@ -567,7 +600,7 @@ describe("certificateToken.switches and settings", () => {
       tokenEnabled: true,
       installsEnabled: false,
       minModuleVersion: null,
-      servedVersion: "0.2.0",
+      servedVersion: MODULE_VERSION,
     })
   })
 
@@ -640,6 +673,118 @@ describe("certificateToken.switches and settings", () => {
       updatedBy: "admin-id",
     })
     expect(result.tokenEnabled).toBe(false)
+  })
+})
+
+describe("browser token traces", () => {
+  test("a redeemed code traces the connected browser with its platform and IP", async () => {
+    const { code } = await startConnection("Firefox portátil")
+    readModule.mockResolvedValue(moduleFile)
+    fakeDb.queue(
+      "query.user.findFirst",
+      userRow({ id: "user-id", twoFactorEnabled: true })
+    )
+    createApiKey.mockResolvedValue({
+      ...tokenKey("key-new", "2026-01-01T10:00:00.000Z"),
+      key: "sk_token_value",
+    })
+
+    await certificateTokenHandler.redeem({
+      context: scriptContext(),
+      input: { code, arch: "aarch64", os: "linux" },
+    })
+
+    expect(tracesWritten()).toContainEqual(
+      expect.objectContaining({
+        userId: "user-id",
+        type: "browser.connected",
+        ipAddress: "198.51.100.4",
+        details: {
+          key: { id: "key-new", name: "Firefox portátil" },
+          platform: "linux-aarch64",
+        },
+      })
+    )
+  })
+
+  test("a used command is traced for its owner, an unknown one is not", async () => {
+    const { code } = await startConnection("Zen sobremesa")
+    installCodes.redeem(code)
+    readModule.mockResolvedValue(moduleFile)
+
+    await expectErrorCode(
+      certificateTokenHandler.redeem({
+        context: scriptContext(),
+        input: { code, arch: "x86_64", os: "linux" },
+      }),
+      "NOT_FOUND"
+    )
+    await expectErrorCode(
+      certificateTokenHandler.redeem({
+        context: scriptContext(),
+        input: { code: "00000000", arch: "x86_64", os: "linux" },
+      }),
+      "NOT_FOUND"
+    )
+
+    expect(tracesWritten()).toEqual([
+      expect.objectContaining({
+        userId: "user-id",
+        type: "browser.installRefused",
+        details: { name: "Zen sobremesa", reason: "used" },
+      }),
+    ])
+  })
+
+  test("unlocking, a wrong code, the lockout and locking are traced", async () => {
+    const context = tokenContext()
+    const key = { id: context.token.keyId, name: "Firefox portátil" }
+    const unlockWith = async (code: string) => {
+      fakeDb.queue(
+        "query.twoFactor.findFirst",
+        await twoFactorRow(context.token.userId)
+      )
+      return certificateTokenHandler.unlock({ context, input: { code } })
+    }
+
+    await unlockWith(totpAt(TOTP_SECRET, Date.now()))
+    await expectErrorCode(unlockWith("000000"), "BAD_REQUEST")
+    for (let i = 0; i < 4; i++) {
+      await expectErrorCode(unlockWith("000000"), "BAD_REQUEST")
+    }
+    await expectErrorCode(unlockWith("000000"), "TOO_MANY_REQUESTS")
+    await certificateTokenHandler.lock({ context })
+
+    const types = tracesWritten().map(typeAndDetails)
+    expect(types[0]).toEqual(["browser.unlocked", { key }])
+    expect(types[1]).toEqual([
+      "browser.unlockFailed",
+      { key, reason: "wrong-code" },
+    ])
+    expect(types[6]).toEqual([
+      "browser.unlockFailed",
+      { key, reason: "locked-out" },
+    ])
+    expect(types[7]).toEqual(["browser.locked", { key }])
+  })
+
+  test("disconnecting a browser is traced with its name", async () => {
+    listApiKeys.mockResolvedValue(
+      listedApiKeys([tokenKey("gone-key", "2026-01-01T10:00:00.000Z")])
+    )
+    deleteApiKey.mockResolvedValue({ success: true })
+
+    await certificateTokenHandler.revokeKey({
+      context: userContext(),
+      input: { id: "gone-key" },
+    })
+
+    expect(tracesWritten()).toEqual([
+      expect.objectContaining({
+        type: "browser.disconnected",
+        details: { key: { id: "gone-key", name: "Browser gone-key" } },
+      }),
+    ])
   })
 })
 

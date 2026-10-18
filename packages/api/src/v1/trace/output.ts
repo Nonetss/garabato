@@ -61,13 +61,22 @@ const plainEntry = z.object({
     "document.downloaded",
     "document.versionDeleted",
     "document.deleted",
+    "account.signedOut",
+    "account.passwordChanged",
+    "account.twoFactorEnabled",
+    "account.twoFactorDisabled",
+    "account.twoFactorFailed",
   ]),
   details: z.null(),
 })
 
 const renameEntry = z.object({
   ...common,
-  type: z.enum(["certificate.renamed", "document.renamed"]),
+  type: z.enum([
+    "certificate.renamed",
+    "document.renamed",
+    "account.nameChanged",
+  ]),
   details: z.object({
     from: z.string().describe("Previous name or alias"),
     to: z.string().describe("New name or alias"),
@@ -102,6 +111,60 @@ const signInEntry = z.object({
   }),
 })
 
+const keyRef = z
+  .object({ id: z.string(), name: z.string() })
+  .describe("The connected browser (token key), as then named")
+
+const browserEntry = z.object({
+  ...common,
+  type: z.enum(["browser.disconnected", "browser.unlocked", "browser.locked"]),
+  details: z.object({ key: keyRef }),
+})
+
+const browserConnectedEntry = z.object({
+  ...common,
+  type: z.literal("browser.connected"),
+  details: z.object({
+    key: keyRef,
+    platform: z.string().describe("Module platform, e.g. linux-x86_64"),
+  }),
+})
+
+const browserUnlockFailedEntry = z.object({
+  ...common,
+  type: z.literal("browser.unlockFailed"),
+  details: z.object({
+    key: keyRef,
+    reason: z.enum(["wrong-code", "locked-out"]),
+  }),
+})
+
+const browserInstallRefusedEntry = z.object({
+  ...common,
+  type: z.literal("browser.installRefused"),
+  details: z.object({
+    name: z
+      .string()
+      .describe("The browser name the connection was started for"),
+    reason: z.enum(["used", "expired"]),
+  }),
+})
+
+const signedInEntry = z.object({
+  ...common,
+  type: z.literal("account.signedIn"),
+  details: z.object({
+    method: z.enum(["password", "sso"]),
+    userAgent: z.string().nullable(),
+  }),
+})
+
+const signInFailedEntry = z.object({
+  ...common,
+  type: z.literal("account.signInFailed"),
+  details: z.object({ reason: z.enum(["wrong-password", "banned"]) }),
+})
+
 const signedEntry = z.object({
   ...common,
   type: z.literal("document.signed"),
@@ -115,6 +178,12 @@ const trailEntry = z.discriminatedUnion("type", [
   moveEntry,
   mergeEntry,
   signInEntry,
+  browserEntry,
+  browserConnectedEntry,
+  browserUnlockFailedEntry,
+  browserInstallRefusedEntry,
+  signedInEntry,
+  signInFailedEntry,
   signedEntry,
 ])
 

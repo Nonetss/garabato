@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test"
 import { stepArgs } from "@nonete/db/testing"
+import { writeTraces } from "@nonete/db/trace-writer"
 import type { Context } from "#context"
 import { recordTraces } from "#shared/trace"
 import { userContext } from "#tests/fixtures/context"
@@ -62,6 +63,31 @@ describe("recordTraces", () => {
 
   test("writes nothing for an empty list", async () => {
     await recordTraces(fakeDb.db, userContext(), "user-1", [])
+
+    expect(fakeDb.calls("insert")).toEqual([])
+  })
+})
+
+describe("writeTraces", () => {
+  test("writes the rows with the IP it is given", async () => {
+    fakeDb.queue("insert", [])
+
+    await writeTraces(fakeDb.db, "user-1", "192.0.2.9", [
+      { type: "account.signedOut" },
+    ])
+
+    const [insert] = fakeDb.calls("insert")
+    expect(insert && stepArgs(insert, "values")[0]).toEqual([
+      expect.objectContaining({
+        userId: "user-1",
+        type: "account.signedOut",
+        ipAddress: "192.0.2.9",
+      }),
+    ])
+  })
+
+  test("writes nothing for no traces", async () => {
+    await writeTraces(fakeDb.db, "user-1", null, [])
 
     expect(fakeDb.calls("insert")).toEqual([])
   })

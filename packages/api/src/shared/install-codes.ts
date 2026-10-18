@@ -133,6 +133,27 @@ export function createInstallCodes(now: Clock) {
       if (entry) entry.progress = { status: "pending" }
     },
 
+    /**
+     * Why a code cannot be redeemed, with whom it belongs to: already used
+     * (redeemed or being redeemed) or expired. Null for a code never issued
+     * or forgotten, and for a code that is still pending.
+     */
+    refusal(
+      value: string
+    ): { userId: string; name: string; reason: "used" | "expired" } | null {
+      const code = normalizeInstallCode(value)
+      if (code === null) return null
+      const entry = entries.get(code)
+      if (!entry) return null
+      if (entry.progress.status !== "pending") {
+        return { userId: entry.userId, name: entry.name, reason: "used" }
+      }
+      if (entry.expiresAt <= now()) {
+        return { userId: entry.userId, name: entry.name, reason: "expired" }
+      }
+      return null
+    },
+
     /** The state of the user's connection; null for another user's or an
      *  unknown code. */
     state(userId: string, value: string): ConnectionState | null {
