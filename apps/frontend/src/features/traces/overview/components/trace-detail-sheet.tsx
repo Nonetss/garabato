@@ -14,7 +14,10 @@ import {
 import { deletedAware } from "@/features/traces/overview/model/filters"
 import {
   folderLabel,
+  signInMethodLabel,
   TRAIL_TYPE_LABELS,
+  traceBrowserName,
+  traceFailureReason,
   traceSubject,
   traceVersionLabel,
 } from "@/features/traces/overview/model/labels"
@@ -50,19 +53,28 @@ function CertificateName({ entry }: { entry: TrailEntry }) {
 }
 
 function renameDetails(entry: TrailEntry) {
-  if (entry.type !== "certificate.renamed" && entry.type !== "document.renamed")
+  if (
+    entry.type !== "certificate.renamed" &&
+    entry.type !== "document.renamed" &&
+    entry.type !== "account.nameChanged"
+  )
     return null
+  return entry.details
+}
+
+function connectedPlatform(entry: TrailEntry) {
+  if (entry.type !== "browser.connected") return null
+  return entry.details.platform
+}
+
+function signInDetails(entry: TrailEntry) {
+  if (entry.type !== "account.signedIn") return null
   return entry.details
 }
 
 function moveDetails(entry: TrailEntry) {
   if (entry.type !== "document.moved") return null
   return entry.details
-}
-
-function signInKey(entry: TrailEntry) {
-  if (entry.type !== "certificate.usedToSignIn") return null
-  return entry.details.key
 }
 
 function mergeSources(entry: TrailEntry) {
@@ -162,8 +174,40 @@ const fields: MetadataFieldDescriptor<TrailEntry>[] = [
   {
     key: "browser",
     label: "Navegador",
-    value: (entry) => signInKey(entry)?.name,
-    hidden: (entry) => signInKey(entry) === null,
+    value: (entry) => traceBrowserName(entry),
+    hidden: (entry) => traceBrowserName(entry) === null,
+  },
+  {
+    key: "platform",
+    label: "Plataforma",
+    value: (entry) => <Text variant="data">{connectedPlatform(entry)}</Text>,
+    hidden: (entry) => connectedPlatform(entry) === null,
+  },
+  {
+    key: "reason",
+    label: "Motivo",
+    value: (entry) => traceFailureReason(entry),
+    hidden: (entry) => traceFailureReason(entry) === null,
+  },
+  {
+    key: "method",
+    label: "Método",
+    value: (entry) => {
+      const details = signInDetails(entry)
+      if (!details) return null
+      return signInMethodLabel(details.method)
+    },
+    hidden: (entry) => signInDetails(entry) === null,
+  },
+  {
+    key: "userAgent",
+    label: "Navegador usado",
+    value: (entry) => (
+      <Text variant="data" className="break-all">
+        {signInDetails(entry)?.userAgent}
+      </Text>
+    ),
+    hidden: (entry) => !signInDetails(entry)?.userAgent,
   },
   {
     key: "ip",

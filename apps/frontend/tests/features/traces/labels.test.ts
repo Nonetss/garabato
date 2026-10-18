@@ -211,6 +211,53 @@ describe("traceDescription", () => {
   })
 })
 
+describe("browser and account entries", () => {
+  const key = { id: "key-1", name: "Firefox portátil" }
+  const none = { document: null, certificate: null, version: null }
+
+  test("name the browser they concern and say what happened", () => {
+    const failed: TrailEntry = {
+      ...common,
+      ...none,
+      type: "browser.unlockFailed",
+      details: { key, reason: "locked-out" },
+    }
+    const refused: TrailEntry = {
+      ...common,
+      ...none,
+      type: "browser.installRefused",
+      details: { name: "Zen", reason: "used" },
+    }
+
+    expect(traceSubject(failed)).toBe("Firefox portátil")
+    expect(traceDescription(failed)).toBe(
+      "«Firefox portátil» rechazado por demasiados códigos incorrectos"
+    )
+    expect(traceSubject(refused)).toBe("Zen")
+    expect(traceDescription(refused)).toBe(
+      "Alguien ejecutó el comando de «Zen», que ya se había usado"
+    )
+  })
+
+  test("account entries are about the account", () => {
+    const signedIn: TrailEntry = {
+      ...common,
+      ...none,
+      type: "account.signedIn",
+      details: { method: "sso", userAgent: null },
+    }
+
+    expect(traceSubject(signedIn)).toBe("Tu cuenta")
+    expect(traceDescription(signedIn)).toBe("Inicio de sesión único (SSO)")
+  })
+
+  test("security failures read as destructive", () => {
+    expect(traceTone("account.signInFailed")).toBe("destructive")
+    expect(traceTone("browser.unlockFailed")).toBe("destructive")
+    expect(traceTone("account.signedIn")).toBe("muted")
+  })
+})
+
 describe("labels", () => {
   test("names the root folder", () => {
     expect(folderLabel(null)).toBe("Biblioteca")

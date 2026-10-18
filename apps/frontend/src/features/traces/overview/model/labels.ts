@@ -27,6 +27,60 @@ export const TRAIL_TYPE_LABELS: Record<TrailType, string> = {
   "certificate.passwordRemembered": "Contraseña recordada",
   "certificate.passwordForgotten": "Contraseña olvidada",
   "certificate.deleted": "Certificado eliminado",
+  "browser.connected": "Navegador conectado",
+  "browser.disconnected": "Navegador desconectado",
+  "browser.unlocked": "Navegador desbloqueado",
+  "browser.unlockFailed": "Código incorrecto en el navegador",
+  "browser.locked": "Navegador bloqueado",
+  "browser.installRefused": "Comando de instalación rechazado",
+  "account.signedIn": "Inicio de sesión",
+  "account.signInFailed": "Inicio de sesión fallido",
+  "account.signedOut": "Cierre de sesión",
+  "account.nameChanged": "Nombre cambiado",
+  "account.passwordChanged": "Contraseña cambiada",
+  "account.twoFactorEnabled": "Verificación en dos pasos activada",
+  "account.twoFactorDisabled": "Verificación en dos pasos desactivada",
+  "account.twoFactorFailed": "Código de verificación incorrecto",
+}
+
+/** The browser (connected token key) an entry concerns, as then named. */
+export function traceBrowserName(entry: TrailEntry) {
+  switch (entry.type) {
+    case "certificate.usedToSignIn":
+    case "browser.connected":
+    case "browser.disconnected":
+    case "browser.unlocked":
+    case "browser.unlockFailed":
+    case "browser.locked":
+      return entry.details.key.name
+    case "browser.installRefused":
+      return entry.details.name
+    default:
+      return null
+  }
+}
+
+/** Why a refused browser or account action failed, in Spanish. */
+export function traceFailureReason(entry: TrailEntry) {
+  switch (entry.type) {
+    case "browser.unlockFailed":
+      if (entry.details.reason === "locked-out") return "demasiados intentos"
+      return "código incorrecto"
+    case "browser.installRefused":
+      if (entry.details.reason === "used") return "comando ya usado"
+      return "comando caducado"
+    case "account.signInFailed":
+      if (entry.details.reason === "banned") return "cuenta bloqueada"
+      return "contraseña incorrecta"
+    default:
+      return null
+  }
+}
+
+/** How a sign-in happened, for the detail. */
+export function signInMethodLabel(method: "password" | "sso") {
+  if (method === "sso") return "Inicio de sesión único (SSO)"
+  return "Contraseña"
 }
 
 /** A folder by name; "Biblioteca" for the library root. */
@@ -43,6 +97,14 @@ export function traceSubject(entry: TrailEntry) {
   }
   if (entry.certificate) {
     names.push(deletedAware(entry.certificate.alias, entry.certificate.deleted))
+  }
+  // A sign-in with a certificate already names the certificate.
+  const browser = traceBrowserName(entry)
+  if (browser !== null && entry.type !== "certificate.usedToSignIn") {
+    names.push(browser)
+  }
+  if (names.length === 0 && entry.type.startsWith("account.")) {
+    return "Tu cuenta"
   }
   return joinFacts(names)
 }
@@ -108,6 +170,43 @@ export function traceDescription(entry: TrailEntry) {
       return entry.certificate?.holder ?? ""
     case "certificate.usedToSignIn":
       return `«${entry.details.key.name}» lo usó para identificarte en un sitio web`
+    case "browser.connected":
+      return `«${entry.details.key.name}» se conectó desde ${entry.details.platform}`
+    case "browser.disconnected":
+      return `Se desconectó «${entry.details.key.name}»; su clave dejó de valer`
+    case "browser.unlocked":
+      return `«${entry.details.key.name}» se desbloqueó con un código válido`
+    case "browser.unlockFailed":
+      if (entry.details.reason === "locked-out") {
+        return `«${entry.details.key.name}» rechazado por demasiados códigos incorrectos`
+      }
+      return `Código incorrecto en «${entry.details.key.name}»`
+    case "browser.locked":
+      return `«${entry.details.key.name}» se bloqueó`
+    case "browser.installRefused":
+      if (entry.details.reason === "used") {
+        return `Alguien ejecutó el comando de «${entry.details.name}», que ya se había usado`
+      }
+      return `Alguien ejecutó el comando de «${entry.details.name}», que había caducado`
+    case "account.signedIn":
+      return signInMethodLabel(entry.details.method)
+    case "account.signInFailed":
+      if (entry.details.reason === "banned") {
+        return "Se intentó entrar en una cuenta bloqueada"
+      }
+      return "Se intentó entrar con una contraseña incorrecta"
+    case "account.signedOut":
+      return "Se cerró la sesión"
+    case "account.nameChanged":
+      return `${entry.details.from} → ${entry.details.to}`
+    case "account.passwordChanged":
+      return "Se cambió la contraseña"
+    case "account.twoFactorEnabled":
+      return "Se activó la verificación en dos pasos"
+    case "account.twoFactorDisabled":
+      return "Se desactivó la verificación en dos pasos"
+    case "account.twoFactorFailed":
+      return "Se escribió un código de verificación incorrecto al entrar"
     case "certificate.passwordRemembered":
       return "La contraseña queda guardada cifrada para firmar sin escribirla"
     case "certificate.passwordForgotten":
@@ -126,7 +225,12 @@ export function traceTone(
   if (
     type === "document.deleted" ||
     type === "document.versionDeleted" ||
-    type === "certificate.deleted"
+    type === "certificate.deleted" ||
+    type === "browser.disconnected" ||
+    type === "browser.unlockFailed" ||
+    type === "browser.installRefused" ||
+    type === "account.signInFailed" ||
+    type === "account.twoFactorFailed"
   ) {
     return "destructive"
   }

@@ -37,9 +37,26 @@ export const TRAIL_TYPES = [
   "certificate.passwordRemembered",
   "certificate.passwordForgotten",
   "certificate.deleted",
+  "browser.connected",
+  "browser.disconnected",
+  "browser.unlocked",
+  "browser.unlockFailed",
+  "browser.locked",
+  "browser.installRefused",
+  "account.signedIn",
+  "account.signInFailed",
+  "account.signedOut",
+  "account.nameChanged",
+  "account.passwordChanged",
+  "account.twoFactorEnabled",
+  "account.twoFactorDisabled",
+  "account.twoFactorFailed",
 ] as const
 
 export type TrailType = (typeof TRAIL_TYPES)[number]
+
+/** A connected browser (token key) as the trace keeps it. */
+export type TraceKeyRef = { id: string; name: string }
 
 /** A folder as the trace keeps it; null is the library root. */
 export type TraceFolderRef = { id: string; name: string } | null
@@ -73,11 +90,42 @@ export type TrailEntry =
         | "document.downloaded"
         | "document.versionDeleted"
         | "document.deleted"
+        | "account.signedOut"
+        | "account.passwordChanged"
+        | "account.twoFactorEnabled"
+        | "account.twoFactorDisabled"
+        | "account.twoFactorFailed"
       details: null
     })
   | (TrailCommon & {
-      type: "certificate.renamed" | "document.renamed"
+      type: "certificate.renamed" | "document.renamed" | "account.nameChanged"
       details: { from: string; to: string }
+    })
+  | (TrailCommon & {
+      type: "browser.disconnected" | "browser.unlocked" | "browser.locked"
+      details: { key: TraceKeyRef }
+    })
+  | (TrailCommon & {
+      type: "browser.connected"
+      /** The module platform, such as `linux-x86_64`. */
+      details: { key: TraceKeyRef; platform: string }
+    })
+  | (TrailCommon & {
+      type: "browser.unlockFailed"
+      details: { key: TraceKeyRef; reason: "wrong-code" | "locked-out" }
+    })
+  | (TrailCommon & {
+      type: "browser.installRefused"
+      /** The browser name the connection was started for. */
+      details: { name: string; reason: "used" | "expired" }
+    })
+  | (TrailCommon & {
+      type: "account.signedIn"
+      details: { method: "password" | "sso"; userAgent: string | null }
+    })
+  | (TrailCommon & {
+      type: "account.signInFailed"
+      details: { reason: "wrong-password" | "banned" }
     })
   | (TrailCommon & {
       type: "certificate.usedToSignIn"
