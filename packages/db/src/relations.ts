@@ -31,6 +31,13 @@ export const relations = defineRelations(schema, (r) => ({
       optional: true,
     }),
   },
+  browserTokenSettings: {
+    updatedByUser: r.one.user({
+      from: r.browserTokenSettings.updatedBy,
+      to: r.user.id,
+      optional: true,
+    }),
+  },
   account: {
     user: r.one.user({
       from: r.account.userId,

@@ -1,5 +1,6 @@
 /** Complete rows with fixed defaults, for queueing on the fake database. */
 import type {
+  browserTokenSettings,
   certificates,
   comments,
   documentFolders,
@@ -18,6 +19,7 @@ import type {
 } from "#schema"
 import type { cronJob, cronRun } from "#schema/cron"
 
+export type BrowserTokenSettingsRow = typeof browserTokenSettings.$inferSelect
 export type CronJobRow = typeof cronJob.$inferSelect
 export type CronRunRow = typeof cronRun.$inferSelect
 export type UserRow = typeof user.$inferSelect
@@ -38,6 +40,20 @@ export type TeamRow = typeof team.$inferSelect
 export type TraceEventRow = typeof traceEvents.$inferSelect
 
 export const NOW = new Date("2026-01-01T00:00:00.000Z")
+
+export function browserTokenSettingsRow(
+  overrides: Partial<BrowserTokenSettingsRow> = {}
+): BrowserTokenSettingsRow {
+  return {
+    id: "default",
+    tokenEnabled: true,
+    installsEnabled: true,
+    minModuleVersion: null,
+    updatedAt: NOW,
+    updatedBy: null,
+    ...overrides,
+  }
+}
 
 export function cronJobRow(overrides: Partial<CronJobRow> = {}): CronJobRow {
   return {
