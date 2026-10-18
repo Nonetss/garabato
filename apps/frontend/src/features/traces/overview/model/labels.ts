@@ -22,6 +22,7 @@ export const TRAIL_TYPE_LABELS: Record<TrailType, string> = {
   "document.versionDeleted": "Versión eliminada",
   "document.deleted": "Documento eliminado",
   "certificate.imported": "Certificado importado",
+  "certificate.usedToSignIn": "Acceso con certificado",
   "certificate.renamed": "Certificado renombrado",
   "certificate.passwordRemembered": "Contraseña recordada",
   "certificate.passwordForgotten": "Contraseña olvidada",
@@ -105,6 +106,8 @@ export function traceDescription(entry: TrailEntry) {
       return "Borrado junto con sus versiones; sus firmas siguen registradas"
     case "certificate.imported":
       return entry.certificate?.holder ?? ""
+    case "certificate.usedToSignIn":
+      return `«${entry.details.key.name}» lo usó para identificarte en un sitio web`
     case "certificate.passwordRemembered":
       return "La contraseña queda guardada cifrada para firmar sin escribirla"
     case "certificate.passwordForgotten":

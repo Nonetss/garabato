@@ -32,6 +32,7 @@ export const TRAIL_TYPES = [
   "document.versionDeleted",
   "document.deleted",
   "certificate.imported",
+  "certificate.usedToSignIn",
   "certificate.renamed",
   "certificate.passwordRemembered",
   "certificate.passwordForgotten",
@@ -77,6 +78,11 @@ export type TrailEntry =
   | (TrailCommon & {
       type: "certificate.renamed" | "document.renamed"
       details: { from: string; to: string }
+    })
+  | (TrailCommon & {
+      type: "certificate.usedToSignIn"
+      /** The token key (browser) that used the certificate, as then named. */
+      details: { key: { id: string; name: string } }
     })
   | (TrailCommon & {
       type: "document.moved"

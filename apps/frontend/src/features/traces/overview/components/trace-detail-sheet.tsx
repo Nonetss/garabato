@@ -60,6 +60,11 @@ function moveDetails(entry: TrailEntry) {
   return entry.details
 }
 
+function signInKey(entry: TrailEntry) {
+  if (entry.type !== "certificate.usedToSignIn") return null
+  return entry.details.key
+}
+
 function mergeSources(entry: TrailEntry) {
   if (entry.type !== "document.merged") return null
   return entry.details.sources
@@ -153,6 +158,12 @@ const fields: MetadataFieldDescriptor<TrailEntry>[] = [
       </ol>
     ),
     hidden: (entry) => mergeSources(entry) === null,
+  },
+  {
+    key: "browser",
+    label: "Navegador",
+    value: (entry) => signInKey(entry)?.name,
+    hidden: (entry) => signInKey(entry) === null,
   },
   {
     key: "ip",

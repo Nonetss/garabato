@@ -151,6 +151,22 @@ describe("traceDescription", () => {
     ).toBe("v3 (eliminada)")
   })
 
+  test("names the browser that used a certificate to sign in", () => {
+    const entry: TrailEntry = {
+      ...common,
+      document: null,
+      version: null,
+      certificate,
+      type: "certificate.usedToSignIn",
+      details: { key: { id: "key-1", name: "Firefox portátil" } },
+    }
+
+    expect(traceSubject(entry)).toBe("FNMT personal")
+    expect(traceDescription(entry)).toBe(
+      "«Firefox portátil» lo usó para identificarte en un sitio web"
+    )
+  })
+
   test("names the certificate, version and placement of a signature", () => {
     expect(
       traceDescription({
@@ -205,6 +221,9 @@ describe("labels", () => {
       "Certificado importado"
     )
     expect(TRAIL_TYPE_LABELS["document.signed"]).toBe("Documento firmado")
+    expect(TRAIL_TYPE_LABELS["certificate.usedToSignIn"]).toBe(
+      "Acceso con certificado"
+    )
     expect(TRAIL_TYPE_LABELS["document.versionDeleted"]).toBe(
       "Versión eliminada"
     )

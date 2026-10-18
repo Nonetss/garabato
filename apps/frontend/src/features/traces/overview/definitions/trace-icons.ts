@@ -13,6 +13,7 @@ export const TRAIL_TYPE_ICONS = {
   "document.versionDeleted": getIcon("actions", "restore"),
   "document.deleted": getIcon("actions", "delete"),
   "certificate.imported": getIcon("navigation", "certificates"),
+  "certificate.usedToSignIn": getIcon("auth", "loginAction"),
   "certificate.renamed": getIcon("actions", "edit"),
   "certificate.passwordRemembered": getIcon("security", "rememberPassword"),
   "certificate.passwordForgotten": getIcon("security", "forgetPassword"),
