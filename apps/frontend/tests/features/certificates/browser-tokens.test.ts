@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import { remainingLabel } from "@/features/certificates/overview/model/browser-tokens"
+import {
+  detectInstallSystem,
+  remainingLabel,
+} from "@/features/certificates/overview/model/browser-tokens"
 
 const EXPIRES = "2026-01-01T10:10:00.000Z"
 
@@ -17,5 +20,24 @@ describe("remainingLabel", () => {
     expect(
       remainingLabel(EXPIRES, Date.parse("2026-01-01T10:12:00.000Z"))
     ).toBe("0:00")
+  })
+})
+
+describe("detectInstallSystem", () => {
+  test("picks Windows on a Windows browser", () => {
+    expect(
+      detectInstallSystem(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:158.0) Gecko/20100101 Firefox/158.0"
+      )
+    ).toBe("windows")
+  })
+
+  test("picks Linux elsewhere", () => {
+    expect(
+      detectInstallSystem(
+        "Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"
+      )
+    ).toBe("linux")
+    expect(detectInstallSystem("")).toBe("linux")
   })
 })

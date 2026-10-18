@@ -9,6 +9,7 @@ import { Text, textVariants } from "@/components/shared/brand/typography"
 import { CopyButton } from "@/components/shared/form/copy-button"
 import type { DialogFieldDescriptor } from "@/components/shared/form/dialog-fields"
 import { FormDialog } from "@/components/shared/form/form-dialog"
+import { SegmentedPicker } from "@/components/shared/form/segmented-picker"
 import { AppLink } from "@/components/ui/app-link"
 import { Button } from "@/components/ui/button"
 import {
@@ -27,6 +28,8 @@ import {
   useStartConnection,
 } from "@/features/certificates/overview/hooks/use-browser-tokens"
 import {
+  detectInstallSystem,
+  type InstallSystem,
   remainingLabel,
   type StartedConnection,
 } from "@/features/certificates/overview/model/browser-tokens"
@@ -89,10 +92,28 @@ function useNow(active: boolean) {
   return now
 }
 
+const SYSTEM_OPTIONS = [
+  { value: "linux", label: browserTokenLabels.linux },
+  { value: "windows", label: browserTokenLabels.windows },
+] satisfies { value: InstallSystem; label: string }[]
+
 function PendingBody({ connection }: { connection: StartedConnection }) {
   const now = useNow(true)
+  const [system, setSystem] = useState<InstallSystem>(() =>
+    detectInstallSystem(navigator.userAgent)
+  )
+  const command = connection.commands[system]
   return (
     <div className="space-y-4 px-6 py-5">
+      <div className="max-w-56">
+        <SegmentedPicker
+          label={browserTokenLabels.system}
+          options={SYSTEM_OPTIONS}
+          value={system}
+          onChange={setSystem}
+          columns={2}
+        />
+      </div>
       <div className="flex items-start gap-2">
         <pre
           className={cn(
@@ -100,10 +121,10 @@ function PendingBody({ connection }: { connection: StartedConnection }) {
             "min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-md border bg-muted/40 px-3 py-2.5 leading-relaxed"
           )}
         >
-          {connection.command}
+          {command}
         </pre>
         <CopyButton
-          text={connection.command}
+          text={command}
           label={browserTokenLabels.copyCommand}
           copiedLabel="Copiado"
           size="icon"
@@ -147,7 +168,7 @@ function PendingBody({ connection }: { connection: StartedConnection }) {
         role="note"
       >
         <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
-        <p>{browserTokenLabels.requirements}</p>
+        <p>{browserTokenLabels.requirements[system]}</p>
       </Text>
     </div>
   )

@@ -12,13 +12,20 @@ export const browserTokenLabels = {
   twoFactorAction: "Ir a mi perfil",
   commandTitle: "Ejecuta este comando",
   commandDescription:
-    "Pégalo en una terminal del equipo donde usas el navegador, con tu usuario y sin sudo. Descarga el módulo, lo instala y lo registra en Firefox y Chromium.",
+    "Pégalo en una terminal del equipo donde usas el navegador, con tu usuario y sin permisos de administrador. Descarga el módulo, lo instala y lo registra en tus navegadores.",
+  system: "Sistema operativo",
+  linux: "Linux",
+  windows: "Windows",
   copyCommand: "Copiar comando",
   code: "Código",
   expiresIn: (remaining: string) => `Caduca en ${remaining}`,
   waiting: "Esperando a que se ejecute el comando…",
-  requirements:
-    "Necesita Linux (x86_64 o ARM64) y las herramientas de NSS: nss en Arch, libnss3-tools en Debian/Ubuntu, nss-tools en Fedora. Si el navegador está abierto, el script esperará a que lo cierres.",
+  requirements: {
+    linux:
+      "En una terminal de Linux (x86_64 o ARM64). Necesita las herramientas de NSS: nss en Arch, libnss3-tools en Debian/Ubuntu, nss-tools en Fedora. Funciona con Firefox, Zen, LibreWolf, Floorp, Waterfox y Chromium. Si el navegador está abierto, el script esperará a que lo cierres.",
+    windows:
+      "En PowerShell, en Windows x86_64. Funciona con Firefox, Zen, LibreWolf, Floorp y Waterfox; Chrome, Edge y Brave en Windows no son compatibles. Si el navegador está abierto, el script esperará a que lo cierres. Algún antivirus puede avisar al descargar el módulo, porque no está firmado.",
+  },
   connectedTitle: "Navegador conectado",
   connectedDescription: (name: string) =>
     `«${name}» ya puede usar tus certificados.`,

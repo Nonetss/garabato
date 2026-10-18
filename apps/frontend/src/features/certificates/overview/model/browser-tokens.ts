@@ -8,12 +8,22 @@ export type ConnectedBrowser = {
   lastUsedAt: string | null
 }
 
+/** Operating systems the module has an install command for. */
+export type InstallSystem = "linux" | "windows"
+
 /** A connection waiting for its install command to run. */
 export type StartedConnection = {
   code: string
   displayCode: string
-  command: string
+  commands: Record<InstallSystem, string>
   expiresAt: string
+}
+
+/** The system whose command to show first: Windows when the page runs on
+ *  Windows, Linux otherwise. */
+export function detectInstallSystem(userAgent: string): InstallSystem {
+  if (/Windows/i.test(userAgent)) return "windows"
+  return "linux"
 }
 
 export type ConnectionStatus =
