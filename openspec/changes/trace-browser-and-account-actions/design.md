@@ -42,6 +42,8 @@ Traces are rows of `trace_events` written by `recordTraces` (`packages/api/src/s
 | `/two-factor/enable` → `/two-factor/verify-totp` completing enrolment, `/two-factor/disable` ok | `account.twoFactorEnabled` / `account.twoFactorDisabled` |
 | `/two-factor/verify-totp` failed at sign-in | `account.twoFactorFailed` |
 
+The decision (which traces a finished request produces) is a pure function `accountTracesFor(event)` in `packages/auth/src/account-traces.ts`, unit-tested; the hooks only gather its input (path, outcome and error code, new session, the user before the request kept by a `hooks.before` in a `WeakMap` keyed by the `Request`, the user found by the sign-in email or the two-step cookie) and write what it returns.
+
 The trace writer used there is a small function in `packages/db` (or `packages/auth`) that inserts into `trace_events` with the IP from the request headers; `packages/api`'s `recordTraces` keeps its signature and delegates to it, so both write the same rows. The exact paths and the shape of `ctx.context` in Better Auth 1.7.7 are confirmed by the first task with a hook test against the real `auth` instance and the fake database.
 
 Two-step enrolment is "on" only when the first code is verified (the plugin flips `twoFactorEnabled` then), so the trace is written when `/two-factor/verify-totp` succeeds for a user whose flag was off before the request.
