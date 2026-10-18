@@ -32,7 +32,7 @@ jobs:
       matrix:
         include:
           - name: backend
-            paths: "apps/backend/ packages/ package.json bun.lock bunfig.toml"
+            paths: "apps/backend/ packages/ native/pkcs11/ package.json bun.lock bunfig.toml"
           - name: frontend
             paths: "apps/frontend/ packages/ package.json bun.lock bunfig.toml"
           - name: gateway

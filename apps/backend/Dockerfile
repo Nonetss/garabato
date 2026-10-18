@@ -1,5 +1,32 @@
 # Keep in sync with "packageManager" in the root package.json.
 ARG BUN_VERSION=1.4.2
+# Toolchain for the browser token module (native/pkcs11, edition 2024).
+ARG RUST_VERSION=1.98
+
+# ── Browser token module ─────────────────────────────────────────────────────
+# Builds the PKCS#11 module the install script hands to browsers, for x86_64
+# and ARM64 Linux. Bookworm's glibc (2.36) keeps it loadable on current
+# desktop distributions. Only native/pkcs11 is copied, so app changes reuse
+# this stage from cache; the Rust toolchain never reaches the runtime image.
+FROM rust:${RUST_VERSION}-slim-bookworm AS module
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+  && rm -rf /var/lib/apt/lists/* \
+  && rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+  CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+  AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
+WORKDIR /src
+COPY native/pkcs11/Cargo.toml native/pkcs11/Cargo.lock ./
+COPY native/pkcs11/src ./src
+# target/ lives in a cache mount, so the files are copied out in the same step.
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+  --mount=type=cache,target=/src/target \
+  cargo build --release --locked --lib \
+    --target x86_64-unknown-linux-gnu --target aarch64-unknown-linux-gnu \
+  && mkdir -p /dist/x86_64 /dist/aarch64 \
+  && cp target/x86_64-unknown-linux-gnu/release/libgarabato_pkcs11.so /dist/x86_64/ \
+  && cp target/aarch64-unknown-linux-gnu/release/libgarabato_pkcs11.so /dist/aarch64/
 
 # ── Build stage ──────────────────────────────────────────────────────────────
 FROM oven/bun:${BUN_VERSION}-slim AS build
@@ -40,6 +67,10 @@ ENV NODE_ENV=production
 # repo layout below must match what the path expects at runtime.
 COPY --from=build /app/apps/backend/dist /app/apps/backend/dist
 COPY --from=build /app/packages/db/src/migrations /app/packages/db/src/migrations
+# The browser token: the backend serves these from ../../native/pkcs11, the
+# same relative layout as the migrations.
+COPY --from=module /dist /app/native/pkcs11/dist
+COPY native/pkcs11/install /app/native/pkcs11/install
 
 EXPOSE 3000
 

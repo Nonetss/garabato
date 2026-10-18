@@ -38,7 +38,7 @@ jobs:
           # Each image lists the paths that can change its build output. The
           # workflow itself and .dockerignore rebuild everything.
           declare -A PATHS=(
-            [backend]="apps/backend/ packages/ package.json bun.lock bunfig.toml"
+            [backend]="apps/backend/ packages/ native/pkcs11/ package.json bun.lock bunfig.toml"
             [frontend]="apps/frontend/ packages/ package.json bun.lock bunfig.toml"
             [gateway]="apps/gateway/"
           )
