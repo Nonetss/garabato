@@ -46,6 +46,8 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 
 ## Native module
 
+`scripts/set-module-version.sh <version>` (repo root) gives the module a release's version in `native/pkcs11/Cargo.toml`, its `Cargo.lock` and `MODULE_VERSION`; `/tag` runs it before tagging.
+
 `native/pkcs11` is a Rust crate outside Turborepo; run these from that folder:
 
 | Command | What it does |
