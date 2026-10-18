@@ -169,6 +169,36 @@ describe("trace.list", () => {
     ])
   })
 
+  test("keeps the token key of a sign-in with the browser token", async () => {
+    fakeDb.queue("select", [
+      trailRow(1, {
+        type: "certificate.usedToSignIn",
+        certificateId: CERT_ID,
+        details: { key: { id: "key-1", name: "Firefox portátil" } },
+      }),
+    ])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    const result = await traceHandler.list({ context, input: listInput() })
+
+    expect(result.entries[0]).toMatchObject({
+      type: "certificate.usedToSignIn",
+      details: { key: { id: "key-1", name: "Firefox portátil" } },
+    })
+  })
+
+  test("refuses a sign-in trace without its token key", async () => {
+    fakeDb.queue("select", [
+      trailRow(1, { type: "certificate.usedToSignIn", certificateId: CERT_ID }),
+    ])
+    fakeDb.queue("select", [{ total: 1 }])
+
+    await expectErrorCode(
+      traceHandler.list({ context, input: listInput() }),
+      "INTERNAL_SERVER_ERROR"
+    )
+  })
+
   test("adds the full signature record to document.signed entries", async () => {
     const signatureId = entryId(1)
     fakeDb.queue("select", [

@@ -90,6 +90,18 @@ const mergeEntry = z.object({
   }),
 })
 
+const signInEntry = z.object({
+  ...common,
+  type: z.literal("certificate.usedToSignIn"),
+  details: z.object({
+    key: z
+      .object({ id: z.string(), name: z.string() })
+      .describe(
+        "The token key (browser) that used the certificate, as then named"
+      ),
+  }),
+})
+
 const signedEntry = z.object({
   ...common,
   type: z.literal("document.signed"),
@@ -102,6 +114,7 @@ const trailEntry = z.discriminatedUnion("type", [
   renameEntry,
   moveEntry,
   mergeEntry,
+  signInEntry,
   signedEntry,
 ])
 

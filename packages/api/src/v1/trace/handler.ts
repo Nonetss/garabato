@@ -240,6 +240,12 @@ function mergeOf(row: TrailRow) {
   return { sources: details.sources }
 }
 
+function signInOf(row: TrailRow) {
+  const { details } = row
+  if (details === null || !("key" in details)) return malformed(row)
+  return { key: details.key }
+}
+
 function toEntry(
   row: TrailRow,
   signatures: Map<string, SignatureLogRecord>
@@ -253,6 +259,8 @@ function toEntry(
       return { ...common, type: row.type, details: moveOf(row) }
     case "document.merged":
       return { ...common, type: row.type, details: mergeOf(row) }
+    case "certificate.usedToSignIn":
+      return { ...common, type: row.type, details: signInOf(row) }
     case "document.signed":
       return {
         ...common,
