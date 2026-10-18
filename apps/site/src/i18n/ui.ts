@@ -12,6 +12,18 @@ export type TourStopId =
   | "certificates"
   | "signatures"
 
+/** The walkthrough on the landing, in order (BrowserToken.astro). */
+export const browserTokenSteps = [
+  "connect",
+  "install",
+  "unlock",
+  "choose",
+  "trace",
+] as const
+export type BrowserTokenStepId = (typeof browserTokenSteps)[number]
+/** How a line of the drawn installer output is shown. */
+export type TerminalTone = "muted" | "check" | "plain" | "gap"
+
 const en = {
   meta: {
     title: "Garabato: sign PDFs with your own digital certificates",
@@ -178,12 +190,110 @@ const en = {
   browserToken: {
     heading: "Sign in to websites with the same certificates.",
     lede: "Firefox and Chromium can use the certificates you keep in Garabato to sign in to sites that ask for one, such as the tax agency, Cl@ve or university enrolment, without installing them in the browser. The private key never leaves Garabato.",
-    stepsLabel: "How it works",
-    steps: [
-      "On the certificates page, Conectar navegador shows one command with a one-time code.",
-      "Run it on the computer: it installs a small module and registers it in your browsers as a security device called Garabato.",
-      "When a site asks for your certificate, type the code from your authenticator app. Garabato signs, and the sign-in lands in the traces.",
-    ],
+    stepsLabel: "Connect a browser, step by step",
+    steps: {
+      connect: {
+        title: "Ask Garabato for the command.",
+        body: "On the certificates page, choose Conectar navegador and give it a name you will recognise, such as Firefox portátil. Garabato shows one command, for Linux or Windows, with a one-time code that lasts 10 minutes.",
+        alt: "The Conectar navegador dialog on the certificates page: the Linux command with its one-time code, the countdown and the wait for the command to run",
+      },
+      install: {
+        title: "Paste it into a terminal.",
+        body: "On the computer you browse from, as your own user, without sudo or administrator rights. The script downloads the module, checks it is the one your Garabato serves and registers it in every browser profile as a security device called Garabato. If a browser is open, it waits for you to close it.",
+        alt: "A terminal running the command: it downloads the module and registers Garabato in Firefox, Zen and Chromium",
+      },
+      unlock: {
+        title: "Open the site and type your code.",
+        body: "When a site asks for your certificate, the browser asks for the password of the Garabato device: it is the 6-digit code from your authenticator app. For the next 15 minutes it does not ask again.",
+        alt: "A website's sign-in page with the browser asking for the Garabato password, next to the current code of the authenticator app",
+      },
+      choose: {
+        title: "Pick the certificate.",
+        body: "The browser offers the valid certificates whose password Garabato remembers. Garabato makes the signature for the connection, and the private key never leaves it.",
+        alt: "The browser's certificate chooser listing two certificates kept in Garabato",
+      },
+      trace: {
+        title: "Every sign-in lands in the traces.",
+        body: "Traces shows it as Acceso con certificado, with the certificate and the browser that used it. Disconnect a browser from the certificates page at any time: its key stops working at once.",
+        alt: "The traces page with a new Acceso con certificado entry for the certificate and the browser that used it",
+      },
+    } satisfies Record<
+      BrowserTokenStepId,
+      { title: string; body: string; alt: string }
+    >,
+    mock: {
+      app: {
+        certificates: "Certificates",
+        connect: "Connect browser",
+        commandTitle: "Run this command",
+        commandDescription:
+          "Paste it into a terminal on the computer where you use the browser, as your own user and without administrator rights.",
+        code: "Code",
+        expiresIn: "Expires in 9:42",
+        waiting: "Waiting for the command to run…",
+        requirements:
+          "Needs the NSS tools. If the browser is open, the script waits for you to close it.",
+        done: "Done",
+        traces: "Traces",
+        traceRows: [
+          {
+            action: "Certificate sign-in",
+            detail: "JANE EXAMPLE DOE · Laptop Firefox",
+            when: "just now",
+          },
+          {
+            action: "Certificate sign-in",
+            detail: "EXAMPLE LTD · Laptop Firefox",
+            when: "12 min ago",
+          },
+          {
+            action: "Signature",
+            detail: "Lease agreement.pdf · v3",
+            when: "yesterday",
+          },
+        ],
+      },
+      terminal: {
+        prompt: "jane@laptop: ~",
+        lines: [
+          { text: "Downloading the module (x86_64)…", tone: "muted" },
+          { text: "Registering “Garabato” in your browsers…", tone: "muted" },
+          { text: "Firefox, profile default-release", tone: "check" },
+          { text: "Zen, profile Default (release)", tone: "check" },
+          { text: "Chromium and Chrome", tone: "check" },
+          { text: "", tone: "gap" },
+          {
+            text: "Done. Open the browser and sign in to the site with your certificate.",
+            tone: "plain",
+          },
+          {
+            text: "When it asks for the “Garabato” password, type the code from your two-factor app.",
+            tone: "plain",
+          },
+          {
+            text: "To uninstall: sh ~/.local/share/garabato/uninstall.sh",
+            tone: "muted",
+          },
+        ] satisfies { text: string; tone: TerminalTone }[],
+      },
+      site: "portal.example.com/sign-in",
+      siteButton: "Sign in with a certificate",
+      passwordTitle: "Password Required",
+      passwordText:
+        "Please enter the password for the Garabato security device.",
+      chooserTitle: "User Identification Request",
+      chooserText:
+        "portal.example.com:443 has requested that you identify yourself with a certificate:",
+      certificates: [
+        { name: "JANE EXAMPLE DOE · 00000000T", valid: "valid until 03/2028" },
+        { name: "EXAMPLE LTD · B00000000", valid: "valid until 11/2027" },
+      ],
+      cancel: "Cancel",
+      ok: "OK",
+      authenticator: "Your authenticator app",
+    },
+    mockNote:
+      "Drawings of each screen, with made-up data. The browser dialogs vary by browser.",
     platforms:
       "Linux (x86_64 and ARM64): Firefox, Zen, LibreWolf, Floorp, Waterfox, Chromium, Chrome and Brave. Windows (x86_64): Firefox and the browsers built on it.",
     docsLink: "Sign in from the browser",
@@ -385,12 +495,113 @@ const es: Dictionary = {
   browserToken: {
     heading: "Entra en webs con los mismos certificados.",
     lede: "Firefox y Chromium pueden usar los certificados que guardas en Garabato para entrar en webs que los piden, como la Agencia Tributaria, Cl@ve o la matrícula de la universidad, sin instalarlos en el navegador. La clave privada nunca sale de Garabato.",
-    stepsLabel: "Cómo funciona",
-    steps: [
-      "En la página de certificados, Conectar navegador muestra un comando con un código de un solo uso.",
-      "Ejecútalo en el equipo: instala un módulo pequeño y lo registra en tus navegadores como un dispositivo de seguridad llamado Garabato.",
-      "Cuando una web pida tu certificado, escribe el código de tu app de autenticación. Garabato firma y el acceso queda en las trazas.",
-    ],
+    stepsLabel: "Conecta un navegador, paso a paso",
+    steps: {
+      connect: {
+        title: "Pide el comando en Garabato.",
+        body: "En la página de certificados, elige Conectar navegador y ponle un nombre que reconozcas, como Firefox portátil. Garabato te muestra un comando, para Linux o para Windows, con un código de un solo uso que vale 10 minutos.",
+        alt: "El diálogo Conectar navegador en la página de certificados: el comando para Linux con su código de un solo uso, la cuenta atrás y la espera a que se ejecute",
+      },
+      install: {
+        title: "Pégalo en una terminal.",
+        body: "En el equipo desde el que navegas, con tu usuario, sin sudo ni permisos de administrador. El script descarga el módulo, comprueba que es el que sirve tu Garabato y lo registra en cada perfil de tus navegadores como un dispositivo de seguridad llamado Garabato. Si un navegador está abierto, espera a que lo cierres.",
+        alt: "Una terminal ejecutando el comando: descarga el módulo y registra Garabato en Firefox, Zen y Chromium",
+      },
+      unlock: {
+        title: "Entra en la web y escribe tu código.",
+        body: "Cuando una web pida tu certificado, el navegador pide la contraseña del dispositivo Garabato: es el código de 6 dígitos de tu app de autenticación. Durante los 15 minutos siguientes no vuelve a pedirlo.",
+        alt: "La página de acceso de una web con el navegador pidiendo la contraseña de Garabato, junto al código actual de la app de autenticación",
+      },
+      choose: {
+        title: "Elige el certificado.",
+        body: "El navegador ofrece los certificados vigentes cuya contraseña recuerda Garabato. Garabato hace la firma de la conexión, y la clave privada nunca sale de él.",
+        alt: "El selector de certificados del navegador con dos certificados guardados en Garabato",
+      },
+      trace: {
+        title: "Cada acceso queda en las trazas.",
+        body: "En Trazas aparece como Acceso con certificado, con el certificado y el navegador que lo usó. Desconecta un navegador desde la página de certificados cuando quieras: su clave deja de funcionar al momento.",
+        alt: "La página de trazas con una entrada nueva de Acceso con certificado, con el certificado y el navegador que lo usó",
+      },
+    } satisfies Record<
+      BrowserTokenStepId,
+      { title: string; body: string; alt: string }
+    >,
+    mock: {
+      app: {
+        certificates: "Certificados",
+        connect: "Conectar navegador",
+        commandTitle: "Ejecuta este comando",
+        commandDescription:
+          "Pégalo en una terminal del equipo donde usas el navegador, con tu usuario y sin permisos de administrador.",
+        code: "Código",
+        expiresIn: "Caduca en 9:42",
+        waiting: "Esperando a que se ejecute el comando…",
+        requirements:
+          "Necesita las herramientas de NSS. Si el navegador está abierto, el script esperará a que lo cierres.",
+        done: "Hecho",
+        traces: "Trazas",
+        traceRows: [
+          {
+            action: "Acceso con certificado",
+            detail: "MARÍA EJEMPLO PÉREZ · Firefox portátil",
+            when: "hace un momento",
+          },
+          {
+            action: "Acceso con certificado",
+            detail: "EJEMPLO SL · Firefox portátil",
+            when: "hace 12 min",
+          },
+          {
+            action: "Firma",
+            detail: "Contrato de alquiler.pdf · v3",
+            when: "ayer",
+          },
+        ],
+      },
+      terminal: {
+        prompt: "maria@portatil: ~",
+        lines: [
+          { text: "Descargando el módulo (x86_64)…", tone: "muted" },
+          { text: "Registrando «Garabato» en tus navegadores…", tone: "muted" },
+          { text: "Firefox, perfil default-release", tone: "check" },
+          { text: "Zen, perfil Default (release)", tone: "check" },
+          { text: "Chromium y Chrome", tone: "check" },
+          { text: "", tone: "gap" },
+          {
+            text: "Listo. Abre el navegador y entra en la sede con certificado.",
+            tone: "plain",
+          },
+          {
+            text: "Cuando pida la contraseña de «Garabato», escribe el código de tu app de verificación en dos pasos.",
+            tone: "plain",
+          },
+          {
+            text: "Para desinstalarlo: sh ~/.local/share/garabato/uninstall.sh",
+            tone: "muted",
+          },
+        ],
+      },
+      site: "sede.example.es/acceso",
+      siteButton: "Acceder con certificado",
+      passwordTitle: "Contraseña requerida",
+      passwordText:
+        "Introduce la contraseña del dispositivo de seguridad Garabato.",
+      chooserTitle: "Solicitud de identificación del usuario",
+      chooserText:
+        "sede.example.es:443 pide que te identifiques con un certificado:",
+      certificates: [
+        {
+          name: "MARÍA EJEMPLO PÉREZ · 00000000T",
+          valid: "válido hasta 03/2028",
+        },
+        { name: "EJEMPLO SL · B00000000", valid: "válido hasta 11/2027" },
+      ],
+      cancel: "Cancelar",
+      ok: "Aceptar",
+      authenticator: "Tu app de autenticación",
+    },
+    mockNote:
+      "Dibujos de cada pantalla, con datos inventados. Las ventanas del navegador cambian según el navegador.",
     platforms:
       "Linux (x86_64 y ARM64): Firefox, Zen, LibreWolf, Floorp, Waterfox, Chromium, Chrome y Brave. Windows (x86_64): Firefox y los navegadores basados en él.",
     docsLink: "Entrar desde el navegador",

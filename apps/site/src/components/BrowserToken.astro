@@ -1,7 +1,8 @@
 ---
 import MonitorSmartphone from "@lucide/astro/icons/monitor-smartphone"
 import ArrowLink from "@/components/ArrowLink.astro"
-import { type Lang, t } from "@/i18n/ui"
+import BrowserTokenMock from "@/components/BrowserTokenMock.astro"
+import { browserTokenSteps, type Lang, t } from "@/i18n/ui"
 import { localized } from "@/lib/url"
 
 interface Props {
@@ -10,17 +11,27 @@ interface Props {
 
 const { lang } = Astro.props
 const dict = t(lang)
+const steps = browserTokenSteps.map((id) => ({
+  id,
+  ...dict.browserToken.steps[id],
+}))
 ---
 
-<section aria-labelledby="browser-token-title" class="section-block">
-  <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+<section
+  id="browser"
+  aria-labelledby="browser-token-title"
+  class="section-block"
+>
+  <div class="grid gap-x-16 gap-y-8 lg:grid-cols-12">
     <div class="min-w-0 lg:col-span-7">
       <h2 id="browser-token-title" class="section-title max-w-[22ch]">
         {dict.browserToken.heading}
       </h2>
       <p class="mt-5 text-lede text-foreground">{dict.browserToken.lede}</p>
+    </div>
+    <div class="min-w-0 lg:col-span-5 lg:self-end">
       <p
-        class="card-box mt-7 flex gap-3 bg-card px-4 py-3.5 text-meta text-foreground"
+        class="card-box flex gap-3 bg-card px-4 py-3.5 text-meta text-foreground"
       >
         <MonitorSmartphone
           class="mt-0.5 size-4 shrink-0 text-strong"
@@ -28,27 +39,45 @@ const dict = t(lang)
         />
         <span>{dict.browserToken.platforms}</span>
       </p>
-      <p class="mt-8 text-body">
-        <ArrowLink href={localized(lang, "docs/browser-token/")}>
-          {dict.browserToken.docsLink}
-        </ArrowLink>
-      </p>
-    </div>
-
-    <div class="min-w-0 lg:col-span-5">
-      <h3 class="text-label-caps text-muted-foreground">
-        {dict.browserToken.stepsLabel}
-      </h3>
-      <ol class="mt-4">
-        {dict.browserToken.steps.map((step, index) => (
-          <li class="grid grid-cols-[2rem_1fr] border-t border-hairline py-4 text-body text-foreground">
-            <span class="font-mono text-meta text-muted-foreground tabular-nums">
-              {index + 1}
-            </span>
-            <span>{step}</span>
-          </li>
-        ))}
-      </ol>
     </div>
   </div>
+
+  <h3 class="mt-16 text-label-caps text-muted-foreground">
+    {dict.browserToken.stepsLabel}
+  </h3>
+  <!-- One row per step: what to do on the left, a drawing of the screen it
+       happens on to the right (below on small screens). -->
+  <ol class="mt-4">
+    {steps.map((step, index) => (
+      <li class="grid gap-x-16 gap-y-6 border-t border-hairline py-10 lg:grid-cols-12 lg:items-center lg:py-14">
+        <div class="min-w-0 lg:col-span-4">
+          <span class="font-mono text-meta text-muted-foreground tabular-nums">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <h4 class="mt-2 text-display font-semibold tracking-tight text-strong">
+            {step.title}
+          </h4>
+          <p class="mt-3 text-body text-foreground">{step.body}</p>
+        </div>
+        <figure class="min-w-0 lg:col-span-8">
+          <div
+            role="img"
+            aria-label={step.alt}
+            class="card-box relative flex flex-col justify-center bg-muted/60 p-3 sm:min-h-104 sm:p-8"
+          >
+            <BrowserTokenMock lang={lang} scene={step.id} />
+          </div>
+        </figure>
+      </li>
+    ))}
+  </ol>
+
+  <p class="mt-4 text-meta text-muted-foreground">
+    {dict.browserToken.mockNote}
+  </p>
+  <p class="mt-8 text-body">
+    <ArrowLink href={localized(lang, "docs/browser-token/")}>
+      {dict.browserToken.docsLink}
+    </ArrowLink>
+  </p>
 </section>
