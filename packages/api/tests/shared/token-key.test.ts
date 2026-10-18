@@ -48,6 +48,16 @@ describe("sessionHeaders", () => {
     expect((await sessionHeaders(headers)).get("x-api-key")).toBe("sk_plain")
   })
 
+  test("drops a revoked or unknown key so the request fails as unauthenticated", async () => {
+    verifyApiKey.mockResolvedValue(refusedTokenKey())
+    const headers = new Headers({ "x-api-key": "sk_revoked", cookie: "a=b" })
+
+    const result = await sessionHeaders(headers)
+
+    expect(result.get("x-api-key")).toBeNull()
+    expect(result.get("cookie")).toBe("a=b")
+  })
+
   test("leaves a request without a key untouched", async () => {
     const headers = new Headers({ cookie: "a=b" })
 

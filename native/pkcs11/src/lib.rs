@@ -48,6 +48,10 @@ const TOKEN_LABEL: &str = "Garabato";
 const LOCKED_LABEL: &[u8] = b"garabato-locked";
 // How long the list of certificates is reused before asking Garabato again.
 const CERTIFICATES_TTL: Duration = Duration::from_secs(60);
+// After a failure (Garabato unreachable, key revoked, no configuration) the
+// token stays empty this long before asking again: NSS lists the token's
+// objects several times a second while a page loads.
+const CERTIFICATES_RETRY: Duration = Duration::from_secs(10);
 // A caller may sign once to learn the length and again to fill the buffer;
 // the same data within this window reuses the signature.
 const SIGNATURE_REUSE: Duration = Duration::from_secs(5);
@@ -58,6 +62,7 @@ static LOGGED_IN: AtomicBool = AtomicBool::new(false);
 static WINDOW_CLOSED: AtomicBool = AtomicBool::new(false);
 static ORIGINAL: OnceLock<CK_FUNCTION_LIST> = OnceLock::new();
 static PATCHED: OnceLock<CK_FUNCTION_LIST> = OnceLock::new();
+/// The certificates and until when they are reused.
 static CERTIFICATES: Mutex<Option<(Instant, Vec<Arc<Identity>>)>> = Mutex::new(None);
 /// The last signature: the data, the signature and when it was made.
 type ReusableSignature = (Vec<u8>, Vec<u8>, Instant);
@@ -77,23 +82,25 @@ fn client() -> Option<Client> {
 
 fn certificates() -> Vec<Arc<Identity>> {
     let mut cached = CERTIFICATES.lock().unwrap();
-    if let Some((at, identities)) = cached.as_ref()
-        && at.elapsed() < CERTIFICATES_TTL
+    if let Some((until, identities)) = cached.as_ref()
+        && Instant::now() < *until
     {
         return identities.clone();
     }
     let Some(client) = client() else {
+        *cached = Some((Instant::now() + CERTIFICATES_RETRY, Vec::new()));
         return Vec::new();
     };
     match client.certificates() {
         Ok(identities) => {
             log("certificates", json!({ "count": identities.len() }));
             let identities: Vec<Arc<Identity>> = identities.into_iter().map(Arc::new).collect();
-            *cached = Some((Instant::now(), identities.clone()));
+            *cached = Some((Instant::now() + CERTIFICATES_TTL, identities.clone()));
             identities
         }
         Err(error) => {
             log("certificates-error", json!({ "error": error }));
+            *cached = Some((Instant::now() + CERTIFICATES_RETRY, Vec::new()));
             Vec::new()
         }
     }

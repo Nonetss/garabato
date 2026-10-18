@@ -57,9 +57,23 @@ export async function carriesTokenKey(headers: Headers) {
   return (await verifyTokenKey(value)) !== null
 }
 
-/** The headers to resolve the session from: a token key is left out. */
+// Whether Better Auth may turn the key into a session: a valid key that is
+// not a token key.
+async function opensSession(key: string) {
+  const result = await auth.api.verifyApiKey({ body: { key } })
+  if (!result.valid || !result.key) return false
+  return !hasTokenPermission(result.key.permissions)
+}
+
+/**
+ * The headers to resolve the session from. A token key never becomes a
+ * session, and an unknown, revoked or expired key is left out too: Better
+ * Auth's session lookup throws on one instead of answering "no session",
+ * which would turn the request into a 500 rather than a 401.
+ */
 export async function sessionHeaders(headers: Headers) {
-  if (!(await carriesTokenKey(headers))) return headers
+  const value = headers.get(TOKEN_KEY_HEADER)
+  if (!value || (await opensSession(value))) return headers
   const withoutKey = new Headers(headers)
   withoutKey.delete(TOKEN_KEY_HEADER)
   return withoutKey
