@@ -3,5 +3,5 @@ area: auth
 required: true
 meaning: "La URL base de Better Auth: el origen público que ve el navegador, con el que se construyen las URL de retorno de OIDC"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

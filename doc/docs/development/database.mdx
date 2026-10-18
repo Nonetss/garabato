@@ -1,11 +1,11 @@
 ---
-titulo: Base de datos
-descripcion: Qué base de datos usa el desarrollo, por qué está fuera del proyecto y cómo se cambia el esquema
+title: Base de datos
+description: Qué base de datos usa el desarrollo, por qué está fuera del proyecto y cómo se cambia el esquema
 workspaces: [db]
 commands: [db-studio, db-generate, db-push, db-migrate]
 env_vars: [database-url]
-orden: 5
-actualizado: 2026-10-18
+order: 5
+updated: 2026-10-18
 ---
 
 El proyecto no levanta ninguna base de datos en desarrollo. La de desarrollo vive **fuera del proyecto, en otro servidor**, y `DATABASE_URL` en el `.env` apunta a ella. Así:

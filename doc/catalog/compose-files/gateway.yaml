@@ -2,5 +2,5 @@ path: apps/gateway/compose.yml
 purpose: Solo el gateway de desarrollo, delante de las apps arrancadas en nativo
 start: bun run gateway
 page: development/native
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

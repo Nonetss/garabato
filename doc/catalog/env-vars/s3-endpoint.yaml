@@ -3,5 +3,5 @@ area: storage
 required: true
 meaning: "La URL completa del almacén compatible con S3 donde se guardan los PDF cifrados"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

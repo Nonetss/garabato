@@ -1,9 +1,9 @@
 ---
-titulo: Navegación
-descripcion: Cómo se declara una página una sola vez para que salga en el navbar, el sidebar, las tarjetas y la búsqueda ⌘K, y cómo se hace buscable una entidad
+title: Navegación
+description: Cómo se declara una página una sola vez para que salga en el navbar, el sidebar, las tarjetas y la búsqueda ⌘K, y cómo se hace buscable una entidad
 workspaces: [frontend]
-orden: 2
-actualizado: 2026-10-18
+order: 2
+updated: 2026-10-18
 ---
 
 Cada página con identidad propia (una **superficie**) se declara **una sola vez** en `src/lib/app-surfaces.ts`: ruta, título, etiqueta, descripción, icono, si aparece en la navegación y si es solo para admins. Las secciones anidan a sus subpáginas, y `id` y `parentId` se derivan solos.

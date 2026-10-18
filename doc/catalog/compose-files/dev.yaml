@@ -2,5 +2,5 @@ path: compose.dev.yml
 purpose: Desarrollo con recarga en caliente, contra una base de datos externa
 start: bun run dev
 page: development/docker
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

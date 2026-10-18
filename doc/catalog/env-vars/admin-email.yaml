@@ -3,5 +3,5 @@ area: auth
 required: false
 meaning: "El email del administrador que se crea al arrancar; los crons declarados en código se ejecutan como él"
 page: auth
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

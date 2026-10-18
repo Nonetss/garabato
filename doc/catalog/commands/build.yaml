@@ -2,5 +2,5 @@ command: "bun run build"
 area: other
 purpose: "Compila todas las apps con Turbo"
 page: architecture
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

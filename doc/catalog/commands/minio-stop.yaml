@@ -2,5 +2,5 @@ command: "bun run minio:stop"
 area: services
 purpose: "Para el MinIO del modo nativo"
 page: development/native
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

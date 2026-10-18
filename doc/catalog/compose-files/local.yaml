@@ -2,5 +2,5 @@ path: compose.yml
 purpose: Probar en local un stack parecido a producción, construido desde el código
 start: bun run docker:up
 page: deployment/compose-local
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

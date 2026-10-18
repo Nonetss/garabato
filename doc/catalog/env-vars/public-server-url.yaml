@@ -3,5 +3,5 @@ area: services
 required: false
 meaning: "Variable de cliente de packages/env/src/web.ts, que hoy no importa nadie"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

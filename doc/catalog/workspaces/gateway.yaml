@@ -2,5 +2,5 @@ path: apps/gateway
 kind: other
 purpose: "Caddy: la única entrada pública, que reparte cada ruta entre el backend y el frontend"
 page: architecture/request
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

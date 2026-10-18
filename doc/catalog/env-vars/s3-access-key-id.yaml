@@ -3,5 +3,5 @@ area: storage
 required: true
 meaning: "El usuario del almacén; también el usuario root del MinIO incluido"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

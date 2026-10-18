@@ -2,5 +2,5 @@ command: "bun run dev:local"
 area: dev
 purpose: "Arranca el frontend y el backend en nativo con Turbo"
 page: development/native
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

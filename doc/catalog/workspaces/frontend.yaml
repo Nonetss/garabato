@@ -3,5 +3,5 @@ package: "frontend"
 kind: app
 purpose: "La web: Astro en SSR con islas React, Tailwind y shadcn/ui sobre Base UI"
 page: frontend
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

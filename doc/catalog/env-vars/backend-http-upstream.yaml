@@ -4,5 +4,5 @@ required: false
 default: "backend:3000"
 meaning: "Adónde manda el gateway la API; lo ponen los compose"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

@@ -2,5 +2,5 @@ command: "bun run docker:down"
 area: docker
 purpose: "Para y elimina el stack de compose.yml"
 page: deployment/compose-local
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

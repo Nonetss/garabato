@@ -3,5 +3,5 @@ area: auth
 required: false
 meaning: "El id de cliente del proveedor OIDC; el inicio de sesión OIDC se activa solo con las tres OIDC_*"
 page: auth
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

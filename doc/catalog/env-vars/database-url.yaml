@@ -3,5 +3,5 @@ area: database
 required: true
 meaning: "La conexión a PostgreSQL; en desarrollo, una base de datos fuera del proyecto, en otro servidor"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

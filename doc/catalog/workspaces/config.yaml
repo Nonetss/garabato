@@ -3,5 +3,5 @@ package: "@nonete/config"
 kind: package
 purpose: "El tsconfig base que heredan todos los workspaces"
 page: architecture/imports
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

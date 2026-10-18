@@ -1,9 +1,9 @@
 ---
-titulo: Helpers compartidos
-descripcion: Qué ofrece packages/api/src/shared antes de escribir un helper nuevo, y cuándo un helper se mueve ahí
+title: Helpers compartidos
+description: Qué ofrece packages/api/src/shared antes de escribir un helper nuevo, y cuándo un helper se mueve ahí
 workspaces: [api]
-orden: 4
-actualizado: 2026-10-18
+order: 4
+updated: 2026-10-18
 ---
 
 Antes de escribir un helper, mira `packages/api/src/shared/`. Un helper que solo usa una feature se queda en su `handler.ts`; se mueve a `shared/` cuando lo necesita una segunda, y entonces lleva su test en `packages/api/tests/shared/<helper>.test.ts`.

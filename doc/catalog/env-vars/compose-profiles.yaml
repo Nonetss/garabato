@@ -3,5 +3,5 @@ area: storage
 required: false
 meaning: "Con minio, compose.dev.yml y compose.prod.yml arrancan el MinIO incluido; sin ella, se usa un almacén externo"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

@@ -2,5 +2,5 @@ path: apps/site
 package: "site"
 kind: app
 purpose: "La web estática del proyecto (portada y documentación en inglés y español), publicada en GitHub Pages"
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

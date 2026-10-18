@@ -3,5 +3,5 @@ area: storage
 required: true
 meaning: "El bucket de los documentos; tiene que existir (el MinIO incluido lo crea al arrancar)"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

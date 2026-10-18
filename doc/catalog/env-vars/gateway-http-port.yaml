@@ -4,5 +4,5 @@ required: false
 default: "80"
 meaning: "El puerto en el que escucha el gateway dentro de su contenedor; lo ponen los compose"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

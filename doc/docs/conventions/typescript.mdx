@@ -1,9 +1,9 @@
 ---
-titulo: Estilo de TypeScript
-descripcion: Qué patrones de TypeScript no se aceptan en el repositorio (casts, cadenas de ??, ternarios metidos en expresiones) y qué escribir en su lugar
+title: Estilo de TypeScript
+description: Qué patrones de TypeScript no se aceptan en el repositorio (casts, cadenas de ??, ternarios metidos en expresiones) y qué escribir en su lugar
 commands: [check, format, check-types]
-orden: 1
-actualizado: 2026-10-18
+order: 1
+updated: 2026-10-18
 ---
 
 El formato lo decide Biome (`bun run check`): 2 espacios, comillas dobles, sin punto y coma, 80 columnas y los imports ordenados. Además hay reglas que Biome no comprueba. Todas buscan lo mismo: que lo que el código decide se vea, y que el compilador no deje pasar errores de tipos. Valen para todo fichero TypeScript de `apps/*` y `packages/*`, nuevo o tocado.

@@ -1,9 +1,9 @@
 ---
-titulo: El método HTTP
-descripcion: Cómo elegir el método y el estado de éxito de un procedimiento según lo que hace su handler, y qué cambia en /rpc
+title: El método HTTP
+description: Cómo elegir el método y el estado de éxito de un procedimiento según lo que hace su handler, y qué cambia en /rpc
 workspaces: [api]
-orden: 2
-actualizado: 2026-10-18
+order: 2
+updated: 2026-10-18
 ---
 
 La API es estilo RPC: las rutas salen del nombre del procedimiento (`/api/v1/cron/setEnabled`) y los identificadores van en el cuerpo o en la query string, nunca en la ruta. El método no forma la ruta: dice si la operación **es segura y si se puede repetir**. Se elige por lo que hace el handler, no por su nombre:

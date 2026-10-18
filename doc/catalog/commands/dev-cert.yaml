@@ -2,5 +2,5 @@ command: "bun run dev:cert"
 area: dev
 purpose: "Exporta la raíz de la autoridad local del gateway a caddy-local-root.crt"
 page: development/certificate
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

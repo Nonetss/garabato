@@ -2,5 +2,5 @@ command: "bun run docker:build"
 area: docker
 purpose: "Construye las imágenes de compose.yml desde el código"
 page: deployment/compose-local
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

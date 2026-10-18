@@ -2,5 +2,5 @@ command: "bun run dev:site"
 area: dev
 purpose: "Arranca la web del proyecto (apps/site) en el puerto 4322"
 page: development/native
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

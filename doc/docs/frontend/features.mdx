@@ -1,9 +1,9 @@
 ---
-titulo: Features y slices
-descripcion: Dónde va cada pieza de la interfaz, qué puede importar de qué y dónde buscar antes de crear un componente, un hook o un helper
+title: Features y slices
+description: Dónde va cada pieza de la interfaz, qué puede importar de qué y dónde buscar antes de crear un componente, un hook o un helper
 workspaces: [frontend]
-orden: 1
-actualizado: 2026-10-18
+order: 1
+updated: 2026-10-18
 ---
 
 El código de la interfaz se agrupa por **dominio** en `src/features/<dominio>/` (`documents`, `certificates`, `crons`, `admin`…). Dentro de cada dominio, cada carpeta es un **caso de uso** (slice: `overview`, `detail`, `sign-in`…), un `shared/` del dominio o su `index.ts`. Nunca una capa técnica.

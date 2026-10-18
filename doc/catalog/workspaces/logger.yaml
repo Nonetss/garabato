@@ -3,5 +3,5 @@ package: "@nonete/logger"
 kind: package
 purpose: "El logger compartido (pino), con envío opcional a Loki"
 page: architecture/logs
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

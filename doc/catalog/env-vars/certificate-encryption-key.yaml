@@ -3,5 +3,5 @@ area: certificates
 required: true
 meaning: "La clave maestra que cifra los certificados guardados: el base64 de 32 bytes exactos"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

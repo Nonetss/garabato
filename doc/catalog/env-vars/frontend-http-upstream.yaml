@@ -4,5 +4,5 @@ required: false
 default: "frontend:4321"
 meaning: "Adónde manda el gateway el resto de rutas; lo ponen los compose"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

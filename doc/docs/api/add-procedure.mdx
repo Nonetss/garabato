@@ -1,10 +1,10 @@
 ---
-titulo: Añadir un procedimiento
-descripcion: Los pasos para añadir una operación a la API, desde buscar si ya existe hasta sus tests, y qué comprobar al terminar
+title: Añadir un procedimiento
+description: Los pasos para añadir una operación a la API, desde buscar si ya existe hasta sus tests, y qué comprobar al terminar
 workspaces: [api]
 commands: [check-types, check, test]
-orden: 6
-actualizado: 2026-10-18
+order: 6
+updated: 2026-10-18
 ---
 
 1. **Busca si ya existe.** `rg -n "summary:" packages/api/src/v1` da un índice rápido de todos los procedimientos. Si hay uno parecido, extiéndelo (un filtro opcional, un campo más en la salida) en vez de crear un hermano, salvo que el método o el acceso cambien.

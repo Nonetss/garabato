@@ -4,44 +4,44 @@
 # grupo "Otros". Los títulos e iconos escritos aquí mandan sobre los de las
 # cabeceras de las páginas.
 
-secciones:
-  - titulo: Empezar
-    icono: rocket
-    descripcion: Las piezas del sistema, cómo se arranca en local y cómo se configura
-    paginas:
-      - { ruta: architecture, icono: blocks }
-      - { ruta: development, icono: terminal }
-      - { ruta: configuration, icono: settings }
+sections:
+  - title: Empezar
+    icon: rocket
+    description: Las piezas del sistema, cómo se arranca en local y cómo se configura
+    pages:
+      - { path: architecture, icon: blocks }
+      - { path: development, icon: terminal }
+      - { path: configuration, icon: settings }
 
-  - titulo: Backend
-    icono: server
-    descripcion: La API, la autenticación y las tareas programadas
-    paginas:
-      - { ruta: api, icono: braces }
-      - { ruta: auth, icono: shield-check }
-      - { ruta: crons, icono: clock }
+  - title: Backend
+    icon: server
+    description: La API, la autenticación y las tareas programadas
+    pages:
+      - { path: api, icon: braces }
+      - { path: auth, icon: shield-check }
+      - { path: crons, icon: clock }
 
-  - titulo: Frontend
-    icono: app-window
-    descripcion: La web y las piezas que se enganchan a cualquier entidad
-    paginas:
-      - { ruta: frontend, icono: layout-dashboard }
-      - { ruta: cross-cutting, icono: puzzle }
+  - title: Frontend
+    icon: app-window
+    description: La web y las piezas que se enganchan a cualquier entidad
+    pages:
+      - { path: frontend, icon: layout-dashboard }
+      - { path: cross-cutting, icon: puzzle }
 
-  - titulo: Operación
-    icono: container
-    descripcion: Los compose, las imágenes, el CI y la instalación en un servidor
-    paginas:
-      - { ruta: deployment, icono: ship }
+  - title: Operación
+    icon: container
+    description: Los compose, las imágenes, el CI y la instalación en un servidor
+    pages:
+      - { path: deployment, icon: ship }
 
-  - titulo: Trabajar en el repositorio
-    icono: git-branch
-    descripcion: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
-    paginas:
-      - { ruta: conventions, icono: book-check }
+  - title: Trabajar en el repositorio
+    icon: git-branch
+    description: Estilo de código, idiomas, commits, migraciones y el flujo de OpenSpec
+    pages:
+      - { path: conventions, icon: book-check }
 
-  - titulo: Referencia
-    icono: table
-    descripcion: Los workspaces, las variables de entorno, los comandos y los compose, como tablas
-    paginas:
-      - { ruta: catalog, titulo: Catálogo }
+  - title: Referencia
+    icon: table
+    description: Los workspaces, las variables de entorno, los comandos y los compose, como tablas
+    pages:
+      - { path: catalog, title: Catálogo }

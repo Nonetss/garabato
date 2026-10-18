@@ -1,11 +1,11 @@
 ---
-titulo: Autenticación y permisos
-descripcion: Cómo se inicia sesión en Garabato, qué plugins de Better Auth están activos, los dos niveles de permisos y cómo se crea el primer administrador
+title: Autenticación y permisos
+description: Cómo se inicia sesión en Garabato, qué plugins de Better Auth están activos, los dos niveles de permisos y cómo se crea el primer administrador
 workspaces: [auth]
 env_vars: [disable-sign-up, admin-email, admin-password, admin-name, oidc-client-id, oidc-client-secret, oidc-discovery-url]
 open_questions:
   - ¿Se acepta un token Bearer en la API? La documentación OpenAPI lo declara, pero Better Auth no tiene activo el plugin `bearer()`
-actualizado: 2026-10-18
+updated: 2026-10-18
 ---
 
 La autenticación la hace [Better Auth](https://www.better-auth.com), configurado en `packages/auth/src/index.ts`. El backend expone sus rutas bajo `/api/auth/*`.

@@ -1,23 +1,23 @@
-nombre: Fichero compose
+name: Fichero compose
 plural: Ficheros compose
-icono: container
-descripcion: Los ficheros de Docker Compose del repositorio, uno por forma de ejecutar el proyecto. El id es un nombre corto (dev, local, prod, gateway)
-etiqueta: path
+icon: container
+description: Los ficheros de Docker Compose del repositorio, uno por forma de ejecutar el proyecto. El id es un nombre corto (dev, local, prod, gateway)
+title_field: path
 
-campos:
+fields:
   path:
-    tipo: texto
-    descripcion: El fichero desde la raíz del repositorio
+    type: text
+    description: El fichero desde la raíz del repositorio
   purpose:
-    tipo: texto
-    descripcion: Para qué se usa
+    type: text
+    description: Para qué se usa
   start:
-    tipo: texto
-    descripcion: Cómo se arranca
+    type: text
+    description: Cómo se arranca
   page:
-    tipo: ficha
-    opcional: true
-    descripcion: La página que lo explica
+    type: page
+    optional: true
+    description: La página que lo explica
 
-vista:
-  columnas: [path, purpose, start]
+view:
+  columns: [path, purpose, start]

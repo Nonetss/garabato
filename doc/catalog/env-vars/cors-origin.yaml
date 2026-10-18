@@ -3,5 +3,5 @@ area: auth
 required: true
 meaning: "El origen público que usa el navegador, para CORS y como origen de confianza de Better Auth"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

@@ -3,5 +3,5 @@ area: auth
 required: false
 meaning: "La URL base del emisor OIDC, sin /.well-known/openid-configuration, que añade el backend"
 page: auth
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

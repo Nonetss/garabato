@@ -4,5 +4,5 @@ required: false
 default: "4444"
 meaning: "El puerto del host que publica el gateway en compose.yml y compose.prod.yml"
 page: configuration/production-env
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

@@ -3,5 +3,5 @@ area: runtime
 required: false
 meaning: "Desactiva la validación de packages/env; solo para builds y tareas de CLI"
 page: configuration
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

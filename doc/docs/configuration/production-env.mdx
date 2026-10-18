@@ -1,10 +1,10 @@
 ---
-titulo: El .env de producción
-descripcion: Qué escribe scripts/bootstrap.sh en el .env de un servidor y por qué nunca se ejecuta dentro de la copia de trabajo
+title: El .env de producción
+description: Qué escribe scripts/bootstrap.sh en el .env de un servidor y por qué nunca se ejecuta dentro de la copia de trabajo
 env_vars: [postgres-password, frontend-port, cors-origin, compose-profiles, certificate-encryption-key]
 compose_files: [prod]
-orden: 2
-actualizado: 2026-10-18
+order: 2
+updated: 2026-10-18
 ---
 
 Un despliegue tiene **su propio `.env`**, junto a `compose.prod.yml`, en el directorio del servidor. Lo genera `scripts/bootstrap.sh` ([Producción](../deployment/production.mdx) explica la instalación).

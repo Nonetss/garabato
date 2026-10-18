@@ -3,5 +3,5 @@ package: "@nonete/db"
 kind: package
 purpose: "El esquema de Drizzle, las migraciones y el seed del admin"
 page: development/database
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

@@ -1,9 +1,9 @@
 ---
-titulo: Configuración
-descripcion: El único .env de la raíz, quién lo lee, cómo lo encuentra cada workspace y qué significa cada variable
+title: Configuración
+description: El único .env de la raíz, quién lo lee, cómo lo encuentra cada workspace y qué significa cada variable
 workspaces: [env]
 env_vars: [database-url, better-auth-url, better-auth-secret, cors-origin, certificate-encryption-key, s3-endpoint, backend-url, loki-url]
-actualizado: 2026-10-18
+updated: 2026-10-18
 ---
 
 Todo el proyecto se configura con **un único fichero `.env` en la raíz**. No hay `.env` por app ni por paquete. `.env.example` documenta cada variable con su valor por defecto; `bun run setup:dev` lo copia a `.env` y rellena los secretos (ver [Primera vez](../development/first-run.mdx)).

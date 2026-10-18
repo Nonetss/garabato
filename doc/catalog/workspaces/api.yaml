@@ -3,5 +3,5 @@ package: "@nonete/api"
 kind: package
 purpose: "Los procedimientos de la API: contrato oRPC, validación, lógica y permisos"
 page: api
-fuente: manual
-actualizado: 2026-10-18
+source: manual
+updated: 2026-10-18

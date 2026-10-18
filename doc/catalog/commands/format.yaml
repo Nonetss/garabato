@@ -2,5 +2,5 @@ command: "bun run format"
 area: validation
 purpose: "Solo el formato de Biome, sin lint"
 page: development/validation
-fuente: package.json
-actualizado: 2026-10-18
+source: package.json
+updated: 2026-10-18

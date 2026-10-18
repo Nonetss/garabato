@@ -1,8 +1,8 @@
 ---
-titulo: Frontend
-descripcion: Cómo está hecha la web de Garabato, qué hay en cada carpeta de apps/frontend/src y por qué las islas React nunca se renderizan en el servidor
+title: Frontend
+description: Cómo está hecha la web de Garabato, qué hay en cada carpeta de apps/frontend/src y por qué las islas React nunca se renderizan en el servidor
 workspaces: [frontend]
-actualizado: 2026-10-18
+updated: 2026-10-18
 ---
 
 `apps/frontend` es una app Astro 7 con renderizado en servidor. Las páginas (`src/pages/`) son ficheros `.astro`, y todo lo interactivo es React 19 montado como isla. Los estilos son Tailwind v4 y los componentes base vienen de shadcn/ui (estilo `base-nova`, sobre Base UI). Habla con la API con el cliente oRPC tipado de `src/lib/orpc.ts` y TanStack Query.

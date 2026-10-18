@@ -4,5 +4,5 @@ required: false
 default: "Admin"
 meaning: "El nombre de ese administrador"
 page: auth
-fuente: .env.example
-actualizado: 2026-10-18
+source: .env.example
+updated: 2026-10-18

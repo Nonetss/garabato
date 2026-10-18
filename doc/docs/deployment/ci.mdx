@@ -1,9 +1,9 @@
 ---
-titulo: CI
-descripcion: Qué construyen y publican los workflows de GitHub y de Gitea en cada push a main, y cómo se publica la web del proyecto
+title: CI
+description: Qué construyen y publican los workflows de GitHub y de Gitea en cada push a main, y cómo se publica la web del proyecto
 workspaces: [backend, frontend, gateway, site]
-orden: 4
-actualizado: 2026-10-18
+order: 4
+updated: 2026-10-18
 ---
 
 En cada push a `main` se reconstruyen solo las imágenes que cambiaron y se suben al registro. **El CI no ejecuta lint, tipos ni tests**: eso se valida en local antes del push ([Validar un cambio](../development/validation.mdx)).
