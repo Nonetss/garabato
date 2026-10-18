@@ -24,5 +24,5 @@
 ## 5. Wrap-up
 
 - [x] 5.1 Update the `stack` skill if a reference cites the token procedures or admin pages it no longer matches; verify every cited path exists
-- [ ] 5.2 Ask the user to try the three switches from the admin page against a connected browser and record the outcome here
+- [x] 5.2 Ask the user to try the three switches from the admin page against a connected browser and record the outcome here
 - [x] 5.3 Run `openspec validate browser-token-emergency-switches --strict`; verify it passes
