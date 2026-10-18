@@ -153,6 +153,12 @@ services:
       LOKI_URL: http://loki:3100
     expose:
       - "3000"
+    # The browser token module, as native/pkcs11/scripts/build-dist.sh leaves
+    # it (run it before starting the stack). `.dockerignore` keeps every dist/
+    # out of the image and a watch sync honours it, so it is mounted instead,
+    # read-only: rebuilding the module reaches the backend at once.
+    volumes:
+      - ./native/pkcs11/dist:/app/native/pkcs11/dist:ro
     # With the `minio` profile, uploads need the bucket the healthy `minio`
     # has created; without it there is nothing to wait for (external store).
     depends_on:
@@ -183,6 +189,9 @@ services:
         - action: sync
           path: ./packages/logger/src
           target: /app/packages/logger/src
+        - action: sync
+          path: ./native/pkcs11/install
+          target: /app/native/pkcs11/install
         - action: rebuild
           path: ./bun.lock
         - action: rebuild
