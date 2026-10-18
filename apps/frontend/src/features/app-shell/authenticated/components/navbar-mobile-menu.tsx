@@ -74,7 +74,14 @@ export function NavbarMobileMenu({
             className="gap-0 border-border bg-popover p-0 text-popover-foreground data-closed:animate-none sm:max-w-xs [&>button]:top-3.5 [&>button]:text-muted-foreground hover:[&>button]:text-foreground"
           >
             <SheetHeader className="shrink-0 border-border border-b px-4 py-4 text-left">
-              <SheetTitle>Navegación principal</SheetTitle>
+              <SheetTitle
+                className={cn(
+                  textVariants({ role: "title" }),
+                  "text-popover-foreground"
+                )}
+              >
+                Navegación principal
+              </SheetTitle>
             </SheetHeader>
             <nav
               className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-3"

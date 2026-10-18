@@ -50,6 +50,13 @@ function menuIconClass(active: boolean) {
 const MENU_ROW =
   "group/item flex min-h-10 items-center gap-2.5 rounded-lg px-2.5 py-2 text-foreground/80 outline-none transition-colors hover:bg-primary/10 hover:text-foreground focus:bg-primary/10 focus:text-foreground data-active:bg-primary/10 data-active:text-primary"
 
+/**
+ * The section hub row: same shape as a sub-route row, but its label and icon
+ * stay in the primary color so it reads as the entry to the whole section.
+ */
+const MENU_HUB_ROW =
+  "group/item flex min-h-11 items-center gap-2.5 rounded-lg px-2.5 py-2 text-primary outline-none transition-colors hover:bg-primary/10 focus:bg-primary/10 data-active:bg-primary/10"
+
 interface SectionLinkProps {
   item: SiteNavItem
   current: boolean
@@ -80,9 +87,9 @@ interface SectionMenuProps {
  * hover or focus, sharing the menu's single animated viewport.
  *
  * The first row is the "section hub" — the section's canonical icon, name
- * and description, sitting on a `bg-primary/5` wash so it reads as the
- * overview rather than another sub-route. A hairline separator then divides
- * the hub from the specific sub-routes below.
+ * and description, with the icon and name in the primary color so it reads
+ * as the overview rather than another sub-route. A hairline separator then
+ * divides the hub from the specific sub-routes below.
  */
 function SectionMenu({
   item,
@@ -100,17 +107,17 @@ function SectionMenu({
         {item.label}
         {sectionActive ? <StatusDot tone="primary" /> : null}
       </NavbarPillTrigger>
-      <NavigationMenuContent className="min-w-64">
+      <NavigationMenuContent className="w-72">
         <NavigationMenuLink
           active={current}
           closeOnClick
           render={<AppLink href={item.href} />}
-          className={cn(MENU_ROW, "min-h-11")}
+          className={MENU_HUB_ROW}
         >
-          <item.icon aria-hidden className={menuIconClass(current)} />
+          <item.icon aria-hidden className="size-3.5 shrink-0" />
           <MenuItemText label={item.label} description={item.description} />
         </NavigationMenuLink>
-        <Separator className="my-1" />
+        <Separator className="my-1.5 bg-foreground/10" />
         {item.subItems?.map((sub) => {
           const active = isNavSubItemCurrent(sub.href, currentPath, item)
           return (
