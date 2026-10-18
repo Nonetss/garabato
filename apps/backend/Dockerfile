@@ -4,29 +4,38 @@ ARG BUN_VERSION=1.4.2
 ARG RUST_VERSION=1.98
 
 # ── Browser token module ─────────────────────────────────────────────────────
-# Builds the PKCS#11 module the install script hands to browsers, for x86_64
-# and ARM64 Linux. Bookworm's glibc (2.36) keeps it loadable on current
-# desktop distributions. Only native/pkcs11 is copied, so app changes reuse
+# Builds the PKCS#11 module the install scripts hand to browsers, for x86_64
+# and ARM64 Linux and x86_64 Windows (MinGW, static runtime: the DLL needs
+# nothing beside it). Bookworm's glibc (2.36) keeps the Linux builds loadable
+# on current desktop distributions. Only native/pkcs11 is copied, so app changes reuse
 # this stage from cache; the Rust toolchain never reaches the runtime image.
 FROM rust:${RUST_VERSION}-slim-bookworm AS module
 RUN apt-get update \
   && apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross \
+    gcc-mingw-w64-x86-64 \
   && rm -rf /var/lib/apt/lists/* \
-  && rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+  && rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu x86_64-pc-windows-gnu
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
   CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
-  AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
+  AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar \
+  CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
+  CARGO_TARGET_X86_64_PC_WINDOWS_GNU_RUSTFLAGS="-C target-feature=+crt-static" \
+  CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc \
+  AR_x86_64_pc_windows_gnu=x86_64-w64-mingw32-ar
 WORKDIR /src
 COPY native/pkcs11/Cargo.toml native/pkcs11/Cargo.lock ./
 COPY native/pkcs11/src ./src
+COPY native/pkcs11/vendor ./vendor
 # target/ lives in a cache mount, so the files are copied out in the same step.
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
   --mount=type=cache,target=/src/target \
   cargo build --release --locked --lib \
     --target x86_64-unknown-linux-gnu --target aarch64-unknown-linux-gnu \
-  && mkdir -p /dist/x86_64 /dist/aarch64 \
+    --target x86_64-pc-windows-gnu \
+  && mkdir -p /dist/x86_64 /dist/aarch64 /dist/windows-x86_64 \
   && cp target/x86_64-unknown-linux-gnu/release/libgarabato_pkcs11.so /dist/x86_64/ \
-  && cp target/aarch64-unknown-linux-gnu/release/libgarabato_pkcs11.so /dist/aarch64/
+  && cp target/aarch64-unknown-linux-gnu/release/libgarabato_pkcs11.so /dist/aarch64/ \
+  && cp target/x86_64-pc-windows-gnu/release/garabato_pkcs11.dll /dist/windows-x86_64/
 
 # ── Build stage ──────────────────────────────────────────────────────────────
 FROM oven/bun:${BUN_VERSION}-slim AS build
