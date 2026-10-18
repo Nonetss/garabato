@@ -6,6 +6,26 @@ export type ConnectedBrowser = {
   expiresAt: string | null
   /** Last time its module reached Garabato; null when never used. */
   lastUsedAt: string | null
+  /** The module version it last reported ("0.1.0" for modules that never did). */
+  moduleVersion: string
+  platform: string
+  /** Below the minimum module version an administrator set. */
+  outdated: boolean
+}
+
+/** The emergency switches as the certificates page needs them. */
+export type TokenSwitches = {
+  tokenEnabled: boolean
+  installsEnabled: boolean
+  minModuleVersion: string | null
+  servedVersion: string
+}
+
+/** Whether new browsers may be connected; true until the switches load,
+ *  since the backend refuses anyway. */
+export function installsAllowed(switches: TokenSwitches | undefined) {
+  if (!switches) return true
+  return switches.tokenEnabled && switches.installsEnabled
 }
 
 /** Operating systems the module has an install command for. */

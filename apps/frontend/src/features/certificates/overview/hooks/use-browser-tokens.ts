@@ -13,6 +13,9 @@ const browsersListKey = orpc.v1.certificateToken.listKeys.queryKey()
 // How often the dialog asks whether the install command has run.
 const STATUS_POLL_MS = 2000
 
+export const useTokenSwitches = () =>
+  useHydratedQuery(orpc.v1.certificateToken.switches.queryOptions())
+
 export const useConnectedBrowsers = () =>
   useHydratedQuery(orpc.v1.certificateToken.listKeys.queryOptions())
 

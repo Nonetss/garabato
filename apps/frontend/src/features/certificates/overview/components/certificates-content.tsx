@@ -27,11 +27,13 @@ import { RememberPasswordDialog } from "@/features/certificates/overview/compone
 import { RenameCertificateDialog } from "@/features/certificates/overview/components/rename-certificate-dialog"
 import { browserTokenLabels } from "@/features/certificates/overview/definitions/browser-token-labels"
 import { certificateLabels } from "@/features/certificates/overview/definitions/certificate-labels"
+import { useTokenSwitches } from "@/features/certificates/overview/hooks/use-browser-tokens"
 import {
   useCertificateDelete,
   useCertificateForgetPassword,
   useCertificates,
 } from "@/features/certificates/overview/hooks/use-certificates"
+import { installsAllowed } from "@/features/certificates/overview/model/browser-tokens"
 import { filterCertificates } from "@/features/certificates/overview/model/filters"
 import type { Certificate } from "@/features/certificates/overview/model/types"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
@@ -52,6 +54,7 @@ export function CertificatesContent() {
   const [connectOpen, setConnectOpen] = useState(false)
   const { data: session } = authClient.useSession()
   const twoFactorEnabled = session?.user.twoFactorEnabled === true
+  const { data: switches } = useTokenSwitches()
   const [query, setQuery] = useState("")
   const signaturesSheet = useTargetDialog<Certificate>()
   const renameDialog = useTargetDialog<Certificate>()
@@ -183,6 +186,7 @@ export function CertificatesContent() {
         open={connectOpen}
         onOpenChange={setConnectOpen}
         twoFactorEnabled={twoFactorEnabled}
+        installsAllowed={installsAllowed(switches)}
       />
       <CertificateSignaturesSheet
         certificate={signaturesSheet.target}

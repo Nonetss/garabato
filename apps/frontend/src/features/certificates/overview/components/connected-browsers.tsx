@@ -3,6 +3,7 @@ import { getIcon } from "@/lib/icon-registry"
 const DisconnectIcon = getIcon("actions", "delete")
 
 import { Text } from "@/components/shared/brand/typography"
+import { StatusTag } from "@/components/shared/data-display/status-dot"
 import { IconButton } from "@/components/shared/form/icon-button"
 import { SectionHeading } from "@/components/shared/layout/section-heading"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
@@ -10,6 +11,7 @@ import { browserTokenLabels } from "@/features/certificates/overview/definitions
 import {
   useConnectedBrowsers,
   useDisconnectBrowser,
+  useTokenSwitches,
 } from "@/features/certificates/overview/hooks/use-browser-tokens"
 import type { ConnectedBrowser } from "@/features/certificates/overview/model/browser-tokens"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
@@ -41,6 +43,16 @@ function BrowserRow({
         <Text as="p" variant="meta" tone="muted" className="truncate">
           {joinFacts([lastUseLabel(browser), expiryLabel(browser)])}
         </Text>
+        {browser.outdated ? (
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <StatusTag dotTone="destructive">
+              {browserTokenLabels.outdated}
+            </StatusTag>
+            <Text as="span" variant="meta" tone="muted">
+              {browserTokenLabels.outdatedHint}
+            </Text>
+          </div>
+        ) : null}
       </div>
       <IconButton
         label={`${browserTokenLabels.disconnect} ${browser.name}`}
@@ -58,6 +70,7 @@ function BrowserRow({
  *  Hidden while there are none: "Conectar navegador" is in the hero. */
 export function ConnectedBrowsers() {
   const { data: browsers = [] } = useConnectedBrowsers()
+  const { data: switches } = useTokenSwitches()
   const disconnect = useDisconnectBrowser()
   const disconnectDialog = useTargetConfirmDialog<ConnectedBrowser>({
     title: browserTokenLabels.disconnectTitle,
@@ -75,6 +88,11 @@ export function ConnectedBrowsers() {
         title={browserTokenLabels.section}
         count={browsers.length}
       />
+      {switches?.tokenEnabled === false ? (
+        <Text as="p" variant="meta" tone="destructive" role="status">
+          {browserTokenLabels.tokenDisabled}
+        </Text>
+      ) : null}
       <ul className="divide-y border-y">
         {browsers.map((browser) => (
           <BrowserRow

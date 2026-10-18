@@ -261,7 +261,29 @@ function ConnectionDialog({
   )
 }
 
+function InstallsDisabledDialog({ open, onOpenChange }: DialogStateProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{browserTokenLabels.installsDisabledTitle}</DialogTitle>
+          <DialogDescription>
+            {browserTokenLabels.installsDisabledDescription}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" onClick={() => onOpenChange(false)}>
+            {browserTokenLabels.close}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 interface ConnectBrowserDialogProps extends DialogStateProps {
+  /** Off while an administrator stops new browsers. */
+  installsAllowed: boolean
   /** The token's PIN is the TOTP code, so it needs two-factor on. */
   twoFactorEnabled: boolean
 }
@@ -273,6 +295,7 @@ interface ConnectBrowserDialogProps extends DialogStateProps {
 export function ConnectBrowserDialog({
   open,
   onOpenChange,
+  installsAllowed,
   twoFactorEnabled,
 }: ConnectBrowserDialogProps) {
   const start = useStartConnection()
@@ -293,6 +316,11 @@ export function ConnectBrowserDialog({
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault()
     await begin(form.trimmed().name)
+  }
+
+  // A connection already started keeps its dialog until it closes.
+  if (!installsAllowed && !connection) {
+    return <InstallsDisabledDialog open={open} onOpenChange={onOpenChange} />
   }
 
   if (!twoFactorEnabled) {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   detectInstallSystem,
+  installsAllowed,
   remainingLabel,
 } from "@/features/certificates/overview/model/browser-tokens"
 
@@ -39,5 +40,24 @@ describe("detectInstallSystem", () => {
       )
     ).toBe("linux")
     expect(detectInstallSystem("")).toBe("linux")
+  })
+})
+
+describe("installsAllowed", () => {
+  const switches = {
+    tokenEnabled: true,
+    installsEnabled: true,
+    minModuleVersion: null,
+    servedVersion: "0.2.0",
+  }
+
+  test("needs the token and installs on", () => {
+    expect(installsAllowed(switches)).toBe(true)
+    expect(installsAllowed({ ...switches, installsEnabled: false })).toBe(false)
+    expect(installsAllowed({ ...switches, tokenEnabled: false })).toBe(false)
+  })
+
+  test("allows while the switches are loading", () => {
+    expect(installsAllowed(undefined)).toBe(true)
   })
 })

@@ -37,6 +37,13 @@ export const browserTokenLabels = {
   regenerate: "Generar otro comando",
   close: "Hecho",
   section: "Navegadores conectados",
+  installsDisabledTitle: "Conexión de navegadores desactivada",
+  installsDisabledDescription:
+    "Un administrador ha desactivado temporalmente la conexión de navegadores nuevos. Vuelve a intentarlo más tarde.",
+  tokenDisabled:
+    "El token del navegador está desactivado temporalmente: los navegadores conectados no pueden entrar con certificado hasta que un administrador lo vuelva a activar.",
+  outdated: "Desactualizado",
+  outdatedHint: "Vuelve a conectarlo para actualizar el módulo",
   neverUsed: "Sin usar todavía",
   lastUsed: (relative: string) => `Último uso ${relative}`,
   expires: (date: string) => `Caduca el ${date}`,

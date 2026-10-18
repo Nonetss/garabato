@@ -1,0 +1,9 @@
+---
+import { BrowserTokenPage } from "@/features/admin/browser-token"
+import Admin from "@/layouts/Admin.astro"
+import { appSurfaces } from "@/lib/app-surfaces"
+---
+
+<Admin title={appSurfaces["admin-browser-token"].title}>
+  <BrowserTokenPage client:only="react" />
+</Admin>

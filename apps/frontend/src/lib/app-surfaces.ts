@@ -21,6 +21,7 @@ export type SurfaceId =
   | "admin-teams"
   | "admin-api-keys"
   | "admin-plugins"
+  | "admin-browser-token"
   | "config"
   | "config-profile"
   | "config-appearance"
@@ -288,6 +289,15 @@ const appSurfaceDefinitions: Partial<Record<SurfaceId, SurfaceDefinition>> = {
         label: "Plugins",
         description: "Inspecciona los plugins activos de Better Auth.",
         icon: iconRef("admin", "plugins"),
+        adminOnly: true,
+      },
+      "admin-browser-token": {
+        path: "/admin/browser-token",
+        title: "Admin · Token del navegador",
+        label: "Token del navegador",
+        description:
+          "Desactiva el token, las instalaciones o los módulos antiguos ante un fallo de seguridad.",
+        icon: iconRef("security", "restricted"),
         adminOnly: true,
       },
     },
