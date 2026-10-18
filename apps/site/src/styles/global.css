@@ -430,9 +430,96 @@ html:has(.lightbox[open]) {
   opacity: 1;
 }
 
+/* Browser token walkthrough, first step (BrowserTokenMock.astro): a pointer
+   glides onto Conectar navegador and clicks it. The three pieces share one
+   loop so the press, the button and the ripple stay in step. */
+.click-pointer {
+  animation: click-pointer 4.2s var(--ease-out-expo) infinite;
+}
+
+.click-target {
+  animation: click-target 4.2s ease-out infinite;
+}
+
+.click-ripple {
+  opacity: 0;
+  animation: click-ripple 4.2s ease-out infinite;
+}
+
+@keyframes click-pointer {
+  0% {
+    opacity: 0;
+    transform: translate(5.5rem, 7rem);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(5.5rem, 7rem);
+  }
+  42% {
+    transform: translate(0, 0) scale(1);
+  }
+  48% {
+    transform: translate(0, 0) scale(0.82);
+  }
+  54%,
+  86% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes click-target {
+  0%,
+  45% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+  49% {
+    background-color: var(--accent);
+    transform: scale(0.96);
+  }
+  56%,
+  80% {
+    background-color: var(--accent);
+    transform: scale(1);
+  }
+  92%,
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes click-ripple {
+  0%,
+  47% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  72%,
+  100% {
+    opacity: 0;
+    transform: scale(1.18, 1.6);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .frame-shot {
     transition: none;
+  }
+
+  /* Still frame: the pointer resting on the button. */
+  .click-pointer,
+  .click-target,
+  .click-ripple {
+    animation: none;
   }
 
   .lightbox[open] {

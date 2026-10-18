@@ -14,6 +14,7 @@ export type TourStopId =
 
 /** The walkthrough on the landing, in order (BrowserToken.astro). */
 export const browserTokenSteps = [
+  "open",
   "connect",
   "install",
   "unlock",
@@ -192,9 +193,14 @@ const en = {
     lede: "Firefox and Chromium can use the certificates you keep in Garabato to sign in to sites that ask for one, such as the tax agency, Cl@ve or university enrolment, without installing them in the browser. The private key never leaves Garabato.",
     stepsLabel: "Connect a browser, step by step",
     steps: {
+      open: {
+        title: "Open your certificates.",
+        body: "In Garabato, go to the certificates page and press Conectar navegador, next to Importar certificado. The button shows up once you have at least one certificate saved.",
+        alt: "Garabato's certificates page, with the pointer clicking the Conectar navegador button",
+      },
       connect: {
         title: "Ask Garabato for the command.",
-        body: "On the certificates page, choose Conectar navegador and give it a name you will recognise, such as Firefox portátil. Garabato shows one command, for Linux or Windows, with a one-time code that lasts 10 minutes.",
+        body: "Give the browser a name you will recognise, such as Firefox portátil, and press Crear conexión. Garabato shows one command, for Linux or Windows, with a one-time code that lasts 10 minutes.",
         alt: "The Conectar navegador dialog on the certificates page: the Linux command with its one-time code, the countdown and the wait for the command to run",
       },
       install: {
@@ -225,6 +231,8 @@ const en = {
       app: {
         certificates: "Certificates",
         connect: "Connect browser",
+        import: "Import certificate",
+        usable: "valid",
         commandTitle: "Run this command",
         commandDescription:
           "Paste it into a terminal on the computer where you use the browser, as your own user and without administrator rights.",
@@ -497,9 +505,14 @@ const es: Dictionary = {
     lede: "Firefox y Chromium pueden usar los certificados que guardas en Garabato para entrar en webs que los piden, como la Agencia Tributaria, Cl@ve o la matrícula de la universidad, sin instalarlos en el navegador. La clave privada nunca sale de Garabato.",
     stepsLabel: "Conecta un navegador, paso a paso",
     steps: {
+      open: {
+        title: "Abre tus certificados.",
+        body: "En Garabato, entra en la página de certificados y pulsa Conectar navegador, junto a Importar certificado. El botón aparece en cuanto tienes al menos un certificado guardado.",
+        alt: "La página de certificados de Garabato, con el puntero pulsando el botón Conectar navegador",
+      },
       connect: {
         title: "Pide el comando en Garabato.",
-        body: "En la página de certificados, elige Conectar navegador y ponle un nombre que reconozcas, como Firefox portátil. Garabato te muestra un comando, para Linux o para Windows, con un código de un solo uso que vale 10 minutos.",
+        body: "Ponle al navegador un nombre que reconozcas, como Firefox portátil, y pulsa Crear conexión. Garabato te muestra un comando, para Linux o para Windows, con un código de un solo uso que vale 10 minutos.",
         alt: "El diálogo Conectar navegador en la página de certificados: el comando para Linux con su código de un solo uso, la cuenta atrás y la espera a que se ejecute",
       },
       install: {
@@ -530,6 +543,8 @@ const es: Dictionary = {
       app: {
         certificates: "Certificados",
         connect: "Conectar navegador",
+        import: "Importar certificado",
+        usable: "vigentes",
         commandTitle: "Ejecuta este comando",
         commandDescription:
           "Pégalo en una terminal del equipo donde usas el navegador, con tu usuario y sin permisos de administrador.",
