@@ -175,6 +175,19 @@ const en = {
     ],
     docsLink: "Read the architecture docs",
   },
+  browserToken: {
+    heading: "Sign in to websites with the same certificates.",
+    lede: "Firefox and Chromium can use the certificates you keep in Garabato to sign in to sites that ask for one, such as the tax agency, Cl@ve or university enrolment, without installing them in the browser. The private key never leaves Garabato.",
+    stepsLabel: "How it works",
+    steps: [
+      "On the certificates page, Conectar navegador shows one command with a one-time code.",
+      "Run it on the computer: it installs a small module and registers it in your browsers as a security device called Garabato.",
+      "When a site asks for your certificate, type the code from your authenticator app. Garabato signs, and the sign-in lands in the traces.",
+    ],
+    platforms:
+      "Linux (x86_64 and ARM64): Firefox, Zen, LibreWolf, Floorp, Waterfox, Chromium, Chrome and Brave. Windows (x86_64): Firefox and the browsers built on it.",
+    docsLink: "Sign in from the browser",
+  },
   install: {
     heading: "Up in one command.",
     lede: "On a Linux host with Docker, curl and openssl, from an empty directory:",
@@ -368,6 +381,19 @@ const es: Dictionary = {
       },
     ],
     docsLink: "Leer la arquitectura en la documentación",
+  },
+  browserToken: {
+    heading: "Entra en webs con los mismos certificados.",
+    lede: "Firefox y Chromium pueden usar los certificados que guardas en Garabato para entrar en webs que los piden, como la Agencia Tributaria, Cl@ve o la matrícula de la universidad, sin instalarlos en el navegador. La clave privada nunca sale de Garabato.",
+    stepsLabel: "Cómo funciona",
+    steps: [
+      "En la página de certificados, Conectar navegador muestra un comando con un código de un solo uso.",
+      "Ejecútalo en el equipo: instala un módulo pequeño y lo registra en tus navegadores como un dispositivo de seguridad llamado Garabato.",
+      "Cuando una web pida tu certificado, escribe el código de tu app de autenticación. Garabato firma y el acceso queda en las trazas.",
+    ],
+    platforms:
+      "Linux (x86_64 y ARM64): Firefox, Zen, LibreWolf, Floorp, Waterfox, Chromium, Chrome y Brave. Windows (x86_64): Firefox y los navegadores basados en él.",
+    docsLink: "Entrar desde el navegador",
   },
   install: {
     heading: "En marcha con un solo comando.",
