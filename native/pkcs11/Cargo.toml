@@ -1,6 +1,6 @@
 [package]
 name = "garabato-pkcs11"
-version = "0.2.0"
+version = "0.3.1"
 edition = "2024"
 description = "PKCS#11 module that lets Firefox and Chromium use the certificates kept in Garabato"
 license = "AGPL-3.0-only"

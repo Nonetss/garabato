@@ -15,7 +15,7 @@ export type ModuleSystem = (typeof MODULE_SYSTEMS)[number]
 
 /** The module version the installers hand out: `native/pkcs11/Cargo.toml`'s
  *  (a unit test keeps them equal). */
-export const MODULE_VERSION = "0.2.0"
+export const MODULE_VERSION = "0.3.1"
 
 export const MODULE_FILE_NAME = "libgarabato_pkcs11.so"
 export const WINDOWS_MODULE_FILE_NAME = "garabato_pkcs11.dll"
