@@ -25,5 +25,5 @@
 
 ## 5. Wrap-up
 
-- [x] 5.1 Ask the user to connect a laptop with the command against their Garabato and record the outcome here — 2026-10-18: installed with the one command against the Docker dev stack (after the 3.3 fix); Firefox 158 completed TLS 1.3 client authentication with the user's FNMT certificate on certauth.cryptomix.com
+- [x] 5.1 Ask the user to connect a laptop with the command against their Garabato and record the outcome here — 2026-10-18: installed with the one command against the Docker dev stack (after the 3.3 fix); Firefox 158 completed TLS 1.3 client authentication with the user's FNMT certificate on certauth.cryptomix.com — CORRECTION (2026-10-18): not confirmed. The user's browser is Zen, where the module was never registered (`browser-token-firefox-derivatives`), and the backend received no certificates/unlock/sign request; the site authenticated with the certificate installed in the browser
 - [x] 5.2 Run `openspec validate browser-token-one-command-install --strict`; verify it passes

@@ -33,6 +33,6 @@
 
 ## 6. Wrap-up
 
-- [x] 6.1 Ask the user to run the end-to-end check with Firefox against their Garabato (AEAT or Cl@ve) and record the outcome here — 2026-10-18: the user reports that signing in with the module in Firefox works
+- [x] 6.1 Ask the user to run the end-to-end check with Firefox against their Garabato (AEAT or Cl@ve) and record the outcome here — 2026-10-18: the user reports that signing in with the module in Firefox works — CORRECTION (2026-10-18): not confirmed. The user's browser is Zen, where the module was never registered (`browser-token-firefox-derivatives`), and the backend received no certificates/unlock/sign request; the site authenticated with the certificate installed in the browser
 - [x] 6.2 Delete `spikes/pkcs11`; verify `git status` shows it removed and nothing references it
 - [x] 6.3 Run `openspec validate browser-certificate-token --strict`; verify it passes
