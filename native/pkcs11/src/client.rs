@@ -88,9 +88,18 @@ impl Client {
             .map_err(|error| error.to_string())?;
         let mut identities = Vec::new();
         for item in offered {
-            let Ok(certificate) = B64.decode(&item.certificate) else { continue };
-            let Some(public_key) = rsa_public_key(&certificate) else { continue };
-            identities.push(Identity { id: item.id, alias: item.alias, certificate, public_key });
+            let Ok(certificate) = B64.decode(&item.certificate) else {
+                continue;
+            };
+            let Some(public_key) = rsa_public_key(&certificate) else {
+                continue;
+            };
+            identities.push(Identity {
+                id: item.id,
+                alias: item.alias,
+                certificate,
+                public_key,
+            });
         }
         Ok(identities)
     }
@@ -135,7 +144,10 @@ impl Client {
         let signature = response
             .into_json::<Signature>()
             .map_err(|error| error.to_string())
-            .and_then(|body| B64.decode(body.signature).map_err(|error| error.to_string()));
+            .and_then(|body| {
+                B64.decode(body.signature)
+                    .map_err(|error| error.to_string())
+            });
         match signature {
             Ok(signature) => SignOutcome::Signed(signature),
             Err(reason) => SignOutcome::Failed(reason),

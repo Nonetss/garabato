@@ -8,7 +8,10 @@ use garabato_pkcs11::{
 use serde_json::{Value, json};
 
 fn client(url: &str) -> Client {
-    Client::new(&Config { url: url.into(), key: "gbt_key".into() })
+    Client::new(&Config {
+        url: url.into(),
+        key: "gbt_key".into(),
+    })
 }
 
 fn body(request: &support::Request) -> Value {
@@ -28,7 +31,10 @@ fn lists_rsa_certificates_with_the_key_header() {
 
     assert_eq!(identities.len(), 1);
     assert_eq!(identities[0].alias, "FNMT");
-    assert_eq!(identities[0].public_key, include_bytes!("fixtures/rsa-public.der"));
+    assert_eq!(
+        identities[0].public_key,
+        include_bytes!("fixtures/rsa-public.der")
+    );
     let request = stub.requests.lock().unwrap()[0].clone();
     assert_eq!(request.method, "GET");
     assert_eq!(request.path, "/api/v1/certificateToken/certificates");
@@ -56,7 +62,10 @@ fn unlock_maps_each_answer() {
 
 #[test]
 fn unlock_reports_an_unreachable_garabato() {
-    assert!(matches!(client("http://127.0.0.1:9").unlock("123456"), UnlockOutcome::Unreachable(_)));
+    assert!(matches!(
+        client("http://127.0.0.1:9").unlock("123456"),
+        UnlockOutcome::Unreachable(_)
+    ));
 }
 
 #[test]
@@ -99,5 +108,8 @@ fn lock_posts_to_lock() {
 
     client(&stub.url).lock();
 
-    assert_eq!(stub.requests.lock().unwrap()[0].path, "/api/v1/certificateToken/lock");
+    assert_eq!(
+        stub.requests.lock().unwrap()[0].path,
+        "/api/v1/certificateToken/lock"
+    );
 }

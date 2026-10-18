@@ -21,7 +21,11 @@ fn hash_name(digest: &DigestType) -> Option<&'static str> {
 pub fn mechanism_json(algorithm: &SignatureAlgorithm) -> Option<Value> {
     match algorithm {
         SignatureAlgorithm::RsaPkcs1v15Raw => Some(json!({ "name": "rsa-pkcs1" })),
-        SignatureAlgorithm::RsaPss { digest, mask_generation_function, salt_length } => {
+        SignatureAlgorithm::RsaPss {
+            digest,
+            mask_generation_function,
+            salt_length,
+        } => {
             let hash = hash_name(digest)?;
             if hash_name(mask_generation_function) != Some(hash) {
                 return None;

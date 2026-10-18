@@ -29,7 +29,9 @@ pub fn serve(responses: Vec<(u16, &'static str)>) -> Stub {
     let recorded = requests.clone();
     thread::spawn(move || {
         for (status, body) in responses {
-            let Ok((stream, _)) = listener.accept() else { return };
+            let Ok((stream, _)) = listener.accept() else {
+                return;
+            };
             let mut reader = BufReader::new(stream.try_clone().unwrap());
             let mut line = String::new();
             reader.read_line(&mut line).unwrap();

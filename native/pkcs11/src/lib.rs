@@ -82,7 +82,9 @@ fn certificates() -> Vec<Arc<Identity>> {
     {
         return identities.clone();
     }
-    let Some(client) = client() else { return Vec::new() };
+    let Some(client) = client() else {
+        return Vec::new();
+    };
     match client.certificates() {
         Ok(identities) => {
             log("certificates", json!({ "count": identities.len() }));
@@ -169,7 +171,10 @@ impl PrivateKey for GarabatoPrivateKey {
 
     fn sign(&self, algorithm: &SignatureAlgorithm, data: &[u8]) -> Result<Vec<u8>> {
         let Some(mechanism) = mechanism_json(algorithm) else {
-            log("sign-unsupported", json!({ "algorithm": format!("{algorithm:?}") }));
+            log(
+                "sign-unsupported",
+                json!({ "algorithm": format!("{algorithm:?}") }),
+            );
             return Err("mechanism not supported".into());
         };
         if !LOGGED_IN.load(Ordering::SeqCst) {
@@ -183,7 +188,9 @@ impl PrivateKey for GarabatoPrivateKey {
         {
             return Ok(signature.clone());
         }
-        let Some(client) = client() else { return Err("no configuration".into()) };
+        let Some(client) = client() else {
+            return Err("no configuration".into());
+        };
         let started = Instant::now();
         match client.sign(&self.0.id, mechanism.clone(), data) {
             SignOutcome::Signed(signature) => {
@@ -236,11 +243,15 @@ impl Backend for GarabatoBackend {
     }
 
     fn find_private_key(&self, query: KeySearchOptions) -> Result<Option<Arc<dyn PrivateKey>>> {
-        Ok(find(&query).map(|identity| Arc::new(GarabatoPrivateKey(identity)) as Arc<dyn PrivateKey>))
+        Ok(find(&query)
+            .map(|identity| Arc::new(GarabatoPrivateKey(identity)) as Arc<dyn PrivateKey>))
     }
 
     fn find_public_key(&self, query: KeySearchOptions) -> Result<Option<Box<dyn PublicKey>>> {
-        Ok(find(&query).map(|identity| Box::new(GarabatoPublicKey(identity)) as Box<dyn PublicKey>))
+        Ok(
+            find(&query)
+                .map(|identity| Box::new(GarabatoPublicKey(identity)) as Box<dyn PublicKey>),
+        )
     }
 
     fn find_all_private_keys(&self) -> Result<Vec<Arc<dyn PrivateKey>>> {
@@ -294,7 +305,8 @@ unsafe extern "C" fn GetMechanismList(
         return CKR_ARGUMENTS_BAD;
     }
     let mut ignored: CK_ULONG = 0;
-    let rv = unsafe { original().C_GetMechanismList.unwrap()(slot, std::ptr::null_mut(), &mut ignored) };
+    let rv =
+        unsafe { original().C_GetMechanismList.unwrap()(slot, std::ptr::null_mut(), &mut ignored) };
     if rv != CKR_OK {
         return rv;
     }
@@ -322,7 +334,10 @@ unsafe extern "C" fn Login(
 ) -> CK_RV {
     let rv = unsafe { original().C_Login.unwrap()(session, user_type, pin, pin_len) };
     if rv != CKR_OK {
-        log("login-rejected-by-session", json!({ "rv": format!("0x{rv:x}"), "session": session }));
+        log(
+            "login-rejected-by-session",
+            json!({ "rv": format!("0x{rv:x}"), "session": session }),
+        );
         return rv;
     }
     if LOGGED_IN.load(Ordering::SeqCst) {
@@ -333,7 +348,9 @@ unsafe extern "C" fn Login(
     }
     let bytes = unsafe { std::slice::from_raw_parts(pin, pin_len as usize) };
     let code = String::from_utf8_lossy(bytes).trim().to_string();
-    let Some(client) = client() else { return CKR_DEVICE_ERROR };
+    let Some(client) = client() else {
+        return CKR_DEVICE_ERROR;
+    };
     let outcome = client.unlock(&code);
     let rv = match &outcome {
         UnlockOutcome::Unlocked => {
@@ -363,7 +380,10 @@ unsafe extern "C" fn Logout(session: CK_SESSION_HANDLE) -> CK_RV {
 }
 
 /// Tells NSS whether the session is logged in; the crate always says yes.
-unsafe extern "C" fn GetSessionInfo(session: CK_SESSION_HANDLE, info: CK_SESSION_INFO_PTR) -> CK_RV {
+unsafe extern "C" fn GetSessionInfo(
+    session: CK_SESSION_HANDLE,
+    info: CK_SESSION_INFO_PTR,
+) -> CK_RV {
     let rv = unsafe { original().C_GetSessionInfo.unwrap()(session, info) };
     if rv == CKR_OK && !info.is_null() {
         let read_write = unsafe { (*info).flags } & CKF_RW_SESSION != 0;
@@ -436,7 +456,8 @@ unsafe extern "C" fn Sign(
     signature_len: CK_ULONG_PTR,
 ) -> CK_RV {
     WINDOW_CLOSED.store(false, Ordering::SeqCst);
-    let rv = unsafe { original().C_Sign.unwrap()(session, data, data_len, signature, signature_len) };
+    let rv =
+        unsafe { original().C_Sign.unwrap()(session, data, data_len, signature, signature_len) };
     signature_result(rv)
 }
 

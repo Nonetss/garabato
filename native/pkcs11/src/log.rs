@@ -15,9 +15,15 @@ use crate::config::state_dir;
 pub fn log(event: &str, detail: Value) {
     let dir = state_dir();
     let _ = fs::create_dir_all(&dir);
-    let millis = SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, |d| d.as_millis());
+    let millis = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| d.as_millis());
     let line = json!({ "t": millis, "pid": std::process::id(), "event": event, "detail": detail });
-    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(dir.join("pkcs11.log")) {
+    if let Ok(mut file) = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join("pkcs11.log"))
+    {
         let _ = writeln!(file, "{line}");
     }
 }
