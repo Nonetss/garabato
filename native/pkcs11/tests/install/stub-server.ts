@@ -28,16 +28,22 @@ const server = Bun.serve({
     const origin = `http://127.0.0.1:${server.port}`
     switch (url.pathname) {
       case "/api/v1/certificateToken/installScript": {
+        const windows = url.searchParams.get("os") === "windows"
+        const os = windows ? "windows" : "linux"
+        const headers = { "content-type": "text/plain; charset=utf-8" }
         if (url.searchParams.get("code") !== CODE || redeemed) {
-          return new Response(expiredInstallScript())
+          return new Response(expiredInstallScript(os), { headers })
         }
+        const files = windows
+          ? ["install.ps1", "uninstall.ps1"]
+          : ["install.sh", "uninstall.sh"]
         const script = renderInstallScript(
-          readFileSync(join(installDir, "install.sh"), "utf8"),
-          readFileSync(join(installDir, "uninstall.sh"), "utf8"),
+          readFileSync(join(installDir, files[0] ?? ""), "utf8"),
+          readFileSync(join(installDir, files[1] ?? ""), "utf8"),
           origin,
           CODE
         )
-        return new Response(script)
+        return new Response(script, { headers })
       }
       case "/api/v1/certificateToken/module":
         return new Response(moduleBytes)
