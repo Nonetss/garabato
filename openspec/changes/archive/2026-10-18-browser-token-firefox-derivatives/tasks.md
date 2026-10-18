@@ -5,5 +5,5 @@
 
 ## 2. Wrap-up
 
-- [ ] 2.1 Ask the user to run a new command with Zen closed, then sign in to a site with the certificate removed from Zen, and check that `/traces` shows "Acceso con certificado"
+- [x] 2.1 Ask the user to run a new command with Zen closed, then sign in to a site with the certificate removed from Zen, and check that `/traces` shows "Acceso con certificado" — 2026-10-18: the user confirms it works with Firefox-based browsers (Zen) and Chromium-based ones (Brave): the TOTP is asked and Garabato signs
 - [x] 2.2 Run `openspec validate browser-token-firefox-derivatives --strict`; verify it passes
