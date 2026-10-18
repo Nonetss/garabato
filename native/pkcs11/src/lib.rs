@@ -366,6 +366,8 @@ unsafe extern "C" fn Login(
         }
         UnlockOutcome::WrongCode | UnlockOutcome::Refused => CKR_PIN_INCORRECT,
         UnlockOutcome::LockedOut => CKR_PIN_LOCKED,
+        // The browser shows an error instead of asking for the code again.
+        UnlockOutcome::Blocked(_) => CKR_DEVICE_ERROR,
         UnlockOutcome::Unreachable(_) => CKR_DEVICE_ERROR,
     };
     log("login", json!({ "outcome": format!("{outcome:?}") }));

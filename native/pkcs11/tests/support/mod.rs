@@ -13,6 +13,7 @@ pub struct Request {
     pub method: String,
     pub path: String,
     pub api_key: Option<String>,
+    pub module: Option<String>,
     pub body: String,
 }
 
@@ -39,6 +40,7 @@ pub fn serve(responses: Vec<(u16, &'static str)>) -> Stub {
             let method = parts.next().unwrap_or_default().to_string();
             let path = parts.next().unwrap_or_default().to_string();
             let mut api_key = None;
+            let mut module = None;
             let mut length = 0;
             loop {
                 let mut header = String::new();
@@ -50,6 +52,7 @@ pub fn serve(responses: Vec<(u16, &'static str)>) -> Stub {
                 let (name, value) = header.split_once(':').unwrap_or((header, ""));
                 match name.to_ascii_lowercase().as_str() {
                     "x-api-key" => api_key = Some(value.trim().to_string()),
+                    "x-garabato-module" => module = Some(value.trim().to_string()),
                     "content-length" => length = value.trim().parse().unwrap_or(0),
                     _ => {}
                 }
@@ -60,6 +63,7 @@ pub fn serve(responses: Vec<(u16, &'static str)>) -> Stub {
                 method,
                 path,
                 api_key,
+                module,
                 body: String::from_utf8_lossy(&content).into_owned(),
             });
             let mut stream = stream;

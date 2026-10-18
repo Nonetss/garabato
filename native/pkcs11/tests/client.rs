@@ -2,7 +2,7 @@ mod support;
 
 use base64::{Engine, engine::general_purpose::STANDARD as B64};
 use garabato_pkcs11::{
-    client::{Client, SignOutcome, UnlockOutcome},
+    client::{Blocked, Client, SignOutcome, UnlockOutcome, module_identity},
     config::Config,
 };
 use serde_json::{Value, json};
@@ -111,5 +111,50 @@ fn lock_posts_to_lock() {
     assert_eq!(
         stub.requests.lock().unwrap()[0].path,
         "/api/v1/certificateToken/lock"
+    );
+}
+
+#[test]
+fn every_request_carries_the_module_identity() {
+    let stub = support::serve(vec![(200, "[]"), (200, r#"{"locked":true}"#)]);
+    let client = client(&stub.url);
+
+    client.certificates().unwrap();
+    client.lock();
+
+    let expected = format!(
+        "{} {}-{}",
+        env!("CARGO_PKG_VERSION"),
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    assert_eq!(module_identity(), expected);
+    for request in stub.requests.lock().unwrap().iter() {
+        assert_eq!(request.module.as_deref(), Some(expected.as_str()));
+    }
+}
+
+#[test]
+fn blocked_modules_are_told_apart_from_a_closed_window() {
+    let stub = support::serve(vec![
+        (503, r#"{"code":"SERVICE_UNAVAILABLE"}"#),
+        (412, r#"{"code":"PRECONDITION_FAILED"}"#),
+        (503, r#"{"code":"SERVICE_UNAVAILABLE"}"#),
+        (412, r#"{"code":"PRECONDITION_FAILED"}"#),
+    ]);
+    let client = client(&stub.url);
+
+    assert_eq!(client.certificates(), Err("token-disabled".to_string()));
+    assert_eq!(
+        client.unlock("123456"),
+        UnlockOutcome::Blocked(Blocked::ModuleOutdated)
+    );
+    assert_eq!(
+        client.sign("cert-1", json!({ "name": "rsa-pkcs1" }), &[1]),
+        SignOutcome::Failed("token-disabled".to_string())
+    );
+    assert_eq!(
+        client.sign("cert-1", json!({ "name": "rsa-pkcs1" }), &[1]),
+        SignOutcome::Failed("module-outdated".to_string())
     );
 }
