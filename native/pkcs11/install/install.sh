@@ -16,6 +16,19 @@ LIB_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/garabato"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/garabato"
 MODULE_PATH="$LIB_DIR/libgarabato_pkcs11.so"
 CHROMIUM_DB="$HOME/.pki/nssdb"
+CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+# Firefox and the browsers built on it, which keep NSS databases per profile,
+# as "<browser>|<profiles folder>".
+GECKO_ROOTS="Firefox|$HOME/.mozilla/firefox
+Firefox|$CONFIG_HOME/mozilla/firefox
+Zen|$HOME/.zen
+Zen|$CONFIG_HOME/zen
+LibreWolf|$HOME/.librewolf
+LibreWolf|$CONFIG_HOME/librewolf
+Floorp|$HOME/.floorp
+Floorp|$CONFIG_HOME/floorp
+Waterfox|$HOME/.waterfox
+Waterfox|$CONFIG_HOME/waterfox"
 BROWSER_WAIT_SECONDS=300
 
 say() { printf '%s\n' "$@"; }
@@ -50,13 +63,21 @@ if [ -n "$missing" ]; then
   exit 1
 fi
 
-firefox_profiles() {
-  for root in "$HOME/.mozilla/firefox" "${XDG_CONFIG_HOME:-$HOME/.config}/mozilla/firefox"; do
+# Every profile with an NSS database, as "<browser>|<profile folder>":
+# the folders inside each root plus those profiles.ini keeps elsewhere.
+gecko_profiles() {
+  printf '%s\n' "$GECKO_ROOTS" | while IFS='|' read -r browser root; do
     [ -d "$root" ] || continue
     for profile in "$root"/*/; do
-      [ -f "${profile}cert9.db" ] && printf '%s\n' "${profile%/}"
+      [ -f "${profile}cert9.db" ] && printf '%s|%s\n' "$browser" "${profile%/}"
     done
-  done
+    [ -f "$root/profiles.ini" ] || continue
+    sed -n 's/^Path=//p' "$root/profiles.ini" | while IFS= read -r path; do
+      case "$path" in
+        /*) [ -f "$path/cert9.db" ] && printf '%s|%s\n' "$browser" "$path" ;;
+      esac
+    done
+  done | sort -u
   return 0
 }
 
@@ -68,19 +89,20 @@ has_chromium() {
 }
 
 browsers_running() {
-  for name in firefox firefox-bin firefox-esr chromium chromium-browse chrome; do
+  for name in firefox firefox-bin firefox-esr zen zen-bin librewolf floorp \
+    waterfox waterfox-bin chromium chromium-browse chrome; do
     pgrep -x -u "$(id -u)" "$name" >/dev/null 2>&1 && return 0
   done
   return 1
 }
 
-profiles="$(firefox_profiles)"
+profiles="$(gecko_profiles)"
 if [ -z "$profiles" ] && ! has_chromium; then
-  fail "no encuentro Firefox ni Chromium en tu usuario. Abre el navegador una vez y vuelve a ejecutar el comando."
+  fail "no encuentro ningún navegador compatible (Firefox, Zen, LibreWolf, Floorp, Waterfox o Chromium) en tu usuario. Abre el navegador una vez y vuelve a ejecutar el comando."
 fi
 
 if browsers_running; then
-  say "Cierra Firefox y Chromium para continuar; espero a que se cierren…"
+  say "Cierra tus navegadores (Firefox, Zen, Chromium…) para continuar; espero a que se cierren…"
   waited=0
   while browsers_running; do
     [ "$waited" -lt "$BROWSER_WAIT_SECONDS" ] || fail "los navegadores siguen abiertos. Ciérralos y vuelve a ejecutar el comando."
@@ -125,13 +147,15 @@ say "Registrando «$MODULE_NAME» en tus navegadores…"
 registered=0
 # A here-document keeps the loop in this shell (a pipe would lose the count)
 # and paths with spaces whole.
-while IFS= read -r profile; do
+# Profile folders are "<random>.<name>"; the name is what the user knows.
+while IFS='|' read -r browser profile; do
   [ -n "$profile" ] || continue
+  label="$browser, perfil $(basename "$profile" | sed 's/^[^.]*\.//')"
   if register "$profile"; then
-    say "  ✓ Firefox, perfil $(basename "$profile")"
+    say "  ✓ $label"
     registered=$((registered + 1))
   else
-    say "  ✗ Firefox, perfil $(basename "$profile"): no se pudo registrar"
+    say "  ✗ $label: no se pudo registrar"
   fi
 done <<PROFILES
 $profiles
@@ -150,6 +174,7 @@ if has_chromium; then
 fi
 
 for sandboxed in "$HOME/.var/app/org.mozilla.firefox" "$HOME/snap/firefox" \
+  "$HOME/.var/app/app.zen_browser.zen" "$HOME/.var/app/io.gitlab.librewolf-community" \
   "$HOME/.var/app/org.chromium.Chromium" "$HOME/snap/chromium"; do
   [ -d "$sandboxed" ] && say "  ! $(basename "$sandboxed") (Flatpak o Snap) no puede usar el módulo; usa el navegador de tu distribución."
 done
