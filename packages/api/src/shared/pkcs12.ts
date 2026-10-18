@@ -316,3 +316,26 @@ export async function openSigningKey(
     chain: chain.map(derOfCertificate),
   }
 }
+
+export type RawSigningIdentity = {
+  /** node:crypto key: the browser token needs raw RSA, not WebCrypto. */
+  key: KeyObject
+  keyAlgorithm: KeyAlgorithm
+  /** DER of the signer certificate. */
+  certificate: Uint8Array<ArrayBuffer>
+}
+
+/**
+ * Opens a PKCS#12 file for the browser token's raw signatures. Same checks
+ * as `readPkcs12`; the key never leaves this process.
+ */
+export function openRawSigningKey(
+  bytes: Uint8Array,
+  password: string
+): RawSigningIdentity {
+  const { key, keyAlgorithm, certificate } = unwrapSigningIdentity(
+    bytes,
+    password
+  )
+  return { key, keyAlgorithm, certificate: derOfCertificate(certificate) }
+}

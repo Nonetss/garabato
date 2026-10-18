@@ -3,6 +3,7 @@ import type { RouterClient } from "@orpc/server"
 import { apiKeyRouter } from "#v1/api-key/router"
 import { authConfigRouter } from "#v1/auth-config/router"
 import { certificateRouter } from "#v1/certificate/router"
+import { certificateTokenRouter } from "#v1/certificate-token/router"
 import { commentRouter } from "#v1/comment/router"
 import { cronRouter } from "#v1/cron/router"
 import { documentRouter } from "#v1/document/router"
@@ -23,6 +24,7 @@ export const appRouter = {
   apiKey: apiKeyRouter,
   comment: commentRouter,
   certificate: certificateRouter,
+  certificateToken: certificateTokenRouter,
   document: documentRouter,
   documentFolder: documentFolderRouter,
   documentTag: documentTagRouter,

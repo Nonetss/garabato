@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, mock, test } from "bun:test"
+import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
+import { auth } from "@nonete/auth"
 import { type AppResource, appStatements } from "@nonete/auth/permissions"
+import { userRow } from "@nonete/db/testing"
 import { type AnyProcedure, call, ORPCError } from "@orpc/server"
 
 import type { Context } from "#context"
@@ -9,6 +11,8 @@ import {
   cronContext,
   userContext,
 } from "#tests/fixtures/context"
+import { fakeDb } from "#tests/fixtures/db"
+import { refusedTokenKey, verifiedTokenKey } from "#tests/fixtures/token"
 
 const hasOrganizationPermission = mock(async (_: unknown) => false)
 
@@ -24,7 +28,10 @@ const {
   permissionProcedure,
   protectedProcedure,
   publicProcedure,
+  tokenProcedure,
 } = await import("#index")
+
+const verifyApiKey = spyOn(auth.api, "verifyApiKey")
 
 // Any declared app permission works; the builder's logic doesn't depend on it.
 const resource = Object.keys(appStatements)[0] as AppResource
@@ -38,6 +45,7 @@ const procedures = {
   admin: adminProcedure.handler(ok),
   permission: permissionProcedure(resource, action).handler(ok),
   cron: cronProcedure.handler(ok),
+  token: tokenProcedure.handler(({ context }) => context.token),
 }
 
 function run(procedure: AnyProcedure, context: Context) {
@@ -54,6 +62,8 @@ async function expectCode(promise: Promise<unknown>, code: string) {
 }
 
 beforeEach(() => {
+  fakeDb.reset()
+  verifyApiKey.mockReset()
   hasOrganizationPermission.mockReset()
   hasOrganizationPermission.mockResolvedValue(false)
 })
@@ -149,6 +159,60 @@ describe("cronProcedure", () => {
   })
 })
 
+describe("tokenProcedure", () => {
+  function withKey(key: string) {
+    return { ...anonymousContext(), headers: new Headers({ "x-api-key": key }) }
+  }
+
+  test("rejects a request without a token key with UNAUTHORIZED", async () => {
+    await expectCode(run(procedures.token, userContext()), "UNAUTHORIZED")
+    expect(verifyApiKey).not.toHaveBeenCalled()
+  })
+
+  test("rejects an unknown key with UNAUTHORIZED", async () => {
+    verifyApiKey.mockResolvedValue(refusedTokenKey())
+
+    await expectCode(run(procedures.token, withKey("sk_gone")), "UNAUTHORIZED")
+  })
+
+  test("rejects an ordinary API key with UNAUTHORIZED", async () => {
+    verifyApiKey.mockResolvedValue(verifiedTokenKey({ permissions: null }))
+
+    await expectCode(run(procedures.token, withKey("sk_plain")), "UNAUTHORIZED")
+  })
+
+  test("rejects an owner without two-factor with FORBIDDEN", async () => {
+    verifyApiKey.mockResolvedValue(verifiedTokenKey())
+    fakeDb.queue("query.user.findFirst", userRow({ id: "user-id" }))
+
+    await expectCode(run(procedures.token, withKey("sk_token")), "FORBIDDEN")
+  })
+
+  test("rejects a banned owner with UNAUTHORIZED", async () => {
+    verifyApiKey.mockResolvedValue(verifiedTokenKey())
+    fakeDb.queue(
+      "query.user.findFirst",
+      userRow({ id: "user-id", twoFactorEnabled: true, banned: true })
+    )
+
+    await expectCode(run(procedures.token, withKey("sk_token")), "UNAUTHORIZED")
+  })
+
+  test("puts the key and its owner in the context", async () => {
+    verifyApiKey.mockResolvedValue(verifiedTokenKey())
+    fakeDb.queue(
+      "query.user.findFirst",
+      userRow({ id: "user-id", twoFactorEnabled: true })
+    )
+
+    expect(await run(procedures.token, withKey("sk_token"))).toEqual({
+      userId: "user-id",
+      keyId: "key-1",
+      keyName: "Firefox portátil",
+    })
+  })
+})
+
 describe("access meta", () => {
   test.each([
     ["public", "public"],
@@ -156,6 +220,7 @@ describe("access meta", () => {
     ["admin", "admin"],
     ["permission", "admin"],
     ["cron", "cron"],
+    ["token", "token"],
   ] as const)("%s builder stamps access %p", (builder, access) => {
     expect(procedures[builder]["~orpc"].meta.access).toBe(access)
   })

@@ -4,13 +4,14 @@ import { defineMeta, os } from "@orpc/server"
 import type { Context } from "#context"
 import { errorMap, errors } from "#errors"
 import { userHasOrganizationPermission } from "#lib/permissions"
+import { resolveTokenCaller } from "#shared/token-key"
 
 /**
  * Who a procedure lets through. Declared by the builder that creates the
  * procedure, never by hand — that is what keeps it in sync with the
  * middleware actually enforcing it.
  */
-export type AppAccess = "public" | "protected" | "admin" | "cron"
+export type AppAccess = "public" | "protected" | "admin" | "cron" | "token"
 
 /**
  * How a procedure takes part in cron scheduling. The two forms are mutually
@@ -158,3 +159,18 @@ const requireCron = o.middleware(async ({ context, next }) => {
 export const cronProcedure = publicProcedure
   .use(requireCron)
   .meta(accessMeta("cron"))
+
+const requireTokenKey = o.middleware(async ({ context, next }) => {
+  const token = await resolveTokenCaller(context.headers)
+  return next({ context: { ...context, token } })
+})
+
+/**
+ * Browser token procedures — reachable only with a token key in `x-api-key`
+ * whose owner has two-factor authentication on. The context carries the
+ * caller as `token`; `user` and `session` stay empty, since a token key never
+ * resolves to a session.
+ */
+export const tokenProcedure = publicProcedure
+  .use(requireTokenKey)
+  .meta(accessMeta("token"))

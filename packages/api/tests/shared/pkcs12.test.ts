@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { X509Certificate } from "node:crypto"
 import {
+  openRawSigningKey,
   openSigningKey,
   Pkcs12Error,
   type Pkcs12FailureKind,
@@ -149,5 +150,23 @@ describe("openSigningKey", () => {
 
     expect(error).toBeInstanceOf(Pkcs12Error)
     if (error instanceof Pkcs12Error) expect(error.kind).toBe("wrong-password")
+  })
+})
+
+describe("openRawSigningKey", () => {
+  test("returns the RSA key as a node:crypto key", async () => {
+    const { key, keyAlgorithm, certificate } = openRawSigningKey(
+      await p12Fixture("rsa"),
+      P12_PASSWORD
+    )
+
+    expect(keyAlgorithm).toBe("RSA")
+    expect(key.asymmetricKeyType).toBe("rsa")
+    expect(new X509Certificate(certificate).checkPrivateKey(key)).toBe(true)
+  })
+
+  test("rejects a wrong password", async () => {
+    const bytes = await p12Fixture("rsa")
+    expect(() => openRawSigningKey(bytes, "wrong")).toThrow(Pkcs12Error)
   })
 })
