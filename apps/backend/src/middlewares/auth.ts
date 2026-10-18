@@ -1,3 +1,4 @@
+import { sessionHeaders } from "@nonete/api/shared/token-key"
 import { auth } from "@nonete/auth"
 import { createMiddleware } from "hono/factory"
 
@@ -8,8 +9,10 @@ export type AuthVariables = {
 
 export const sessionMiddleware = createMiddleware<{ Variables: AuthVariables }>(
   async (c, next) => {
+    // A browser token key reaches only its own procedures, which read it
+    // from the headers themselves; it never resolves to a session.
     const session = await auth.api.getSession({
-      headers: c.req.raw.headers,
+      headers: await sessionHeaders(c.req.raw.headers),
     })
     c.set("user", session?.user ?? null)
     c.set("session", session?.session ?? null)
