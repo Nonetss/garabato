@@ -25,5 +25,5 @@
 
 ## 6. Wrap-up
 
-- [ ] 6.1 Ask the user to connect Firefox on a Windows x86_64 computer with the PowerShell command, sign in to a site with the certificate not installed in Firefox, and confirm the TOTP prompt and the "Acceso con certificado" trace; record the outcome here
+- [ ] 6.1 Ask the user to connect Firefox on a Windows x86_64 computer with the PowerShell command, sign in to a site with the certificate not installed in Firefox, and confirm the TOTP prompt and the "Acceso con certificado" trace; record the outcome here — 2026-10-18: not done; archived at the user's request before any run on a real Windows computer (the PowerShell scripts were only tested with PowerShell 7 on Linux)
 - [x] 6.2 Run `openspec validate browser-token-windows-firefox --strict`; verify it passes
