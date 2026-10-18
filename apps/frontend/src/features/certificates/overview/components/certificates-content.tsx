@@ -2,6 +2,7 @@ import { getIcon } from "@/lib/icon-registry"
 
 const CertificateIcon = getIcon("navigation", "certificates")
 const UploadIcon = getIcon("actions", "upload")
+const BrowserIcon = getIcon("security", "locked")
 
 import { useState } from "react"
 import { HeroCount } from "@/components/shared/layout/page-hero"
@@ -19,9 +20,12 @@ import {
   type CertificateGridContext,
 } from "@/features/certificates/overview/components/certificate-grid"
 import { CertificateSignaturesSheet } from "@/features/certificates/overview/components/certificate-signatures-sheet"
+import { ConnectBrowserDialog } from "@/features/certificates/overview/components/connect-browser-dialog"
+import { ConnectedBrowsers } from "@/features/certificates/overview/components/connected-browsers"
 import { ImportCertificateDialog } from "@/features/certificates/overview/components/import-certificate-dialog"
 import { RememberPasswordDialog } from "@/features/certificates/overview/components/remember-password-dialog"
 import { RenameCertificateDialog } from "@/features/certificates/overview/components/rename-certificate-dialog"
+import { browserTokenLabels } from "@/features/certificates/overview/definitions/browser-token-labels"
 import { certificateLabels } from "@/features/certificates/overview/definitions/certificate-labels"
 import {
   useCertificateDelete,
@@ -32,6 +36,7 @@ import { filterCertificates } from "@/features/certificates/overview/model/filte
 import type { Certificate } from "@/features/certificates/overview/model/types"
 import { useTargetConfirmDialog } from "@/hooks/use-target-confirm-dialog"
 import { useTargetDialog } from "@/hooks/use-target-dialog"
+import { authClient } from "@/lib/auth-client"
 
 export function CertificatesContent() {
   const {
@@ -44,6 +49,9 @@ export function CertificatesContent() {
   const deleteCertificate = useCertificateDelete()
 
   const [importOpen, setImportOpen] = useState(false)
+  const [connectOpen, setConnectOpen] = useState(false)
+  const { data: session } = authClient.useSession()
+  const twoFactorEnabled = session?.user.twoFactorEnabled === true
   const [query, setQuery] = useState("")
   const signaturesSheet = useTargetDialog<Certificate>()
   const renameDialog = useTargetDialog<Certificate>()
@@ -93,11 +101,23 @@ export function CertificatesContent() {
     </Button>
   )
 
+  const heroActions = (
+    <div className="flex flex-wrap gap-2">
+      {certificates.length > 0 ? (
+        <Button variant="outline" onClick={() => setConnectOpen(true)}>
+          <BrowserIcon className="size-4" />
+          {browserTokenLabels.connect}
+        </Button>
+      ) : null}
+      {importButton}
+    </div>
+  )
+
   return (
     <>
       <ResourceOverview
         surface="certificates"
-        heroAction={importButton}
+        heroAction={heroActions}
         heroChildren={
           // Same ledger line as the document library, ruled off from the desk.
           certificates.length > 0 ? (
@@ -151,11 +171,19 @@ export function CertificatesContent() {
         }}
       >
         {(data) => (
-          <CertificateGrid certificates={data} context={gridContext} />
+          <>
+            <CertificateGrid certificates={data} context={gridContext} />
+            <ConnectedBrowsers />
+          </>
         )}
       </ResourceOverview>
 
       <ImportCertificateDialog open={importOpen} onOpenChange={setImportOpen} />
+      <ConnectBrowserDialog
+        open={connectOpen}
+        onOpenChange={setConnectOpen}
+        twoFactorEnabled={twoFactorEnabled}
+      />
       <CertificateSignaturesSheet
         certificate={signaturesSheet.target}
         {...signaturesSheet.dialogProps}
