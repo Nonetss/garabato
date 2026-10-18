@@ -177,7 +177,9 @@ function ConnectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-2xl">
+      {/* One shrinkable column: the command never wraps, and an auto grid
+          track would widen past the dialog to fit it. */}
+      <DialogContent className="grid-cols-[minmax(0,1fr)] gap-0 overflow-hidden p-0 sm:max-w-2xl">
         {state === "connected" ? (
           <>
             <DialogHeader className="gap-1.5 border-b px-6 py-5 text-left">
