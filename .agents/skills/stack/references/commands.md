@@ -53,8 +53,9 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 | `cargo build --release` | Builds `target/release/libgarabato_pkcs11.so`, the file the browser loads. |
 | `cargo test` | Hermetic tests: configuration, mechanism mapping, public-key extraction, and the HTTP client against a loopback stub. |
 | `cargo clippy --all-targets` | Lint. |
-| `scripts/build-dist.sh` | Builds the host architecture into `dist/<arch>/libgarabato_pkcs11.so`, where a natively run backend serves it to the install script. |
+| `scripts/build-dist.sh [linux\|windows\|all]` | Builds into `dist/`, where a natively run backend and the Docker dev stack serve it: `linux` (default) the host architecture with the local cargo into `dist/<arch>/libgarabato_pkcs11.so`; `windows` the x86_64 DLL into `dist/windows-x86_64/` through the backend Dockerfile's `module` stage (needs Docker). |
 | `tests/install/run.sh` | Hermetic test of `install/install.sh` and `uninstall.sh`: a stub Garabato (`tests/install/stub-server.ts`, using the backend's renderer), a throwaway `HOME`, real NSS databases. `SHOW_LOG=1` prints what the user would see. Needs `bun`, `curl` and the NSS tools. |
+| `tests/install-windows/run.sh` | Hermetic test of `install/install.ps1` and `uninstall.ps1`: PowerShell 7 in a `mcr.microsoft.com/powershell` container against the same stub, a throwaway `APPDATA`/`LOCALAPPDATA` with real NSS profiles (CRLF, `profiles.ini` elsewhere, a profile never opened); the host's `modutil` checks every edited `pkcs11.txt` still parses. Windows PowerShell 5.1 is only checked on Windows. `SHOW_LOG=1` prints the output. Needs `bun`, Docker and the NSS tools. |
 | `tests/e2e/run.sh [connections]` | End-to-end check against the user's real Garabato, without a browser: NSS loads the module from a throwaway database and signs a TLS handshake against a local `openssl s_server`. Asks for a TOTP code, so only the user runs it. Needs `cc`, `openssl` and the NSS headers. |
 
 ## Tests
