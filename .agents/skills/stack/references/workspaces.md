@@ -1,6 +1,6 @@
 # Workspaces
 
-Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml` sets `linker = "isolated"`. `apps/gateway` has no `package.json`, so it is not a workspace.
+Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml` sets `linker = "isolated"`. `apps/gateway` has no `package.json`, so it is not a workspace, and neither is anything under `native/` (Rust crates built with `cargo`).
 
 ## Apps
 
@@ -42,12 +42,20 @@ Bun workspaces are `apps/*` and `packages/*` (root `package.json`). `bunfig.toml
 | Package | Role |
 |---|---|
 | `packages/api` (`@nonete/api`) | oRPC contract and handlers. Builders in `src/index.ts`, shared `context.ts`/`errors.ts`, `shared/`, `lib/`, top-level `router.ts` nesting `src/v1/router.ts`. Subpath exports for `"./*"`. Unit tests (`bun test`) in `tests/`, outside `src/`. See `references/api/layering.md`. |
-| `packages/auth` (`@nonete/auth`) | Better Auth factory `createAuth()` / `auth`, using the shared `db`. Plugins `admin()`, `apiKey({ enableSessionForAPIKeys: true })`, `organization()` (teams, access control, dynamic roles) and `genericOAuth` (`src/oauth.ts`, only when `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL` are set). `src/permissions.ts` holds `appStatements` and the `owner`/`admin`/`member` roles; `src/session.ts` exposes `createUserSession()` (used by cron to run jobs as a user). |
+| `packages/auth` (`@nonete/auth`) | Better Auth factory `createAuth()` / `auth`, using the shared `db`. Plugins `admin()`, `apiKey({ enableSessionForAPIKeys: true })`, `organization()` (teams, access control, dynamic roles), `twoFactor()` and `genericOAuth` (`src/oauth.ts`, only when `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` and `OIDC_DISCOVERY_URL` are set). `src/permissions.ts` holds `appStatements` and the `owner`/`admin`/`member` roles; `src/session.ts` exposes `createUserSession()` (used by cron to run jobs as a user); `src/two-factor.ts` decrypts the TOTP secret the `twoFactor` plugin stores (used by the browser token's unlock). |
 | `packages/db` (`@nonete/db`) | Drizzle ORM (1.0 RC, `node-postgres`). One shared pool per process: `db`, closed with `closeDb()`; `createDb()` is only called to build `db`. Schema per domain in `src/schema/<domain>/` (`auth`, `comment`, `cron`, `entity-icon`), relations in `src/relations.ts`, `src/keyset-pagination.ts`, `src/seed/` (migrations + admin seed), `src/migrations/`. Drizzle CLI scripts live here only. Test support (fake `db` and row factories) in `testing/`, exported as `@nonete/db/testing` and used only by test suites. |
 | `packages/cron` (`@nonete/cron`) | oRPC-agnostic scheduler on `Bun.cron` (UTC only) plus the CRUD service over `cron_job`/`cron_run` and the code-declared job sync. Wired to the API in `apps/backend/src/cron`. Unit tests (`bun test`) in `tests/`, outside `src/`. |
 | `packages/logger` (`@nonete/logger`) | pino factory (`@nonete/logger/factory`, used by the frontend's `src/lib/logger.ts`) and the backend `logger` / `child()`. Ships to Loki when `LOKI_URL` is set. |
 | `packages/env` (`@nonete/env`) | `@t3-oss/env-core`: `@nonete/env/server` and `@nonete/env/web`. See `references/env.md`. |
 | `packages/config` (`@nonete/config`) | Shared `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `types: ["bun"]`). |
+
+## Native modules (`native/`, not workspaces)
+
+### `native/pkcs11`
+- The browser certificate token (OpenSpec capability `browser-certificate-token`): a Rust `cdylib` PKCS#11 module (`libgarabato_pkcs11.so`) that Firefox and Chromium on Linux (NSS) load as a security device. It lists the certificates Garabato offers through the token and forwards each TLS client-authentication signature to `/api/v1/certificateToken/*` with the token key in `x-api-key`; the browser's PIN is the user's TOTP code.
+- Built on `native-pkcs11` (pinned exactly, with `custom-function-list`): `src/lib.rs` wraps `C_GetTokenInfo`, `C_GetMechanismList`, `C_Login`, `C_Logout`, `C_GetSessionInfo`, `C_FindObjectsInit`, `C_Sign`, `C_SignFinal` and `C_Finalize` so the token asks for a PIN, hides private keys until login and reports a closed signing window as logged out. `src/config.rs` reads `$XDG_CONFIG_HOME/garabato/token.json` (`{ "url", "key" }`, refused unless owner-only), `src/client.rs` calls the backend (system trust store, so a private CA must be installed system-wide), `src/log.rs` writes `$XDG_STATE_HOME/garabato/pkcs11.log` (never the PIN or the key).
+- Distribution: the backend production image builds it for x86_64 and ARM64 (`references/docker.md`) and serves it, with the install script, through `v1.certificateToken.module` and `installScript`. `install/install.sh` is a template (`@@URL@@`, `@@CODE@@`, `@@UNINSTALL@@`) the backend fills in (`packages/api/src/shared/token-module.ts`); it downloads and checks the module, redeems the one-time code, writes the configuration and registers "Garabato" in every Firefox profile and in Chromium's `~/.pki/nssdb`, leaving `install/uninstall.sh` next to the module in `$XDG_DATA_HOME/garabato/`. `scripts/build-dist.sh` builds the host architecture into `dist/<arch>/` for native dev (`dist/` and `target/` are ignored by git).
+- Not part of Turborepo or `bun run test`. Commands: `references/commands.md`, "Native module".
 
 ## Docs and design
 

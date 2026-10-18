@@ -26,6 +26,7 @@ This repo was started from a **template**, so it ships with a lot of features (B
 - `apps/backend` — Hono + oRPC on Bun; HTTP `:3000`; applies migrations, seeds the admin and runs the cron scheduler.
 - `apps/site` — the static project website (Astro, English + Spanish landing and docs), published to GitHub Pages by `.github/workflows/pages.yml`; not part of the running app.
 - `apps/gateway` — Caddy (Docker assets only, not a workspace) and the only place that maps requests to apps: the public HTTP entry point (backend API + frontend on one origin, the only publicly published port; the bundled MinIO console listens on the host loopback only).
+- `native/pkcs11` — Rust PKCS#11 module (not a workspace, built with `cargo`) that lets Firefox and Chromium on Linux use the certificates kept in Garabato for TLS client authentication.
 - `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/logger`, `packages/env`, `packages/config`.
 
 Details and conventions: `stack` skill.

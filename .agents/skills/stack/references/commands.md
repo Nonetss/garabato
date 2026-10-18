@@ -44,6 +44,19 @@ A package-specific task in root `turbo.json` (e.g. `@nonete/api#build`) does **n
 
 `bun run icons:catalog` — regenerate the entity icon picker's Lucide catalog (needs network; commit the output). Run after upgrading `lucide-react` in `apps/frontend`. See `references/frontend/entity-icons.md`.
 
+## Native module
+
+`native/pkcs11` is a Rust crate outside Turborepo; run these from that folder:
+
+| Command | What it does |
+|---|---|
+| `cargo build --release` | Builds `target/release/libgarabato_pkcs11.so`, the file the browser loads. |
+| `cargo test` | Hermetic tests: configuration, mechanism mapping, public-key extraction, and the HTTP client against a loopback stub. |
+| `cargo clippy --all-targets` | Lint. |
+| `scripts/build-dist.sh` | Builds the host architecture into `dist/<arch>/libgarabato_pkcs11.so`, where a natively run backend serves it to the install script. |
+| `tests/install/run.sh` | Hermetic test of `install/install.sh` and `uninstall.sh`: a stub Garabato (`tests/install/stub-server.ts`, using the backend's renderer), a throwaway `HOME`, real NSS databases. `SHOW_LOG=1` prints what the user would see. Needs `bun`, `curl` and the NSS tools. |
+| `tests/e2e/run.sh [connections]` | End-to-end check against the user's real Garabato, without a browser: NSS loads the module from a throwaway database and signs a TLS handshake against a local `openssl s_server`. Asks for a TOTP code, so only the user runs it. Needs `cc`, `openssl` and the NSS headers. |
+
 ## Tests
 
 `bun run test` — `turbo test`: runs every workspace `test` script: `packages/api`, `packages/cron` and `apps/frontend`, each with `bun test`. Exits non-zero on any failure. One suite: `turbo run test --filter=<workspace>` (`@nonete/api`, `@nonete/cron`, `frontend`). See `testing.md`.
