@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import {
   detectInstallSystem,
   installsAllowed,
+  platformLabel,
   remainingLabel,
 } from "@/features/certificates/overview/model/browser-tokens"
 
@@ -59,5 +60,21 @@ describe("installsAllowed", () => {
 
   test("allows while the switches are loading", () => {
     expect(installsAllowed(undefined)).toBe(true)
+  })
+})
+
+describe("platformLabel", () => {
+  test("names the system and keeps the architecture", () => {
+    expect(platformLabel("linux-x86_64")).toBe("Linux x86_64")
+    expect(platformLabel("windows-x86_64")).toBe("Windows x86_64")
+    expect(platformLabel("linux")).toBe("Linux")
+  })
+
+  test("leaves an unknown system as reported", () => {
+    expect(platformLabel("freebsd-amd64")).toBe("freebsd-amd64")
+  })
+
+  test("hides the platform of browsers that never reported one", () => {
+    expect(platformLabel("unknown")).toBeNull()
   })
 })

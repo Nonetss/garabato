@@ -46,6 +46,7 @@ const entityIcons = {
   apiKey: Lucide.KeyRound,
   folder: Lucide.Folder,
   tag: Lucide.Tag,
+  browser: Lucide.AppWindow,
 } as const
 
 const identityIcons = {
@@ -99,6 +100,7 @@ const actionIcons = {
   moveUp: Lucide.ArrowUp,
   moveDown: Lucide.ArrowDown,
   restore: Lucide.Undo2,
+  disconnect: Lucide.Unplug,
 } as const
 
 const controlIcons = {

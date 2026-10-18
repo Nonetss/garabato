@@ -13,6 +13,21 @@ export type ConnectedBrowser = {
   outdated: boolean
 }
 
+const SYSTEM_NAMES = new Map([
+  ["linux", "Linux"],
+  ["windows", "Windows"],
+])
+
+/** The module's platform as people read it ("linux-x86_64" → "Linux
+ *  x86_64"); null for browsers connected before modules reported one. */
+export function platformLabel(platform: string) {
+  if (platform === "unknown") return null
+  const [system = "", ...arch] = platform.split("-")
+  const name = SYSTEM_NAMES.get(system)
+  if (!name) return platform
+  return [name, ...arch].join(" ")
+}
+
 /** The emergency switches as the certificates page needs them. */
 export type TokenSwitches = {
   tokenEnabled: boolean
