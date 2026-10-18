@@ -5,6 +5,10 @@ import { env } from "@nonete/env/server"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { admin, organization, twoFactor } from "better-auth/plugins"
+import {
+  accountTraceAfter,
+  accountTraceBefore,
+} from "#auth/account-trace-hooks"
 import { ac, roles } from "#auth/permissions"
 import { buildGenericOAuthPlugin } from "./oauth"
 
@@ -29,6 +33,11 @@ export function createAuth() {
       },
     },
     secret: env.BETTER_AUTH_SECRET,
+    // Sign-ins, sign-outs and account changes land in the user's traces.
+    hooks: {
+      before: accountTraceBefore,
+      after: accountTraceAfter,
+    },
     baseURL: env.BETTER_AUTH_URL,
     advanced: {
       defaultCookieAttributes: {
