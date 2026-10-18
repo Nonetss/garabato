@@ -1,7 +1,7 @@
 ---
 title: Upgrading and backups
 description: Update a running installation, pin an image, and back up what cannot be rebuilt.
-order: 7
+order: 8
 ---
 
 ## The usual upgrade

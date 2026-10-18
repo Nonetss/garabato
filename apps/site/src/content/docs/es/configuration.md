@@ -1,7 +1,7 @@
 ---
 title: Configuración
 description: Las variables de entorno que define un despliegue, y dónde está la lista completa.
-order: 4
+order: 5
 ---
 
 Toda la configuración de ejecución sale de variables de entorno. En un despliegue con Docker viven en el `.env` junto a `compose.prod.yml`, que leen todos los servicios. El backend valida sus variables al arrancar y se detiene con un error claro si falta alguna o está mal formada.

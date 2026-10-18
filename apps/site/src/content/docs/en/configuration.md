@@ -1,7 +1,7 @@
 ---
 title: Configuration
 description: The environment variables a deployment sets, and where the full list lives.
-order: 4
+order: 5
 ---
 
 All runtime configuration comes from environment variables. In a Docker deployment they live in the `.env` next to `compose.prod.yml`, which every service reads. The backend validates its variables at startup and exits with a clear error when one is missing or malformed.

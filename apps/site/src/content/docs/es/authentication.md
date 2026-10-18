@@ -1,7 +1,7 @@
 ---
 title: Usuarios e inicio de sesión
 description: Cuentas, el rol de administrador, el primer administrador, inicio de sesión único con cualquier proveedor OIDC y API keys.
-order: 6
+order: 7
 ---
 
 El inicio de sesión lo gestiona Better Auth. Todas las páginas salvo `/login` y `/signup` necesitan sesión, y cada documento y certificado pertenece al usuario que lo creó.
@@ -51,7 +51,7 @@ Cada usuario puede proteger su acceso con contraseña con un código de una apli
 - **Entrar**: después de la contraseña, la página de inicio de sesión pide el código de 6 dígitos, o un código de respaldo. Marca "confiar en este dispositivo" para no tener que meter el código en ese navegador durante 30 días.
 - **Desactivarla o generar códigos de respaldo nuevos** desde la misma fila del perfil, otra vez con tu contraseña.
 
-Solo se aplica al acceso con contraseña: el inicio de sesión único depende de la verificación de tu proveedor de identidad, y las API keys no se ven afectadas.
+Solo se aplica al acceso con contraseña: el inicio de sesión único depende de la verificación de tu proveedor de identidad, y las API keys no se ven afectadas. Es necesaria para [entrar en webs desde el navegador](../browser-token/) con tus certificados de Garabato: su código es la contraseña que pide el navegador.
 
 Si un usuario pierde la app y también los códigos de respaldo, un operador puede desactivarla en la base de datos: pon `two_factor_enabled` a `false` en su fila de `user` y borra su fila de `two_factor`.
 
@@ -64,3 +64,5 @@ curl -H "x-api-key: $GARABATO_KEY" https://firma.example.com/api/v1/document/lis
 ```
 
 Los administradores gestionan las claves en `/admin/api-keys`. La API acepta además un token Bearer, aparte de la cookie de sesión.
+
+Las claves que recibe un navegador desde **Conectar navegador** (consulta [Entrar desde el navegador](../browser-token/)) son distintas: solo llegan a los procedimientos del token del navegador y nunca actúan como una sesión, así que no pueden leer documentos ni ajustes.

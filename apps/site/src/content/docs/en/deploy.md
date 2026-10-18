@@ -1,7 +1,7 @@
 ---
 title: Deploy with Docker Compose
 description: Install by hand with compose.prod.yml, put it behind HTTPS, or use an external PostgreSQL or object store.
-order: 3
+order: 4
 ---
 
 The installer only automates these steps. Doing them by hand gives you the same stack from `compose.prod.yml`: the gateway, frontend, backend, PostgreSQL and Loki, plus MinIO when you keep the documents in the bundled store. Only the gateway publishes a port on the host.

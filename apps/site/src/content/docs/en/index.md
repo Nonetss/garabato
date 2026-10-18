@@ -4,7 +4,7 @@ description: Install Garabato on a Linux server with one command and sign in for
 order: 1
 ---
 
-Garabato signs PDFs with your own digital certificates. You import a PKCS#12 certificate, drop a PDF, place the visible signature and download the signed file. Certificates and documents are stored encrypted. It ships as three Docker images (gateway, frontend and backend) plus PostgreSQL and, optionally, a bundled MinIO for the documents.
+Garabato signs PDFs with your own digital certificates. You import a PKCS#12 certificate, drop a PDF, place the visible signature and download the signed file. Certificates and documents are stored encrypted, and your browser can use the same certificates to [sign in to websites](./browser-token/). It ships as three Docker images (gateway, frontend and backend) plus PostgreSQL and, optionally, a bundled MinIO for the documents.
 
 ## Requirements
 
@@ -37,5 +37,6 @@ The backend applies the database migrations and creates the admin from `.env` on
 ## Next steps
 
 - [Your first signature](./first-run/): import a certificate, sign a PDF and download it.
+- [Sign in from the browser](./browser-token/): use your Garabato certificates to sign in to websites from Firefox or Chromium.
 - [Deploy with Docker Compose](./deploy/): the same installation by hand, behind HTTPS, or with an external database or object store.
 - [Configuration](./configuration/): the environment variables that matter.

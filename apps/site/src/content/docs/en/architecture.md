@@ -1,7 +1,7 @@
 ---
 title: Architecture
 description: How the gateway, frontend, backend, database and object store fit together, and how certificates and documents are protected.
-order: 5
+order: 6
 ---
 
 Garabato is a monorepo with two apps behind a Caddy gateway, plus PostgreSQL and an S3-compatible object store. Only the gateway publishes a port, so the browser sees a single origin and never talks to the backend, the database or the store directly.
@@ -36,6 +36,10 @@ On startup the backend applies the committed database migrations and creates the
 - **Certificate passwords are not kept** unless you ask the app to remember one, and then they are encrypted the same way.
 - **Everything is per user.** Documents and certificates belong to the signed-in user; another user's answer as not found.
 - **Sessions** are `httpOnly`, `Secure`, `SameSite=Lax` cookies. `/rpc` never accepts `GET`, and `/api` rejects cross-site top-level navigations, which keeps CSRF out without a client plugin.
+
+## The browser token
+
+`native/pkcs11` is a PKCS#11 module, written in Rust, that Firefox and Chromium load as a security device. It lists the certificates Garabato offers to the browser and forwards each TLS client-authentication signature to `/api/v1/certificateToken/*`, authenticated with the browser's own key. The backend checks that a code from the user's authenticator app opened a 15-minute window, decrypts the certificate as it does for a PDF signature, signs and records an **Acceso con certificado** trace. The backend image builds the module for Linux x86_64 and ARM64 and Windows x86_64 and serves it with the install scripts. See [Sign in from the browser](../browser-token/).
 
 ## The API
 

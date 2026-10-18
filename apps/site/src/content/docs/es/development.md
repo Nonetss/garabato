@@ -1,7 +1,7 @@
 ---
 title: Desarrollo
 description: Arranca el monorepo en local, pasa las comprobaciones y oriéntate en el código.
-order: 8
+order: 9
 ---
 
 Garabato es un monorepo de Bun y Turborepo, solo TypeScript. Necesitas [Bun](https://bun.sh) 1.4.2, `openssl`, Docker con Compose 2.22 o superior y un PostgreSQL de desarrollo fuera del proyecto.
@@ -47,6 +47,8 @@ apps/
   backend/    API Hono + oRPC y el scheduler de crons
   gateway/    Caddy: el punto de entrada público
   site/       Esta web
+native/
+  pkcs11/     Módulo PKCS#11 del token del navegador (Rust) y sus scripts de instalación
 packages/
   api/        Contrato y handlers de oRPC, versionados bajo v1
   auth/       Configuración de Better Auth
@@ -58,6 +60,19 @@ packages/
 doc/          Documentación (en español), diagramas y capturas
 openspec/     Specs de capacidades y propuestas de cambio
 scripts/      setup-dev.sh y el instalador bootstrap
+```
+
+## El módulo del token del navegador
+
+`native/pkcs11` es un crate de Rust fuera de los workspaces de Bun y de Turbo; ejecuta sus comandos desde esa carpeta:
+
+```bash
+cargo build --release          # el módulo para este equipo
+cargo test                     # tests unitarios
+scripts/build-dist.sh          # compila en dist/, que sirve el backend de desarrollo
+scripts/build-dist.sh windows  # el DLL de Windows, con Docker
+tests/install/run.sh           # el script de instalación de Linux contra un Garabato falso
+tests/install-windows/run.sh   # el script de PowerShell, en un contenedor
 ```
 
 ## Esta web

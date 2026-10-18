@@ -1,7 +1,7 @@
 ---
 title: Desplegar con Docker Compose
 description: Instala a mano con compose.prod.yml, ponlo detrás de HTTPS o usa un PostgreSQL o un almacén de objetos externos.
-order: 3
+order: 4
 ---
 
 El instalador solo automatiza estos pasos. Hacerlos a mano te deja el mismo stack de `compose.prod.yml`: el gateway, el frontend, el backend, PostgreSQL y Loki, más MinIO si guardas los documentos en el almacén incluido. Solo el gateway publica un puerto en el host.

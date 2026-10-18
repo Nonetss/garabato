@@ -1,7 +1,7 @@
 ---
 title: Development
 description: Run the monorepo locally, run the checks and find your way around the code.
-order: 8
+order: 9
 ---
 
 Garabato is a Bun and Turborepo monorepo, TypeScript only. You need [Bun](https://bun.sh) 1.4.2, `openssl`, Docker with Compose 2.22 or newer, and a PostgreSQL for development that lives outside the project.
@@ -47,6 +47,8 @@ apps/
   backend/    Hono + oRPC API and the cron scheduler
   gateway/    Caddy: the public entry point
   site/       This website
+native/
+  pkcs11/     PKCS#11 browser token module (Rust) and its install scripts
 packages/
   api/        oRPC contract and handlers, versioned under v1
   auth/       Better Auth configuration
@@ -58,6 +60,19 @@ packages/
 doc/          Human documentation (Spanish), diagrams and screenshots
 openspec/     Capability specs and change proposals
 scripts/      setup-dev.sh and the bootstrap installer
+```
+
+## The browser token module
+
+`native/pkcs11` is a Rust crate outside the Bun workspaces and Turbo; run its commands from that folder:
+
+```bash
+cargo build --release          # the module for this machine
+cargo test                     # unit tests
+scripts/build-dist.sh          # build into dist/, which the dev backend serves
+scripts/build-dist.sh windows  # the Windows DLL, through Docker
+tests/install/run.sh           # the Linux install script against a stub Garabato
+tests/install-windows/run.sh   # the PowerShell install script, in a container
 ```
 
 ## This website

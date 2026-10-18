@@ -1,7 +1,7 @@
 ---
 title: Arquitectura
 description: Cómo encajan el gateway, el frontend, el backend, la base de datos y el almacén de objetos, y cómo se protegen los certificados y documentos.
-order: 5
+order: 6
 ---
 
 Garabato es un monorepo con dos apps detrás de un gateway Caddy, más PostgreSQL y un almacén de objetos compatible con S3. Solo el gateway publica un puerto, así que el navegador ve un único origen y nunca habla directamente con el backend, la base de datos ni el almacén.
@@ -36,6 +36,10 @@ Al arrancar, el backend aplica las migraciones de la base de datos y crea el adm
 - **Las contraseñas de los certificados no se guardan**, salvo que pidas a la app que recuerde una, y entonces se cifra igual.
 - **Todo es por usuario.** Los documentos y certificados pertenecen al usuario con sesión; los de otro usuario responden como no encontrados.
 - **Las sesiones** son cookies `httpOnly`, `Secure` y `SameSite=Lax`. `/rpc` nunca acepta `GET` y `/api` rechaza las navegaciones de nivel superior desde otra web, lo que deja fuera el CSRF sin ningún plugin en el cliente.
+
+## El token del navegador
+
+`native/pkcs11` es un módulo PKCS#11, escrito en Rust, que Firefox y Chromium cargan como un dispositivo de seguridad. Enumera los certificados que Garabato ofrece al navegador y reenvía cada firma de la autenticación TLS de cliente a `/api/v1/certificateToken/*`, autenticado con la clave propia del navegador. El backend comprueba que un código de la app de autenticación del usuario abrió una ventana de 15 minutos, descifra el certificado igual que para firmar un PDF, firma y registra una traza **Acceso con certificado**. La imagen del backend compila el módulo para Linux x86_64 y ARM64 y para Windows x86_64, y lo sirve junto con los scripts de instalación. Consulta [Entrar desde el navegador](../browser-token/).
 
 ## La API
 

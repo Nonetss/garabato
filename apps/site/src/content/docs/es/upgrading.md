@@ -1,7 +1,7 @@
 ---
 title: Actualizar y copias de seguridad
 description: Actualiza una instalación en marcha, fija una imagen y haz copia de lo que no se puede reconstruir.
-order: 7
+order: 8
 ---
 
 ## La actualización habitual

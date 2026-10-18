@@ -1,7 +1,7 @@
 ---
 title: Users and sign-in
 description: Accounts, the admin role, the first admin, single sign-on with any OIDC provider, and API keys.
-order: 6
+order: 7
 ---
 
 Sign-in is handled by Better Auth. Every page except `/login` and `/signup` requires a session, and every document and certificate belongs to the user who created it.
@@ -51,7 +51,7 @@ Each user can protect their password sign-in with a code from an authenticator a
 - **Sign in**: after the password, the sign-in page asks for the 6-digit code, or a backup code. Tick "trust this device" to skip the code in that browser for 30 days.
 - **Turn it off or get new backup codes** from the same row in the profile, again with your password.
 
-It applies to password sign-in only: single sign-on relies on your identity provider's own verification, and API keys are not affected.
+It applies to password sign-in only: single sign-on relies on your identity provider's own verification, and API keys are not affected. It is required to [sign in to websites from the browser](../browser-token/) with your Garabato certificates: its code is the password the browser asks for.
 
 If a user loses both the app and the backup codes, an operator can turn it off in the database: set `two_factor_enabled` to `false` on their `user` row and delete their row in `two_factor`.
 
@@ -64,3 +64,5 @@ curl -H "x-api-key: $GARABATO_KEY" https://sign.example.com/api/v1/document/list
 ```
 
 Admins manage the keys at `/admin/api-keys`. The API also accepts a Bearer token besides the session cookie.
+
+The keys a browser gets from **Conectar navegador** (see [Sign in from the browser](../browser-token/)) are different: they only reach the browser token's procedures and never act as a session, so they cannot read documents or settings.
