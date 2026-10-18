@@ -1,0 +1,69 @@
+---
+titulo: Sistema visual
+descripcion: Cómo se da estilo a un texto con Text, cómo se explica un botón de solo icono, cuándo usar container queries y de dónde salen los iconos
+workspaces: [frontend]
+commands: [icons-catalog]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Las reglas visuales completas están en `DESIGN.md`, en la raíz del repositorio. Aquí va lo que más se usa al escribir componentes.
+
+## Tipografía con `Text`
+
+El texto del producto no se estiliza a mano con utilidades de Tailwind. Se usa el componente `Text` (`components/shared/brand/typography.tsx`) con un **rol** y un **tono**:
+
+```tsx
+<Text as="h2" variant="label" tone="muted">Miembros</Text>
+<Text as="p" variant="meta" tone="muted">{description}</Text>
+```
+
+| Rol | Para |
+| --- | --- |
+| `display` | El título de la página (`PageHero`) |
+| `headline` | Títulos de tarjetas, de diálogos y de paneles |
+| `title` | El nombre de una fila de lista, de un resultado o de la entidad elegida |
+| `body` | Texto normal |
+| `meta` | Texto secundario: descripciones, ayudas, contadores, errores en línea |
+| `meta-sm` | Metadatos pequeños en filas densas |
+| `label` | Etiquetas en versalitas de secciones y campos |
+| `status` | Texto de estado en versalitas («Vigente») |
+| `stat` | Un número grande en un resumen |
+| `data` | Valores en monoespaciada: ids, expresiones cron, fechas, JSON |
+| `compact` | Cualquier otro texto pequeño |
+
+- Los tonos son `default`, `muted`, `primary` y `destructive`.
+- Cuando `Text` no puede ser el elemento (un `Input`, un `DialogDescription`, un `button`), se aplica el mismo estilo con `textVariants({ role, tone })` en su `className`.
+- Los patrones compuestos ya usan `Text`: `FieldLabel`, `StatusTag`, `SectionHeading`, `MenuItemText` y `MetadataCell`.
+- Los números con unidad se escriben con `formatCount` y `formatFileSize`, y las líneas de datos con `joinFacts`, todos de `@/lib/format`; los nombres se citan con «».
+
+## Botones de solo icono: `Hint`
+
+Un botón que solo tiene un icono se explica con `Hint` (`components/shared/feedback/hint.tsx`), un globo con flecha que aparece al pasar el ratón o al enfocar con teclado. Nunca con el atributo `title`. Para el caso normal está `IconButton` (`components/shared/form/icon-button.tsx`), que es esa composición en un solo componente: su `label` es a la vez el globo y el `aria-label`.
+
+```tsx
+<IconButton label="Editar nombre" icon={Pencil} onClick={openEditName} />
+```
+
+`Hint` a mano solo envuelve lo que `IconButton` no puede ser: el disparador de un menú, de un popover o de un diálogo, o un control que solo es de icono en un modo. El control conserva siempre su `aria-label` para los lectores de pantalla.
+
+## Responsive: container queries
+
+El ancho que tiene una página no es el de la ventana: el sidebar de la sección ocupa espacio y un mismo componente puede aparecer a pantalla completa o en un panel estrecho. Por eso:
+
+- **El contenido de la página** (rejillas, filas de lista, formularios) se adapta a **su contenedor**: un ancestro con `@container` y variantes como `@md:` o `@xl:`.
+- **El marco de la app** (navbar, sidebars, barra de filtros en móvil), el tamaño de los diálogos y el padding de la página siguen los breakpoints de la ventana (`sm:`, `lg:`).
+
+```tsx
+<div className="@container min-w-0">
+  <div className="grid grid-cols-1 gap-3 @xl:grid-cols-2 @4xl:grid-cols-3">…</div>
+</div>
+```
+
+La pregunta que decide: ¿se vería mal si se abre el sidebar o si el componente se mete en una caja más estrecha? Entonces necesita container queries.
+
+## Iconos
+
+Los iconos de la interfaz (Lucide) se resuelven por nombre a través de `src/lib/icon-registry.ts`, agrupados por uso (`navigation`, `entities`, `actions`, `status`…), para que el mismo concepto use siempre el mismo icono.
+
+Los iconos que elige el usuario para una entidad son otra cosa: ver [Iconos de entidad](../cross-cutting/entity-icons.mdx). Su catálogo se regenera con `bun run icons:catalog` después de actualizar `lucide-react`.

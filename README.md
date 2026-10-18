@@ -108,7 +108,7 @@ a phone.
 
 ## How it fits together
 
-![The browser only talks to the gateway, which sends the API paths to the backend and everything else to the frontend](doc/diagrams/architecture.svg)
+![The browser only talks to the gateway, which sends the API paths to the backend and everything else to the frontend](doc/readme/architecture.svg)
 
 - **One origin.** The gateway serves the site and the API from the same host,
   so the browser never makes cross-origin calls and session cookies just work.
@@ -238,7 +238,7 @@ page views are also shipped to Loki and become browsable at `/admin/logs`.
 
 ## Project Structure
 
-![The monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus doc/, openspec/ and scripts/](doc/diagrams/project-structure.svg)
+![The monorepo: apps/ holds the frontend, backend and gateway, packages/ the shared @nonete libraries, plus doc/, openspec/ and scripts/](doc/readme/project-structure.svg)
 
 ```txt
 garabato/
@@ -255,7 +255,7 @@ garabato/
 │   ├── env/            # @t3-oss/env-core validated env access
 │   ├── logger/         # Shared pino logger (+ Loki stream)
 │   └── config/         # Shared tsconfig base
-├── doc/                # Human documentation (Spanish) with diagrams and screenshots
+├── doc/                # Human documentation (Spanish): a colofon content repository
 ├── openspec/           # Capability specs (openspec/specs) and change proposals
 └── scripts/
     ├── setup-dev.sh    # Generates the local root .env with real secrets
@@ -459,7 +459,10 @@ There are no git hooks.
 **Start with [`doc/`](doc/README.md).** It is the human-oriented guide to how
 the project works, written in Spanish: architecture, local development,
 configuration, the API, auth, the frontend, cron jobs, Docker and the
-conventions, with diagrams. The rest of this section lists the reference
+conventions, with diagrams. It is a content repository for the colofon
+documentation platform, which publishes it (content folder `doc`): pages in
+`doc/docs/`, reference tables in `doc/catalog/` and diagrams in
+`doc/diagrams/`. The rest of this section lists the reference
 material it builds on.
 
 Every capability (auth, admin, documents, certificates, crons, logging,
@@ -468,7 +471,7 @@ Docker, …) has a spec under `openspec/specs/`; finished changes are kept in
 expected behavior before changing code in an area you're unfamiliar with;
 `openspec validate --specs --strict` checks they stay well-formed.
 
-- `doc/`: the human documentation (Spanish), one file per topic
+- `doc/`: the human documentation (Spanish), one folder per topic under `doc/docs/`
 - `AGENTS.md`: normative conventions for contributors and coding agents
 - `.agents/skills/stack/`: the project skill (workspaces, commands, env, Docker, API layering and frontend structure)
 - `DESIGN.md` / `PRODUCT.md`: visual system and product context, used by the `impeccable` design skill

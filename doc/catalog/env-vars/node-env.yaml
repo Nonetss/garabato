@@ -1,0 +1,8 @@
+name: NODE_ENV
+area: runtime
+required: false
+default: "development"
+meaning: "Entorno de ejecución (development, production o test); en production los logs salen como JSON"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

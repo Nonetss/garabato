@@ -1,0 +1,6 @@
+command: "bun run gateway"
+area: dev
+purpose: "Arranca el gateway de desarrollo en Docker delante de las apps en nativo"
+page: development/native
+fuente: package.json
+actualizado: 2026-10-18

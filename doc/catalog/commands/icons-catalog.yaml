@@ -1,0 +1,6 @@
+command: "bun run icons:catalog"
+area: other
+purpose: "Regenera el catálogo de iconos Lucide del selector de iconos (necesita red; se commitea el resultado)"
+page: cross-cutting/entity-icons
+fuente: package.json
+actualizado: 2026-10-18

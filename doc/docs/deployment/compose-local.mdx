@@ -1,0 +1,48 @@
+---
+titulo: Producción en local
+descripcion: Qué levanta compose.yml, en qué orden arranca cada servicio y qué variables sobrescribe, para probar en local un stack parecido a producción
+compose_files: [local]
+commands: [docker-up, docker-build, docker-down, docker-logs]
+env_vars: [frontend-port, postgres-password, s3-endpoint]
+orden: 1
+actualizado: 2026-10-18
+---
+
+```bash
+bun run docker:up     # construye las imágenes desde tu copia y arranca el stack
+bun run docker:logs   # sigue los logs de todos los servicios
+bun run docker:down   # para y elimina los contenedores
+```
+
+`docker:build` solo construye las imágenes. La web queda en `http://localhost:${FRONTEND_PORT:-4444}` (proyecto de compose `stack`).
+
+## Los servicios
+
+| Servicio | Puertos | Notas |
+| --- | --- | --- |
+| `gateway` | publica `${FRONTEND_PORT:-4444}` → 80 | El único que publica un puerto. Espera a que el frontend esté sano. |
+| `frontend` | interno 4321 | Astro en SSR, solo accesible a través del gateway. Espera al backend. |
+| `backend` | interno 3000 | Espera a que la base de datos y MinIO estén sanos. |
+| `db` | ninguno | `postgres:17`, base de datos `stack`, contraseña `${POSTGRES_PASSWORD:-postgres}`, volumen `db_data`. |
+| `loki` | interno 3100 | `grafana/loki:3.7.7`, retención de 720 horas, volumen `loki_data`. Opcional: nadie espera por él. |
+| `minio` | interno 9000 | `pgsty/silo:latest`, volumen `minio_data`. Sus credenciales de root son las `S3_*` del `.env`, y crea él mismo el bucket `S3_BUCKET`. |
+
+Cada servicio tiene su *healthcheck*, y arrancan en orden: base de datos y MinIO → backend → frontend → gateway. MinIO solo se da por sano cuando el bucket ya existe, así que el backend nunca arranca sin él.
+
+## Las variables
+
+Todas las apps leen el `.env` de la raíz (si no existe, no pasa nada), y el propio compose sobrescribe lo que cambia dentro de la red de Docker:
+
+- `NODE_ENV=production`, así que los logs salen como JSON.
+- `BACKEND_URL=http://backend:3000`, `LOKI_URL=http://loki:3100` y `S3_ENDPOINT=http://minio:9000`.
+- `DATABASE_URL` apunta al servicio `db`, y `BETTER_AUTH_URL` y `CORS_ORIGIN` a `http://localhost:${FRONTEND_PORT:-4444}`.
+
+Las credenciales de S3 y `S3_BUCKET` sí salen del `.env`: sin ellas MinIO no arranca ([Variables de entorno](../configuration/index.mdx)).
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend no llega a arrancar | MinIO no consigue crear el bucket o no arranca | Mira `bun run docker:logs` del servicio `minio`; comprueba `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (al menos 8 caracteres) y `S3_BUCKET` en el `.env` |
+| No se puede iniciar sesión desde otra máquina | Las cookies son `Secure` y sobre `http` solo valen en `localhost` | Pruébalo desde el propio equipo, o pon el stack detrás de https ([Trampas](../configuration/traps.mdx)) |
+| `/admin/logs` aparece vacío | Loki no está sano | El resto de la app sigue funcionando; mira los logs del servicio `loki` |

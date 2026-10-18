@@ -1,0 +1,35 @@
+---
+titulo: CI
+descripcion: Qué construyen y publican los workflows de GitHub y de Gitea en cada push a main, y cómo se publica la web del proyecto
+workspaces: [backend, frontend, gateway, site]
+orden: 4
+actualizado: 2026-10-18
+---
+
+En cada push a `main` se reconstruyen solo las imágenes que cambiaron y se suben al registro. **El CI no ejecuta lint, tipos ni tests**: eso se valida en local antes del push ([Validar un cambio](../development/validation.mdx)).
+
+## Qué imagen se reconstruye
+
+| Imagen | Se reconstruye si cambia… |
+| --- | --- |
+| backend | `apps/backend/`, `packages/`, `native/pkcs11/`, `package.json`, `bun.lock` o `bunfig.toml` |
+| frontend | `apps/frontend/`, `packages/`, `package.json`, `bun.lock` o `bunfig.toml` |
+| gateway | `apps/gateway/` |
+
+Si cambia el propio workflow o `.dockerignore`, se reconstruyen las tres. Si cambian estas reglas, hay que tocar los dos workflows.
+
+## GitHub
+
+`.github/workflows/docker-build.yml` construye las imágenes que cambiaron y las sube al GitHub Container Registry (`ghcr.io/<owner>/<repo>-<app>`) con las etiquetas `latest`, el nombre de la rama y `<rama>-<sha>`, usando una caché de capas en el propio registro. Se autentica con el `GITHUB_TOKEN` del workflow, así que no hay que configurar ningún secreto.
+
+## Gitea
+
+En el remoto de Gitea corre `.gitea/workflows/docker-build.yml`, el equivalente para Gitea Actions. Gitea ignora `.github/workflows` si existe `.gitea/workflows`, y GitHub ignora `.gitea/`, así que conviven. Aplica las mismas reglas y etiquetas, pero:
+
+- Cada job de la matriz detecta por su cuenta si su imagen cambió y, si no, se salta el build (como mucho dos a la vez).
+- Construye con `docker build` sobre el daemon del propio runner (la caché de capas es local, no del registro) y sube al registro de contenedores de Gitea como `<host-gitea>/<owner>/<repo>-<app>`.
+- Necesita un secreto `TOKEN` en el repositorio, con un token de acceso con permiso `write:package`.
+
+## La web del proyecto
+
+`.github/workflows/pages.yml` no construye ninguna imagen: publica [`apps/site`](catalog:workspaces/site) en GitHub Pages. Se ejecuta en los push a `main` que tocan `apps/site/`, `doc/screenshots/`, `bun.lock` o el propio workflow, o a mano. Instala el workspace entero (las capturas viven en `doc/screenshots/`, fuera de `apps/site`), ejecuta `bun run --filter site build` y despliega `apps/site/dist`. En GitHub, Settings → Pages → Source tiene que ser «GitHub Actions». Gitea no tiene equivalente.

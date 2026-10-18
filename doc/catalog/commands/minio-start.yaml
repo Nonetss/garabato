@@ -1,0 +1,6 @@
+command: "bun run minio:start"
+area: services
+purpose: "Arranca solo la API S3 de MinIO en 127.0.0.1:9000, para el modo nativo"
+page: development/native
+fuente: package.json
+actualizado: 2026-10-18

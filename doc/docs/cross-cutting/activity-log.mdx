@@ -1,0 +1,26 @@
+---
+titulo: Registro de actividad
+descripcion: Qué muestra /admin/logs, de dónde salen sus entradas y qué pasa cuando no hay Loki o no responde
+workspaces: [api, backend, frontend, logger]
+env_vars: [loki-url]
+orden: 3
+actualizado: 2026-10-18
+---
+
+`/admin/logs` muestra qué ha pasado en la aplicación: las llamadas a la API y las páginas visitadas por usuarios con sesión. Solo lo ven los admins.
+
+- El backend marca cada llamada a `/rpc` y `/api` de un usuario con sesión como `api_call` (`apps/backend/src/middlewares/request-logger.ts`), salvo las de autenticación (`/api/auth`), la documentación (`/scalar`, `/openapi.json`) y la propia consulta del registro.
+- El middleware del frontend marca cada página vista como `page_view`, salvo las precargas.
+- Los logs se envían a **Loki**, y `logs.query` (`adminProcedure`, `GET`) los consulta.
+
+Los tres compose (`compose.dev.yml`, `compose.yml` y `compose.prod.yml`) ya incluyen un Loki con 30 días de retención (720 horas). En desarrollo nativo escucha en `localhost:3100`, el `LOKI_URL` de `.env.example`.
+
+## Cuando no hay Loki
+
+| Situación | Qué pasa |
+| --- | --- |
+| `LOKI_URL` sin definir | Los logs solo salen por consola y `/admin/logs` aparece vacío. Es una configuración válida, no un error. |
+| Loki no responde | `logs.query` falla con `BAD_GATEWAY` (502): «No se pudo contactar con Loki en …». |
+| Loki responde con un error | `BAD_GATEWAY`: «Loki respondió … a la consulta». |
+
+El resto de la aplicación sigue funcionando en los tres casos.

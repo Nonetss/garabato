@@ -1,0 +1,31 @@
+---
+titulo: Iconos de entidad
+descripcion: Cómo se deja que el usuario elija un icono de Lucide y un color para una entidad, y cómo se activa para un tipo de entidad nuevo
+workspaces: [api, frontend]
+commands: [icons-catalog]
+orden: 2
+actualizado: 2026-10-18
+---
+
+Permiten que el usuario elija un icono de Lucide y un color para una entidad. Hoy los usan las carpetas de documentos.
+
+| Pieza | Qué es |
+| --- | --- |
+| Tabla `entity_icons` | Un icono por `(entity_type, entity_id)`, con el nombre del icono y una clave de color de una paleta fija (por defecto `orange`). |
+| API `orpc.v1.entityIcon.*` | `getMany` (`QUERY`, en lote, para listas), `set` (`PUT`) y `clear` (`DELETE`). |
+| Frontend `@/features/entity-icons` | `IconPicker` (selector controlado), `EntityIconPicker` (carga y guarda solo), `EntityIcon` (lo muestra, con un icono de reserva), `useEntityIcons` (carga los de una lista en una petición), `useSetEntityIcon` y `useClearEntityIcon`. |
+
+## Activarlos para otra entidad
+
+A diferencia de los comentarios, **cada tipo de entidad tiene que registrarse** en `packages/api/src/v1/entity-icon/targets.ts`, que dice qué entidades puede ver y modificar cada usuario. Las carpetas de documentos son el ejemplo (`documentFolder`, en `v1/document-folder/icon-target.ts`):
+
+1. Escribe un `EntityIconTarget` con las funciones `readable` y `writable`, que reciben los ids pedidos y devuelven los que el usuario puede tocar.
+2. Añádelo a `entityIconTargets` con su tipo de entidad.
+3. En el handler que borra esa entidad, llama a `deleteEntityIcons(...)` en la misma transacción.
+4. En la interfaz, usa `EntityIconPicker` o `IconPicker` en el formulario y `EntityIcon` donde se muestre.
+
+Un tipo de entidad que no está registrado responde `BAD_REQUEST`.
+
+## El catálogo de iconos
+
+El catálogo del selector se genera con `bun run icons:catalog` a partir de los metadatos de Lucide (necesita red, y el resultado se commitea), y se descarga solo cuando se abre un selector. Se vuelve a generar tras actualizar `lucide-react`.

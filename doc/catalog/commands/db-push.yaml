@@ -1,0 +1,6 @@
+command: "bun run db:push"
+area: database
+purpose: "Aplica el esquema sin migración, solo para experimentos"
+page: development/database
+fuente: package.json
+actualizado: 2026-10-18

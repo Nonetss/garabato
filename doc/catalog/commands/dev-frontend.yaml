@@ -1,0 +1,6 @@
+command: "bun run dev:frontend"
+area: dev
+purpose: "Arranca solo el frontend en nativo"
+page: development/native
+fuente: package.json
+actualizado: 2026-10-18

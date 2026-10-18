@@ -1,0 +1,33 @@
+---
+titulo: Crons
+descripcion: El planificador de tareas que corre dentro del backend, donde un job es una llamada programada a un procedimiento de la API
+workspaces: [cron, api, backend]
+actualizado: 2026-10-18
+---
+
+El proyecto trae un planificador de tareas propio que corre **dentro del backend**. La idea central: **un job de cron es una llamada programada a un procedimiento de la API**. No hay un sistema aparte de «tareas»; cualquier procedimiento puede convertirse en una.
+
+> [!NOTE]
+> Garabato no usa los crons hoy. Las páginas `/crons` y `/crons/[id]` siguen funcionando si se abre su URL, pero no salen en el navbar, en la portada ni en la búsqueda (`apps/frontend/src/lib/app-surfaces.ts`).
+
+## Las piezas
+
+| Pieza | Dónde | Qué hace |
+| --- | --- | --- |
+| Planificador | `packages/cron` | Dispara los jobs a su hora (con `Bun.cron`, siempre en UTC) y guarda cada ejecución. No sabe nada de oRPC. |
+| Descubrimiento | `packages/api/src/v1/cron/discovery.ts` | Recorre el router de v1 y encuentra qué procedimientos se pueden programar y cuáles traen su horario declarado. |
+| API de crons | `packages/api/src/v1/cron/` | Crear, editar, pausar, borrar y ejecutar jobs, y consultar su historial. Las escrituras son de admin; las lecturas, de cualquiera con sesión. |
+| Cableado | `apps/backend/src/cron/` | Construye el servicio con el planificador y lo enlaza con la API al arrancar el backend (`v1/cron/runtime.ts` es el hueco donde se enchufa). |
+| Interfaz | `apps/frontend/src/features/crons/` | `/crons` (lista) y `/crons/[id]` (detalle e historial en vivo). |
+
+En la base de datos, `cron_job` guarda la definición de cada job (el procedimiento, su origen `manual` o `code`, la expresión en UTC, si está activo, el usuario con el que corre y la entrada) y `cron_run` una fila por cada ejecución.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Hacer que un procedimiento se pueda programar desde `/crons` | [Dos tipos de jobs](jobs.mdx) |
+| Que el código fije el horario de un procedimiento | [Jobs declarados en código](jobs.mdx#jobs-declarados-en-código) |
+| Saber con qué usuario corre un job y qué permisos tiene | [Cómo se ejecuta un job](execution.mdx) |
+| Entender por qué no conviene tener dos réplicas del backend | [Cosas a tener en cuenta](execution.mdx#cosas-a-tener-en-cuenta) |
+| Saber qué hace el backend con los crons al arrancar | [Arranque y apagado del backend](../architecture/backend-lifecycle.mdx) |

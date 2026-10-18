@@ -1,0 +1,24 @@
+---
+titulo: Trampas habituales
+descripcion: Por qué el backend no arranca, no se puede iniciar sesión o un contenedor no encuentra a otro, y cómo arreglarlo
+env_vars: [admin-email, cors-origin, better-auth-url, certificate-encryption-key, s3-bucket, backend-url, gateway-http-port]
+orden: 1
+actualizado: 2026-10-18
+---
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El backend no arranca y el error de validación nombra `ADMIN_EMAIL` | No es un email válido: `admin@localhost` no pasa la validación | Usa un email con dominio; `setup:dev` pone `admin@stack.local` |
+| El backend no arranca y el error nombra `CERTIFICATE_ENCRYPTION_KEY` | No es el base64 de exactamente 32 bytes | Genera una con `openssl rand -base64 32` |
+| El backend no arranca y el error nombra `BETTER_AUTH_SECRET` | Tiene menos de 32 caracteres | Genera uno con `openssl rand -base64 48` |
+| En un servidor por `http`, el inicio de sesión no hace nada | Las cookies de sesión son `Secure`: sobre `http` plano el navegador solo las guarda en `localhost` | Sirve la web por `https` |
+| El retorno de OIDC va a una dirección que no existe | `BETTER_AUTH_URL` apunta al puerto del backend y no al origen público | Ponle el mismo valor que `CORS_ORIGIN` |
+| Subir un documento falla | El bucket de `S3_BUCKET` no existe en un almacén externo | Créalo a mano; el MinIO incluido lo crea solo al arrancar |
+
+## Las direcciones entre contenedores no van en el `.env`
+
+Cuando las apps corren en contenedores, los compose sobrescriben `BACKEND_URL` y `LOKI_URL` con los nombres de servicio (`http://backend:3000`, `http://loki:3100`), y `compose.yml` además `DATABASE_URL` y `S3_ENDPOINT`. El `.env` de desarrollo usa `localhost`; solo si arrancas el MinIO incluido en el stack de desarrollo (`COMPOSE_PROFILES=minio`) pones tú `S3_ENDPOINT=http://minio:9000`.
+
+## Las variables del gateway
+
+`GATEWAY_HTTP_PORT`, `BACKEND_HTTP_UPSTREAM` y `FRONTEND_HTTP_UPSTREAM` las ponen los compose del gateway y de desarrollo. No hace falta tocarlas: sus valores por defecto son las direcciones de los servicios de Docker.

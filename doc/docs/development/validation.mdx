@@ -1,0 +1,42 @@
+---
+titulo: Validar un cambio
+descripcion: Los comandos que comprueban un cambio antes de subirlo y cómo funcionan los tests sin base de datos ni red
+workspaces: [api, cron, frontend]
+commands: [check-types, check, format, tailwind-check, tailwind-fix, test]
+orden: 6
+actualizado: 2026-10-18
+---
+
+```bash
+bun run check-types     # tipos en todo el repo (tsc y astro check)
+bun run check           # Biome: formato, lint y orden de imports (corrige lo que puede)
+bun run tailwind:check  # clases de Tailwind mal escritas o redundantes (tailwint)
+bun run test            # los tests unitarios
+```
+
+- Un solo workspace: `bun run --filter @nonete/api check-types`, o `turbo run test --filter=@nonete/api` para una sola suite.
+- `bun run format` solo formatea; `bun run tailwind:fix` arregla las clases que `tailwind:check` marca, en `apps/frontend` y `apps/site`.
+- El CI no ejecuta nada de esto: se valida en local antes de hacer push (ver [CI](../deployment/ci.mdx)).
+
+## Los tests
+
+`bun run test` ejecuta, con Turbo, las tres suites de `bun test` que hay:
+
+| Suite | Qué prueba |
+| --- | --- |
+| `packages/api/tests/` | Los builders de procedimientos (`index.test.ts`), los helpers (`shared/`) y los handlers de cada feature (`v1/<feature>/`) |
+| `packages/cron/tests/` | El planificador, el servicio de crons, las expresiones cron y la sincronización de los jobs declarados |
+| `apps/frontend/tests/` | Los helpers de `src/lib`, los hooks, los componentes compartidos y algunas features, sobre happy-dom |
+
+No hay tests del backend (`apps/backend`), ni end-to-end, ni del módulo PKCS#11 en `bun run test` (ese se prueba con `cargo test`).
+
+### Son herméticos
+
+No se conectan a la base de datos, no hacen peticiones de red y no necesitan nada arrancado, ni siquiera un `.env`:
+
+- **`packages/api/tests/setup.ts`** se carga antes que nada y **sobrescribe** las variables de entorno con valores de mentira: `DATABASE_URL` apunta a un puerto cerrado, el almacén S3 y la autoridad de sellado de tiempo se sustituyen por versiones en memoria, y las variables opcionales se vacían. Así importar `@nonete/auth` o `@nonete/db` no falla al validar el entorno y nunca toca tu base de datos real.
+- **La base de datos es falsa**: `@nonete/db/testing` da un `fakeDb` en el que cada test encola los resultados de sus consultas y después comprueba las escrituras.
+- **Los procedimientos** se ejecutan con `call(procedimiento, input, { context })` de oRPC, que pasa por los mismos middlewares que una petición real, con contextos de `tests/fixtures/context.ts`.
+- **`apps/frontend/tests/setup.ts`** registra una ventana de happy-dom en el origen de desarrollo y fija la zona horaria a UTC.
+
+La carpeta `tests/` de cada suite replica la de `src/`. Qué test acompaña a cada tipo de cambio está en la referencia de tests de la skill `stack` (`.agents/skills/stack/references/testing.md`).

@@ -1,0 +1,5 @@
+path: native/pkcs11
+kind: other
+purpose: "Módulo PKCS#11 en Rust que deja a Firefox y Chromium en Linux usar los certificados de Garabato para la autenticación TLS de cliente"
+fuente: manual
+actualizado: 2026-10-18

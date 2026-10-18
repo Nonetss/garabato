@@ -1,0 +1,32 @@
+---
+titulo: Funcionalidades transversales
+descripcion: Comentarios, iconos de entidad y registro de actividad, las piezas que se enganchan a cualquier entidad o página, y el truco que comparten
+workspaces: [api, frontend, db]
+actualizado: 2026-10-18
+---
+
+Son piezas que no pertenecen a una página concreta sino que se pueden enganchar a cualquier entidad. Vienen de la plantilla: úsalas si encajan con el producto, y pregunta antes de engancharlas a algo nuevo.
+
+| Pieza | Hoy se usa en |
+| --- | --- |
+| [Comentarios](comments.mdx) | Las ejecuciones de los crons, que no salen en la navegación |
+| [Iconos de entidad](entity-icons.mdx) | Las carpetas de documentos |
+| [Registro de actividad](activity-log.mdx) | `/admin/logs`, cuando hay Loki |
+
+## Referencias polimórficas
+
+Comentarios e iconos usan el mismo truco: en vez de una clave foránea a una tabla concreta, guardan una **referencia polimórfica** con dos campos:
+
+- `entityType`: qué tipo de cosa es (`"cron-run"`, `"documentFolder"`…).
+- `entityId`: su identificador. En `entity_icons` es texto, para que valgan tanto UUIDs como los ids de Better Auth; en `comments` es un UUID.
+
+Así se puede comentar o poner icono a una entidad sin tocar el esquema. La contrapartida es que la base de datos no puede borrar en cascada: el handler que borra una entidad tiene que borrar también sus comentarios o su icono, en la misma transacción.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Añadir un hilo de comentarios a una entidad | [Comentarios](comments.mdx) |
+| Dejar que el usuario elija icono y color para una entidad | [Iconos de entidad](entity-icons.mdx) |
+| Ver qué ha hecho cada usuario en la aplicación | [Registro de actividad](activity-log.mdx) |
+| Saber cómo llegan los logs a Loki | [Logs](../architecture/logs.mdx) |

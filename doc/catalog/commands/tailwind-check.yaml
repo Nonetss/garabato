@@ -1,0 +1,6 @@
+command: "bun run tailwind:check"
+area: validation
+purpose: "Busca clases de Tailwind mal escritas o redundantes en el frontend y la web (tailwint)"
+page: development/validation
+fuente: package.json
+actualizado: 2026-10-18

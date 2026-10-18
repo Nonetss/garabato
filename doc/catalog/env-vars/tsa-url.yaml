@@ -1,0 +1,7 @@
+name: TSA_URL
+area: certificates
+required: false
+meaning: "La autoridad de sellado de tiempo (RFC 3161); con ella las firmas llevan sello de tiempo (PAdES B-T)"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

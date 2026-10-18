@@ -1,0 +1,33 @@
+---
+titulo: Arranque y apagado del backend
+descripcion: Qué hace el backend al arrancar, en qué orden se apaga y por qué sobrevive a la recarga en caliente
+workspaces: [backend, db, cron]
+env_vars: [admin-email, admin-password, admin-name]
+orden: 2
+actualizado: 2026-10-18
+---
+
+## Al arrancar
+
+`apps/backend/src/index.ts` empieza a servir HTTP enseguida (en el puerto de `PORT`, o 3000) y, en paralelo, hace esto una sola vez:
+
+1. **Aplica las migraciones pendientes** de `packages/db/src/migrations/`.
+2. **Crea el administrador** si `ADMIN_EMAIL` y `ADMIN_PASSWORD` están definidas y todavía no existe un usuario con ese email (`ADMIN_NAME` es opcional, por defecto `Admin`). Reiniciar no lo duplica ni le cambia la contraseña.
+3. **Arranca el planificador de crons**: recupera las ejecuciones que quedaron a medias en un apagado anterior, sincroniza los jobs declarados en código con la base de datos y empieza a dispararlos (ver [Crons](../crons/index.mdx)).
+
+Si cualquiera de estos pasos falla, el backend lo registra (`bootstrap failed`) y sale con código 1.
+
+## Al apagarse
+
+Al recibir `SIGINT` o `SIGTERM` se apaga en este orden:
+
+1. Cierra los streams de eventos de crons, que no terminan solos y retendrían el resto.
+2. Deja hasta 5 segundos a las peticiones HTTP en curso; las que sigan abiertas se cortan.
+3. Para el planificador de crons.
+4. Cierra el pool de la base de datos.
+
+Si algo se cuelga, a los 8 segundos sale igualmente con código 1, antes de que Docker mande `SIGKILL` (10 segundos por defecto).
+
+## Con `bun --hot`
+
+En desarrollo, `bun --hot` vuelve a ejecutar el fichero de entrada con cada cambio. Para no repetir las migraciones, el seed y el planificador, ni acumular manejadores de señales en cada recarga, el servidor y una marca de «ya arrancado» se guardan en `globalThis`, que sobrevive a las recargas. El servidor se recarga en el mismo puerto gracias a un `id` fijo.

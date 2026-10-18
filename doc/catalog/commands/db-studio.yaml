@@ -1,0 +1,6 @@
+command: "bun run db:studio"
+area: database
+purpose: "Abre Drizzle Studio sobre la base de datos de DATABASE_URL"
+page: development/database
+fuente: package.json
+actualizado: 2026-10-18

@@ -1,0 +1,47 @@
+---
+titulo: Dos tipos de jobs
+descripcion: Cómo se marca un procedimiento para que un admin lo programe, y cómo fija el código su propio horario
+workspaces: [cron, api]
+orden: 1
+actualizado: 2026-10-18
+---
+
+## Jobs manuales
+
+Un admin los crea desde `/crons`: elige un **handler** (un procedimiento marcado como programable), rellena un formulario generado a partir del esquema de entrada de ese procedimiento y le pone una expresión cron. Se pueden editar, pausar, borrar y ejecutar al momento.
+
+Para que un procedimiento aparezca como handler disponible, se marca en sus metadatos con `cronMeta`, de `#index`:
+
+```ts
+.meta(openapi({ ... }), cronMeta({ eligible: true }))
+```
+
+No hay que registrarlo en ningún otro sitio. Hoy el único es `plugins.list`.
+
+## Jobs declarados en código
+
+Un procedimiento puede fijar su propio horario, en UTC:
+
+```ts
+.meta(openapi({ ... }), cronMeta({ schedule: "* * * * *", name: "…", description: "…" }))
+```
+
+`name` toma por defecto la clave del procedimiento y `description` la de su `openapi()`. Hoy ningún procedimiento declara un horario.
+
+Al arrancar, el backend sincroniza estas declaraciones con la tabla `cron_job` (`syncDeclaredJobs`, en `packages/cron/src/declared.ts`): crea las que faltan, actualiza en su sitio las que cambiaron, desactiva las que tienen una expresión inválida y borra (de forma lógica) las que ya no están en el código.
+
+Estos jobs:
+
+- se ejecutan con `{}` como entrada, así que el procedimiento no puede tener entrada obligatoria;
+- se ejecutan como el **administrador del seed** (`ADMIN_EMAIL`), así que pueden llamar a procedimientos protegidos o de admin con su autorización normal;
+- son **de solo lectura**: en `/crons` aparecen sin controles, no salen en la lista de handlers, y la API responde `CONFLICT` si alguien intenta editarlos, pausarlos, borrarlos o ejecutarlos.
+
+Las dos formas, `eligible` y `schedule`, son excluyentes.
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| El job declarado sale desactivado en `/crons` | Su expresión cron es inválida | Corrige la expresión en el `cronMeta` y reinicia el backend |
+| Un job falla con `UNAUTHORIZED` o `FORBIDDEN` | No existe el admin del seed, o `ADMIN_EMAIL` es un usuario sin rol admin, y el procedimiento no es público | Crea ese admin (ver [Configuración](../configuration/index.mdx)); el arranque avisa en los logs |
+| Un job manual deja de encontrar su handler | Se renombró o movió el procedimiento, o se le quitó `eligible` | Ver [Cosas a tener en cuenta](execution.mdx#cosas-a-tener-en-cuenta) |

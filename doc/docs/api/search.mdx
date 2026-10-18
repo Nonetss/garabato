@@ -1,0 +1,42 @@
+---
+titulo: Búsquedas de texto libre
+descripcion: Cómo se escribe el procedimiento search de una entidad para un selector o la búsqueda del navbar, y cómo se mantiene rápido cuando la tabla crece
+workspaces: [api]
+orden: 5
+actualizado: 2026-10-18
+---
+
+Cuando una entidad necesita un buscador (para un selector o para la búsqueda del navbar), se añade un procedimiento `search` hermano de su `list`. `list` construye filas completas para una página; `search` solo responde qué registros coinciden con un texto.
+
+| Parte | Cómo es |
+| --- | --- |
+| Entrada | `query` y `limit`, con `searchQuery()` y `searchLimit()` de `#shared/search`: mínimo 2 caracteres, 5 resultados por defecto, máximo 20. |
+| Salida | Lo mínimo: el id y los campos que se muestran o con los que se busca. Nada anidado ni calculado. |
+| Consulta | Una sola, con `ilike` y `likePattern(input.query)` (escapa `%`, `_` y `\`), ordenada primero por los que empiezan por el texto, luego alfabéticamente y por id, con `limit`. |
+| Router | El mismo builder que su `list`, para no devolver nada que la lista no enseñaría; `method: "GET"` y las mismas etiquetas. |
+
+Ejemplos que ya existen: `apiKey.search`, `organization.search` y `organization.searchTeams`. La búsqueda del navbar llama a un procedimiento así 150 ms después de dejar de escribir (ver [Navegación](../frontend/navigation.mdx)).
+
+## Varias tablas
+
+Un `OR` entre columnas de la misma tabla está bien: PostgreSQL combina sus índices. Pero si el texto tiene que coincidir con columnas de **varias tablas**, no se hace un `OR` a través de un join, porque así no puede usar ningún índice. En su lugar:
+
+1. Se construyen los ids que coinciden como una `union` (de `drizzle-orm/pg-core`) de una consulta por columna, cada una con un predicado sobre una sola tabla.
+2. La consulta de fuera filtra con `inArray(tabla.id, ids)` y conserva el resto del `where` (borrados lógicos, dueño).
+3. Si el `list` de la entidad ofrece el mismo filtro de texto, usa el mismo helper, para que los dos devuelvan siempre lo mismo.
+
+Hoy ninguna feature necesita una búsqueda entre tablas.
+
+## Índices de trigramas
+
+Un índice B-tree sirve para `like 'abc%'`, pero no para `ilike '%abc%'`: una búsqueda «contiene» lee la tabla entera. Un índice GIN de trigramas (`pg_trgm`) sí puede servirla, pero solo compensa en tablas grandes, desde decenas de miles de filas o cuando `EXPLAIN ANALYZE` muestra un recorrido secuencial de más de unos milisegundos.
+
+> [!IMPORTANT]
+> La extensión `pg_trgm` no está activada: ninguna migración la crea. El primer índice de trigramas necesita antes una migración a mano con `CREATE EXTENSION IF NOT EXISTS pg_trgm;`, y las migraciones las genera siempre una persona (ver [Base de datos](../development/database.mdx)).
+
+Para que el índice se use:
+
+- **La misma expresión.** Un índice sobre una expresión (`ip::text`) solo se usa si la consulta escribe exactamente la misma.
+- **Una tabla por predicado**, como en la `union` de arriba.
+- **Tres caracteres.** Un patrón más corto no tiene ningún trigrama completo y se recorre la tabla.
+- **Coste de escritura.** Cada insert o update de la columna indexada actualiza el índice.

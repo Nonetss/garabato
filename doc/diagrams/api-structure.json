@@ -1,0 +1,106 @@
+{
+  "type": "tree",
+  "title": "Estructura de packages/api/src",
+  "desc": "La base compartida (builders, contexto y errores), el router que monta cada versión, los helpers de shared/ y lib/, y la versión v1 con una carpeta por feature; cada feature separa router, handler, entrada y salida",
+  "direction": "right",
+  "nodes": [
+    {
+      "id": "root",
+      "name": "packages/api/src",
+      "page": "api"
+    },
+    {
+      "id": "base",
+      "name": "Base compartida",
+      "parent": "root"
+    },
+    {
+      "id": "index",
+      "name": "index.ts",
+      "sub": "builders y metadatos",
+      "parent": "base",
+      "page": "api/builders"
+    },
+    {
+      "id": "context",
+      "name": "context.ts",
+      "sub": "el contexto",
+      "parent": "base",
+      "info": "Lo que recibe cada procedimiento: usuario, sesión, cabeceras e id de petición"
+    },
+    {
+      "id": "errors",
+      "name": "errors.ts",
+      "sub": "el mapa de errores",
+      "parent": "base",
+      "page": "api/errors"
+    },
+    {
+      "id": "root-router",
+      "name": "router.ts",
+      "sub": "monta cada versión (v1)",
+      "parent": "root"
+    },
+    {
+      "id": "shared",
+      "name": "shared/",
+      "sub": "helpers compartidos",
+      "parent": "root",
+      "page": "api/shared-helpers",
+      "info": "Los helpers que usan dos o más features"
+    },
+    {
+      "id": "lib",
+      "name": "lib/",
+      "sub": "permisos, almacén",
+      "parent": "root",
+      "info": "Permisos, almacén de objetos y sellos de tiempo"
+    },
+    {
+      "id": "v1",
+      "name": "v1/",
+      "sub": "la versión 1",
+      "parent": "root",
+      "info": "Todo lo que depende de la versión de la API"
+    },
+    {
+      "id": "v1-router",
+      "name": "router.ts",
+      "sub": "monta cada feature",
+      "parent": "v1"
+    },
+    {
+      "id": "cron",
+      "name": "cron/",
+      "sub": "una feature",
+      "parent": "v1",
+      "focal": true
+    },
+    {
+      "id": "others",
+      "name": "17 features más",
+      "sub": "document, comment…",
+      "parent": "v1",
+      "info": "document, certificate, comment, organization y el resto"
+    },
+    {
+      "id": "cron-router",
+      "name": "router.ts",
+      "sub": "solo cableado",
+      "parent": "cron"
+    },
+    {
+      "id": "cron-handler",
+      "name": "handler.ts",
+      "sub": "la lógica",
+      "parent": "cron",
+      "info": "La lógica: las llamadas a la base de datos y a Better Auth"
+    },
+    {
+      "id": "cron-io",
+      "name": "input.ts, output.ts",
+      "sub": "esquemas zod",
+      "parent": "cron"
+    }
+  ]
+}

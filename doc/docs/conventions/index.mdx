@@ -1,0 +1,47 @@
+---
+titulo: Convenciones
+descripcion: Las reglas que más se notan al trabajar en el repositorio, con su porqué, desde los idiomas hasta las migraciones y las pruebas en vivo
+actualizado: 2026-10-18
+---
+
+Las reglas normativas están en `AGENTS.md` y en la skill `stack` (`.agents/skills/stack/`). Aquí van las que más se notan al trabajar, con su porqué. Si alguna vez no coinciden, mandan `AGENTS.md`, las specs de `openspec/specs/` y el código.
+
+## Idiomas
+
+- **Código en inglés:** identificadores, comentarios, mensajes de log, errores internos y las descripciones de OpenAPI (`summary`, `description`, `.describe()`).
+- **Lo que ve el usuario, en español:** textos de la interfaz y los mensajes de error de la API que muestra la interfaz (`errors.NOT_FOUND({ message: "Comentario no encontrado" })`).
+- **La documentación mantiene su idioma:** `README.md` está en inglés; `PRODUCT.md` y este sitio, en español.
+
+## Reutilizar antes de crear
+
+Antes de escribir un componente, hook, helper o procedimiento nuevo, se busca uno que ya exista y se reutiliza o se extiende: dónde mirar está en [Features y slices](../frontend/features.mdx#antes-de-crear-algo-busca) y en [Añadir un procedimiento](../api/add-procedure.mdx). Lo nuevo nace dentro de su feature y se promueve a compartido cuando de verdad se reutiliza, y llega con sus tests en el mismo cambio.
+
+## Las funcionalidades de la plantilla
+
+Garabato parte de la plantilla `stack`, que trae muchas cosas de serie (admin, organizaciones, API keys, crons, comentarios, iconos de entidad, registro de actividad…). Que existan no significa que el producto las necesite:
+
+- No se da por hecho que una tarea requiere una de ellas: ante la duda, se pregunta.
+- Tampoco se quitan «para simplificar» sin decidirlo explícitamente.
+- Quitar una es un cambio con su propia propuesta de OpenSpec, como se hizo con las colecciones (`openspec/changes/archive/2026-10-08-remove-collections/`).
+
+## Migraciones
+
+Las migraciones las genera, revisa y commitea una persona (`bun run db:generate`, ver [Base de datos](../development/database.mdx)). Los agentes de código no las generan, aplican ni editan, y tampoco cambian el esquema de `packages/db/src/schema/` sin que se les pida. Si una tarea necesita una migración, el agente propone el cambio y se para.
+
+## Procesos y pruebas en vivo
+
+- Nadie (ni agente ni script) mata o reinicia un servidor de desarrollo o el stack de Docker que esté corriendo sin preguntar: se asume que está en uso.
+- La validación normal es `check-types`, Biome y `bun run test` (ver [Validar un cambio](../development/validation.mdx)). Las pruebas contra la app en marcha (curl, navegador) se hacen solo cuando se piden, porque casi todo requiere sesión.
+
+## La documentación
+
+Este sitio vive en `doc/` y es un repositorio de contenido de la plataforma colofon: páginas MDX en `doc/docs/`, el menú en `doc/menu.yaml`, las tablas de referencia en `doc/catalog/` y los diagramas en `doc/diagrams/`. Se escribe con las skills de escritura de colofon (`colofon-documentation` y las demás `colofon-*`), y sus convenciones propias están en `AGENTS.md`. Un cambio de comportamiento actualiza en el mismo cambio la página que lo cuenta.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber qué TypeScript no se acepta y qué escribir en su lugar | [Estilo de TypeScript](typescript.mdx) |
+| Escribir el mensaje de un commit | [Commits](commits.mdx) |
+| Hacer un cambio funcional con su especificación | [OpenSpec](openspec.mdx) |
+| Saber dónde va una pieza nueva del frontend | [Features y slices](../frontend/features.mdx) |

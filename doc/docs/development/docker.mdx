@@ -1,0 +1,33 @@
+---
+titulo: Con Docker
+descripcion: Arrancar el stack de desarrollo en contenedores con recarga en caliente, y qué pasa al editar cada fichero
+commands: [dev, dev-down]
+compose_files: [dev]
+env_vars: [backend-url, loki-url, s3-endpoint, compose-profiles]
+orden: 2
+actualizado: 2026-10-18
+---
+
+```bash
+bun run dev        # construye, arranca y vigila cambios; Ctrl+C para parar
+bun run dev:down   # elimina los contenedores
+```
+
+Levanta con `compose.dev.yml` el frontend (`astro dev` en `:4320`), el backend (`bun --hot`), el gateway (con `Caddyfile.dev`, que sirve la app en `https://localhost:4321`) y Loki.
+
+- **Solo el gateway publica un puerto**, como en producción. Las apps y Loki quedan en la red interna del stack y se encuentran por nombre de servicio: el compose sobrescribe `BACKEND_URL` y `LOKI_URL`, y el resto sale del `.env` sin cambios.
+- **No levanta base de datos**: el backend usa la de `DATABASE_URL`, que está en otro servidor (ver [Base de datos](database.mdx)).
+- **Los PDF van al `S3_ENDPOINT` del `.env`**. Para usar el MinIO del propio stack, pon `COMPOSE_PROFILES=minio` y `S3_ENDPOINT=http://minio:9000` en el `.env`: el contenedor crea el bucket al arrancar y el backend espera a que esté listo.
+- **No se monta el repositorio**: `docker compose watch` copia tus cambios dentro de los contenedores. Solo hay volúmenes con nombre para la caché de Vite (`frontend_vite_cache`), la autoridad de certificación del gateway (`gateway_data`), Loki y MinIO; `bun run dev:down -v` los borra.
+- **El módulo PKCS#11** se monta de solo lectura desde `native/pkcs11/dist`: constrúyelo antes con `native/pkcs11/scripts/build-dist.sh` si vas a probar la instalación del token del navegador.
+
+## Qué pasa al editar
+
+| Si editas… | Pasa esto |
+| --- | --- |
+| `apps/*/src`, el `src` de los paquetes que usa cada app, `apps/frontend/public` | Se sincroniza y la recarga en caliente lo recoge |
+| `apps/frontend/astro.config.mjs`, `apps/gateway/Caddyfile.dev`, `apps/gateway/routes.caddy` | Se sincroniza y se reinicia ese servicio |
+| `package.json`, `bun.lock` o el `package.json` de una app | Se reconstruyen las imágenes afectadas |
+
+> [!WARNING]
+> Cuando un servicio empieza a importar un paquete o una carpeta nueva, hay que añadir su entrada `sync` en `compose.dev.yml`, o los cambios no llegarán al contenedor.

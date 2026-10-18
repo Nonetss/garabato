@@ -1,0 +1,8 @@
+name: DISABLE_SIGN_UP
+area: auth
+required: false
+default: "false"
+meaning: "Con true cierra el registro: /signup y el primer inicio de sesión por OIDC se rechazan"
+page: auth
+fuente: .env.example
+actualizado: 2026-10-18

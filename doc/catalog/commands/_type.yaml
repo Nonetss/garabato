@@ -1,0 +1,24 @@
+nombre: Comando
+plural: Comandos
+icono: square-terminal
+descripcion: Los scripts del package.json de la raíz. El id es el nombre del script con guiones en lugar de dos puntos (dev:local → dev-local)
+etiqueta: command
+
+campos:
+  command:
+    tipo: texto
+    descripcion: Cómo se ejecuta (bun run dev:local)
+  area:
+    tipo: enum
+    valores: [dev, validation, database, docker, services, other]
+    descripcion: "dev: arrancar el proyecto en desarrollo; validation: comprobar un cambio; database: Drizzle; docker: el stack tipo producción; services: Loki y MinIO sueltos; other: el resto"
+  purpose:
+    tipo: texto
+    descripcion: Qué hace, en una línea
+  page:
+    tipo: ficha
+    opcional: true
+    descripcion: La página que lo explica
+
+vista:
+  columnas: [command, purpose]

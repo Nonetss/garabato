@@ -1,0 +1,32 @@
+---
+titulo: Layouts
+descripcion: Qué layout de Astro usa cada ruta según su contexto de navegación, y qué opciones tiene cada uno
+workspaces: [frontend]
+orden: 3
+actualizado: 2026-10-18
+---
+
+Se elige por el contexto de navegación de la ruta, y cada ruta tiene exactamente un `<main>`.
+
+| Layout | Para qué |
+| --- | --- |
+| `Layout.astro` | El de por defecto: navbar (de invitado o con sesión), contenido y pie. Acepta, entre otras, `guestNavbar`, `hideFooter` y `scrollToTop`. |
+| `Admin.astro` | La sección `/admin`, con su sidebar (`AdminShell`, de `features/admin/shell`). El middleware solo deja entrar a quien tiene el rol `admin`. |
+| `WithSidebar.astro` | Secciones con subpáginas (`/config`), con el sidebar de la sección. Recibe `section`, que tiene que declarar `subItems`. Lee el estado del sidebar de la cookie `sidebar_state` para que no parpadee al cargar. |
+| `Detail.astro` | Páginas de detalle cuyo padre no tiene sidebar (`/crons/[id]`, `/documents/[id]`). Pone el enlace de volver y el `<main>`. |
+
+## `WithSidebar.astro` y el scroll
+
+La página hace scroll dentro de su `<main>`, no en la ventana, así que la restauración de scroll de Astro no sirve. El sidebar guarda el desplazamiento por ruta y query string y lo restaura al volver, reservando antes la altura del contenido para que las islas `client:only` tengan dónde pintarse. Con `persistScroll={false}` la página abre siempre arriba y no guarda nada.
+
+## `Detail.astro`
+
+- Acepta `title`, `backHref`, `backLabel`, `maxWidth` y `scrollToTop`.
+- `fillViewport` fija la página a la ventana, sin pie ni scroll de ventana, para que la isla reparta su propio scroll: lo usa el visor de documentos.
+- Como ya pinta el `<main>`, la isla que monta no se envuelve en `PageShell` (habría dos `<main>`): va con `QueryProvider` y pinta `PageHero` directamente. Ejemplo: `features/crons/detail/components/cron-detail-page.tsx` y `cron-detail-content.tsx`.
+
+Una página de detalle dentro de una sección con sidebar usa `WithSidebar.astro` con esa sección, no `Detail.astro`.
+
+## Volver arriba
+
+`Layout.astro` y `Admin.astro` montan una vez el botón flotante «Volver arriba» (`ScrollToTopButton`). Solo aparece en las páginas que lo piden con `scrollToTop`, en cualquiera de los cuatro layouts.

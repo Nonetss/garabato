@@ -28,6 +28,7 @@ This repo was started from a **template**, so it ships with a lot of features (B
 - `apps/gateway` — Caddy (Docker assets only, not a workspace) and the only place that maps requests to apps: the public HTTP entry point (backend API + frontend on one origin, the only publicly published port; the bundled MinIO console listens on the host loopback only).
 - `native/pkcs11` — Rust PKCS#11 module (not a workspace, built with `cargo`) that lets Firefox and Chromium on Linux use the certificates kept in Garabato for TLS client authentication.
 - `packages/api` (oRPC contract + handlers), `packages/db` (Drizzle schema, seed, migrations), `packages/auth` (Better Auth), `packages/cron`, `packages/logger`, `packages/env`, `packages/config`.
+- `doc/` — the human documentation (Spanish), a colofon content repository registered with content folder `doc`; see "Documentation site (`doc/`)".
 
 Details and conventions: `stack` skill.
 
@@ -84,6 +85,18 @@ Before writing a new React/UI component, hook, client-side helper or `packages/a
 - Biome 2.5.15 (root `biome.json`): 2-space indent, double quotes, no semicolons, 80-col, organize imports on, experimental HTML formatting, Tailwind CSS directives. One override: `**/*.svelte|astro|vue` disables `useConst`, `useImportType`, unused-vars/imports.
 - Tailwind classes: `tailwint` (`bun run tailwind:check`).
 - No ESLint, no Prettier, no Husky.
+
+## Documentation site (`doc/`)
+
+`doc/` is a **colofon content repository** (the documentation platform at https://doc.noneweb.online publishes it; content folder `doc`). Before writing or changing anything under it, load the `colofon-documentation` skill and the one for the folder you touch (`colofon-docs`, `colofon-catalog`, `colofon-diagrams`…). Those writing skills belong to the platform: never copy them into this repo or edit an installed copy. Every path below is relative to `doc/`. This section is the site's «Este sitio».
+
+- **What it documents:** how Garabato works inside and how to work with it (architecture, local development, configuration, API, auth, crons, frontend, cross-cutting features, deployment, conventions). Prose, titles and menu groups in Spanish; folder, file, type, field, enum and entity ids in English.
+- **Sections:** one folder per topic under `docs/`, never deeper than `docs/<topic>/<page>.mdx`: `architecture`, `development`, `configuration`, `api`, `auth`, `crons`, `frontend`, `cross-cutting`, `deployment`, `conventions`. Each `menu.yaml` group shows whole folders with their icon; the catalog shows as `{ ruta: catalog, titulo: Catálogo }` in «Referencia».
+- **Catalog types:** `workspaces` (id = folder name), `env-vars` (id = variable lowercased with hyphens), `commands` (id = root script with `:` → `-`), `compose-files` (id = short name). Their sources: the repo tree and each `package.json`, `.env.example` plus `packages/env/src/server.ts`, the root `package.json` scripts, and the compose files. An entity's `fuente` names that source and `actualizado` is the date it was last checked against it. The `ficha` to the explaining page is always `page`.
+- **Header fields** (`doc.config.yaml`): `workspaces`, `env_vars`, `commands`, `compose_files` (lists of `ref`) and `open_questions`.
+- **Diagrams:** `diagrams/architecture.json` (home, `architecture`), `api-structure.json` (`api`), `frontend-structure.json` (`frontend`), `crons-slices.json` (`frontend/features`). When the tree or the routing they draw changes, update them in the same change.
+- **Keep it current with the code:** a change that alters what a page or entity states (a variable, a script, a workspace, a compose service, a convention) updates the page or entity in the same change. Adding, renaming or removing an env var, root script, workspace or compose file adds, updates or removes its entity.
+- **Not read by the platform:** `screenshots/` (the root `README.md` and `apps/site/src/lib/screens.ts` use them) and `readme/` (the English SVG diagrams of the root `README.md`, each with its `.html` source: edit the HTML and re-export the SVG, keeping `var(--token)` colours and the embedded fonts; `architecture.svg` and `project-structure.svg` follow the README's "How it fits together" and "Project Structure").
 
 ## OpenSpec workflow
 

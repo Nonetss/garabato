@@ -1,0 +1,29 @@
+---
+titulo: Confiar en el certificado local
+descripcion: Importar en el navegador la autoridad de certificación local del gateway, una sola vez, para abrir https://localhost:4321 sin avisos
+commands: [dev-cert]
+orden: 4
+actualizado: 2026-10-18
+---
+
+El gateway firma `https://localhost:4321` con la autoridad de certificación local de Caddy, guardada en el volumen `stack-dev_gateway_data` para que no cambie entre reinicios.
+
+1. Arranca el gateway al menos una vez ([con Docker](docker.mdx) o [en nativo](native.mdx)).
+2. Exporta la raíz:
+
+   ```bash
+   bun run dev:cert   # deja caddy-local-root.crt (ignorado por git) en la raíz
+   ```
+
+3. Impórtala en el navegador como autoridad de confianza:
+   - **Chrome**: `chrome://certificate-manager`, certificados personalizados.
+   - **Firefox**: Ajustes → Privacidad y seguridad → Certificados → Ver certificados → Autoridades → Importar, marcando que identifique sitios web.
+4. Recarga la página.
+
+Si borras el volumen (`bun run dev:down -v`) se crea una autoridad nueva y hay que importarla otra vez.
+
+## Por qué HTTPS en local
+
+Los navegadores solo usan HTTP/2 sobre TLS. Con HTTP/2, los cientos de módulos sin empaquetar que sirve Vite en desarrollo comparten una conexión en vez de hacer cola en seis. `astro dev` no puede hacerlo solo, porque Vite pierde HTTP/2 cuando usa su proxy; por eso lo hace el gateway delante.
+
+Un `http://localhost:4321` sin cifrar recibe una redirección a `https` en el mismo puerto.

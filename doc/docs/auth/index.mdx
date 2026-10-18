@@ -1,0 +1,61 @@
+---
+titulo: Autenticación y permisos
+descripcion: Cómo se inicia sesión en Garabato, qué plugins de Better Auth están activos, los dos niveles de permisos y cómo se crea el primer administrador
+workspaces: [auth]
+env_vars: [disable-sign-up, admin-email, admin-password, admin-name, oidc-client-id, oidc-client-secret, oidc-discovery-url]
+open_questions:
+  - ¿Se acepta un token Bearer en la API? La documentación OpenAPI lo declara, pero Better Auth no tiene activo el plugin `bearer()`
+actualizado: 2026-10-18
+---
+
+La autenticación la hace [Better Auth](https://www.better-auth.com), configurado en `packages/auth/src/index.ts`. El backend expone sus rutas bajo `/api/auth/*`.
+
+## Formas de iniciar sesión
+
+- **Email y contraseña**, siempre disponible (`/login`, `/signup`).
+- **OIDC genérico** (Keycloak, Authentik, Google o cualquier proveedor compatible), activo solo cuando están definidas `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` y `OIDC_DISCOVERY_URL`. Pide los scopes `openid`, `profile` y `email`.
+- **Segundo factor (TOTP)**, opcional por usuario desde la página de perfil (`/config/profile`), con códigos de respaldo. Solo protege el inicio de sesión con email y contraseña: el OIDC y las API keys no lo piden.
+
+### Cerrar el registro
+
+Con `DISABLE_SIGN_UP=true` nadie puede registrarse por su cuenta: se rechazan `/signup` y el primer inicio de sesión por OIDC de alguien que aún no tiene cuenta. Los usuarios que ya existen siguen entrando, y los admins crean cuentas desde `/admin/users`. Por defecto está abierto.
+
+## Plugins activos
+
+| Plugin | Qué añade |
+| --- | --- |
+| `admin()` | El rol global `admin` y la gestión de usuarios: crear, borrar, cambiar rol o contraseña, banear y desbanear. Es lo que usa `/admin/users`. |
+| `organization()` | Organizaciones con miembros, invitaciones, equipos y roles con permisos configurables (control de acceso dinámico). |
+| `apiKey()` | Claves de API. Una petición con cabecera `x-api-key` se trata como una sesión del dueño de la clave. Guarda metadatos, que usa el token del navegador. |
+| `twoFactor()` | El segundo factor TOTP, con emisor «Garabato». |
+| `genericOAuth` | El inicio de sesión OIDC, solo si está configurado. |
+
+`/admin/plugins` muestra los plugins instalados.
+
+### Las claves del token del navegador
+
+Una API key con el permiso `certificateToken: ["use"]` es una **clave de token**: la que usa el módulo PKCS#11 del navegador (`native/pkcs11`). Nunca se convierte en una sesión: el backend responde `401` si llega a `/api/auth/*`, y solo sirve para los procedimientos del token del navegador (`tokenProcedure`), que además exigen que su dueño tenga activo el segundo factor.
+
+## Dos niveles de permisos
+
+1. **Rol global.** Un usuario es `admin` o no. Los admins ven `/admin` y la documentación de la API, y pueden llamar a los `adminProcedure`.
+2. **Permisos de organización.** Dentro de una organización, cada miembro tiene un rol (`owner`, `admin`, `member` o uno personalizado) con permisos sobre recursos. Los recursos y acciones se definen en `appStatements`, en `packages/auth/src/permissions.ts`, y los procedimientos los comprueban con `permissionProcedure(recurso, acción)` contra la organización activa de la sesión. Un admin global pasa siempre.
+
+Los builders de procedimientos están en [Quién puede llamar](../api/builders.mdx).
+
+## El primer administrador
+
+Al arrancar, el backend crea un usuario `admin` con `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `ADMIN_NAME` (por defecto «Admin») si todavía no existe uno con ese email. Lo crea con la API del plugin `admin()`, así que funciona aunque el registro esté cerrado.
+
+- Es idempotente: reiniciar no lo duplica ni le cambia la contraseña.
+- Sin `ADMIN_EMAIL` o sin `ADMIN_PASSWORD` no crea nada, y el log dice `admin seed skipped`.
+- Los crons declarados en código se ejecutan como este usuario ([Tipos de jobs](../crons/jobs.mdx)).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber cómo viaja la sesión y qué hace el middleware del frontend | [La sesión](sessions.mdx) |
+| Entender la protección CSRF y los límites del backend | [CSRF y protecciones](csrf.mdx) |
+| Elegir quién puede llamar a un procedimiento | [Quién puede llamar](../api/builders.mdx) |
+| Configurar las variables de OIDC o del admin | [Configuración](../configuration/index.mdx) |

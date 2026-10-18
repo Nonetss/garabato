@@ -1,0 +1,48 @@
+---
+titulo: Estilo de TypeScript
+descripcion: Qué patrones de TypeScript no se aceptan en el repositorio (casts, cadenas de ??, ternarios metidos en expresiones) y qué escribir en su lugar
+commands: [check, format, check-types]
+orden: 1
+actualizado: 2026-10-18
+---
+
+El formato lo decide Biome (`bun run check`): 2 espacios, comillas dobles, sin punto y coma, 80 columnas y los imports ordenados. Además hay reglas que Biome no comprueba. Todas buscan lo mismo: que lo que el código decide se vea, y que el compilador no deje pasar errores de tipos. Valen para todo fichero TypeScript de `apps/*` y `packages/*`, nuevo o tocado.
+
+## No se permite
+
+| Patrón | Ejemplo |
+| --- | --- |
+| Casts que silencian al compilador | `valor as Tipo`, `valor as unknown as Tipo`, `valor!` |
+| Tipos genéricos o formas inventados para que algo encaje | `TData = unknown` que nadie necesita |
+| Cadenas de `??` | `a ?? b ?? c ?? null` |
+| `??` con un valor por defecto que no es literal | `job.description ?? job.cronExpression` |
+| Ternarios anidados o dentro de una expresión | `list.flatMap((x) => (x.ok ? [x.id] : []))` |
+| Memoizar con `let` + `??=` | `let spec; const get = () => (spec ??= build())` |
+
+## Sí se permite
+
+- Un `??` con un literal: `user.name ?? ""`.
+- Un ternario simple como valor de una asignación: `const mode = enabled ? "on" : "off"`.
+- El encadenamiento opcional para leer: `user?.role === "admin"`, mientras no alimente una cadena de `??`.
+
+## Qué hacer en su lugar
+
+- Para un valor que puede ser de otro tipo, **estrecharlo con una comprobación** (`if (typeof x === "boolean") return null`), no con `as`.
+- Para un registro de entradas de tipos distintos, comprobarlo con `satisfies` contra la forma común en vez de borrar su tipo (`surface-search-sources.ts` lo hace).
+- Para varios valores por defecto, **una función con nombre y `return` tempranos**, comparando con `!== undefined` o `!== null` para conservar el sentido de `??`:
+
+  ```ts
+  function jobDescription(job: CronJob): string {
+    if (job.description !== null) return job.description
+    return job.cronExpression
+  }
+  ```
+
+- Para filtrar y transformar, `.filter().map()` o un bucle `for`.
+- Para objetos que dependen de una condición, dos `return` explícitos.
+
+## Si un tipo no encaja
+
+No se fuerza. Se busca el tipo que expone la librería, se estrecha con comprobaciones o se replantea el diseño. Si sigue sin haber una forma limpia, se para y se consulta antes de escribir un cast.
+
+La referencia completa, con los ejemplos reales del código, es `.agents/skills/stack/references/code-style.md`.

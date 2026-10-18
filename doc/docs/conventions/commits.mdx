@@ -1,0 +1,27 @@
+---
+titulo: Commits
+descripcion: Cómo se escribe el mensaje de un commit, cómo se reparten los cambios entre commits y qué no puede aparecer nunca en el historial
+orden: 2
+actualizado: 2026-10-18
+---
+
+Se sigue Conventional Commits: `tipo(ámbito): resumen corto en imperativo`, en inglés, en minúsculas y sin punto final.
+
+```txt
+feat(frontend): show the running version in the account menu and flag a newer release to administrators
+fix(api): use proper HTTP methods on destructive oRPC routes
+docs(openspec): archive remove-collections and sync its specs
+```
+
+- Tipos habituales: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`.
+- El ámbito es el área afectada (`api`, `frontend`, `auth`, `db`, `docker`, `openspec`, `deps`, `release`…); si son varias, separadas por comas (`chore(frontend,docs,openspec): …`).
+- El resumen cuenta por qué se hace el cambio, no repite el diff.
+- Un commit por unidad de trabajo coherente; los cambios que no tienen relación van en commits separados, nunca en un «misc updates».
+- Las migraciones que ya existen en la copia de trabajo se commitean junto al esquema o al código al que pertenecen.
+
+## Nunca
+
+- **Ninguna atribución a una herramienta de IA**: ni un `Co-Authored-By:` que nombre a un asistente o modelo, ni pies del tipo «Generated with…», ni insignias o enlaces, en el asunto, el cuerpo, los trailers o la descripción de un PR. Los commits son solo de su autor.
+- Ni `amend`, ni `force`, ni saltarse hooks. No hay git hooks instalados: nada se ejecuta solo al hacer commit, así que se valida antes.
+
+En Claude Code, `/commit` (`.claude/commands/commit.md`) hace los commits siguiendo estas reglas, y `/tag` crea la etiqueta de una versión.

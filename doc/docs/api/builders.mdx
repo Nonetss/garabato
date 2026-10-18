@@ -1,0 +1,29 @@
+---
+titulo: Quién puede llamar
+descripcion: Los seis builders de procedimientos, qué acceso deja pasar cada uno y qué error responde a quien no puede
+workspaces: [api, auth]
+orden: 1
+actualizado: 2026-10-18
+---
+
+Todo procedimiento parte de uno de estos builders, definidos en `packages/api/src/index.ts`. El builder decide el acceso y lo deja anotado en los metadatos (`access`); nunca se anota a mano.
+
+| Builder | Quién puede llamarlo | Si no puede |
+| --- | --- | --- |
+| `publicProcedure` | Cualquiera, incluso sin sesión. | — |
+| `protectedProcedure` | Cualquier usuario con sesión. | Sin sesión: `UNAUTHORIZED`. |
+| `adminProcedure` | Solo usuarios con el rol global `admin`. | Sin sesión: `UNAUTHORIZED`; sin el rol: `FORBIDDEN`. |
+| `permissionProcedure(recurso, acción)` | Quien tenga ese permiso en su organización activa. Los admins globales pasan siempre. | Sin sesión: `UNAUTHORIZED`; sin organización activa o sin el permiso: `FORBIDDEN`. |
+| `cronProcedure` | Solo el planificador de crons. Ni siquiera un admin puede llamarlo por HTTP. | `FORBIDDEN` («This endpoint is cron-only»). |
+| `tokenProcedure` | Solo el módulo PKCS#11 del navegador, con una clave de token en `x-api-key` cuyo dueño tenga activada la verificación en dos pasos. | Sin clave válida o con el dueño baneado: `UNAUTHORIZED`; sin dos pasos: `FORBIDDEN`; con el token desactivado: `SERVICE_UNAVAILABLE`; con un módulo demasiado viejo: `PRECONDITION_FAILED`. |
+
+## Cómo elegir
+
+- **El que deja pasar a menos gente** que necesite el procedimiento. Una lectura que cualquiera con sesión puede ver es `protectedProcedure`; si además filtra por dueño, eso lo hace el handler (y responde `NOT_FOUND` a lo ajeno, ver [Errores](errors.mdx)).
+- **`permissionProcedure`** comprueba los recursos y acciones de `appStatements` en `packages/auth/src/permissions.ts` contra la organización activa de la sesión (ver [Autenticación y permisos](../auth/index.mdx)). Hoy ningún procedimiento lo usa.
+- **`cronProcedure`** es para lo que solo debe ejecutarse programado: ninguna petición HTTP lleva el contexto del planificador (ver [Crons](../crons/execution.mdx)).
+- **`tokenProcedure`** solo lo usa `certificateToken`. Su contexto lleva a quien llama en `token`; `user` y `session` quedan vacíos, porque una clave de token nunca se convierte en una sesión.
+
+## Qué se comprueba
+
+La regla de acceso de cada builder está probada en `packages/api/tests/index.test.ts`. Los tests de un procedimiento solo vuelven a probar el acceso cuando el handler añade una comprobación propia (el dueño de una fila, por ejemplo).

@@ -1,0 +1,169 @@
+{
+  "title": "Cómo llega una petición a cada app",
+  "desc": "El navegador solo habla con el gateway, la única entrada pública: el gateway manda /rpc, /api, /scalar y /openapi.json al backend y todo lo demás al frontend, que consulta la sesión al backend. El backend guarda los datos en PostgreSQL y los PDF, cifrados, en un almacén S3 (MinIO); backend y frontend envían sus logs a Loki",
+  "width": 816,
+  "height": 296,
+  "zones": [
+    {
+      "id": "client",
+      "x": 16,
+      "y": 16,
+      "w": 144,
+      "h": 264,
+      "label": "CLIENTE"
+    },
+    {
+      "id": "app",
+      "x": 192,
+      "y": 16,
+      "w": 400,
+      "h": 264,
+      "label": "APLICACIÓN"
+    },
+    { "id": "data", "x": 624, "y": 16, "w": 176, "h": 264, "label": "DATOS" }
+  ],
+  "nodes": [
+    {
+      "id": "browser",
+      "name": "Navegador",
+      "kind": "input",
+      "shape": "pill",
+      "x": 40,
+      "y": 116,
+      "w": 96,
+      "h": 64,
+      "zone": "client",
+      "trace": true,
+      "info": "Todo va al mismo origen: no hay peticiones cross-origin ni CORS en el cliente"
+    },
+    {
+      "id": "gateway",
+      "entity": "workspaces/gateway",
+      "name": "Gateway",
+      "sub": "Caddy",
+      "kind": "focal",
+      "x": 216,
+      "y": 116,
+      "w": 128,
+      "h": 64,
+      "zone": "app",
+      "info": "El único servicio que publica un puerto. Las rutas están en apps/gateway/routes.caddy"
+    },
+    {
+      "id": "backend",
+      "entity": "workspaces/backend",
+      "name": "Backend",
+      "sub": "Hono + oRPC · :3000",
+      "x": 408,
+      "y": 48,
+      "w": 160,
+      "h": 64,
+      "zone": "app",
+      "needs": ["postgres", "objects"]
+    },
+    {
+      "id": "frontend",
+      "entity": "workspaces/frontend",
+      "name": "Frontend",
+      "sub": "Astro SSR · :4321",
+      "x": 408,
+      "y": 184,
+      "w": 160,
+      "h": 64,
+      "zone": "app",
+      "needs": ["backend"],
+      "info": "En desarrollo es astro dev en :4320, detrás del gateway de desarrollo en https://localhost:4321"
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "kind": "store",
+      "shape": "cylinder",
+      "x": 648,
+      "y": 52,
+      "w": 128,
+      "h": 56,
+      "zone": "data",
+      "info": "DATABASE_URL. En desarrollo vive fuera del proyecto, en otro servidor"
+    },
+    {
+      "id": "objects",
+      "name": "MinIO / S3",
+      "sub": "los PDF, cifrados",
+      "kind": "store",
+      "shape": "cylinder",
+      "x": 648,
+      "y": 128,
+      "w": 128,
+      "h": 56,
+      "zone": "data",
+      "info": "Cualquier almacén compatible con S3 (S3_ENDPOINT); los compose traen un MinIO con el perfil minio"
+    },
+    {
+      "id": "loki",
+      "name": "Loki",
+      "sub": "opcional",
+      "kind": "store",
+      "shape": "cylinder",
+      "x": 648,
+      "y": 208,
+      "w": 128,
+      "h": 56,
+      "zone": "data",
+      "info": "Solo con LOKI_URL: alimenta el registro de actividad de /admin/logs"
+    }
+  ],
+  "edges": [
+    {
+      "from": "browser",
+      "to": "gateway",
+      "kind": "accent",
+      "points": [[136, 148], [216, 148]],
+      "label": "HTTPS",
+      "at": [176, 138]
+    },
+    {
+      "from": "gateway",
+      "to": "backend",
+      "kind": "accent",
+      "points": [[280, 116], [280, 80], [408, 80]],
+      "label": "/RPC · /API",
+      "at": [344, 70]
+    },
+    {
+      "from": "gateway",
+      "to": "frontend",
+      "points": [[280, 180], [280, 216], [408, 216]],
+      "label": "EL RESTO",
+      "at": [344, 206]
+    },
+    {
+      "from": "frontend",
+      "to": "backend",
+      "points": [[488, 184], [488, 112]],
+      "label": "SESIÓN",
+      "at": [500, 152],
+      "anchor": "start",
+      "info": "En SSR, el middleware consulta la sesión al backend por BACKEND_URL"
+    },
+    {
+      "from": "backend",
+      "to": "postgres",
+      "points": [[568, 80], [648, 80]],
+      "label": "SQL",
+      "at": [608, 70]
+    },
+    {
+      "from": "backend",
+      "to": "objects",
+      "points": [[568, 96], [604, 96], [604, 156], [648, 156]],
+      "label": "S3",
+      "at": [626, 146]
+    },
+    { "from": "backend", "to": "loki", "badge": "LOGS" },
+    { "from": "frontend", "to": "loki", "badge": "LOGS" }
+  ],
+  "kindNames": { "focal": "Entrada pública" },
+  "edgeNames": { "accent": "Una llamada a la API", "default": "Conexión" },
+  "badgeName": "Envía sus logs"
+}

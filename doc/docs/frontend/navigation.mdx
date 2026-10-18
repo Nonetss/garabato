@@ -1,0 +1,35 @@
+---
+titulo: Navegación
+descripcion: Cómo se declara una página una sola vez para que salga en el navbar, el sidebar, las tarjetas y la búsqueda ⌘K, y cómo se hace buscable una entidad
+workspaces: [frontend]
+orden: 2
+actualizado: 2026-10-18
+---
+
+Cada página con identidad propia (una **superficie**) se declara **una sola vez** en `src/lib/app-surfaces.ts`: ruta, título, etiqueta, descripción, icono, si aparece en la navegación y si es solo para admins. Las secciones anidan a sus subpáginas, y `id` y `parentId` se derivan solos.
+
+## Lo que se deriva de `app-surfaces.ts`
+
+Todo lo demás sale de ahí, en `src/lib/site-nav.ts`: el navbar, el sidebar de cada sección, las tarjetas de las páginas resumen y la búsqueda. Nunca se escribe a mano una etiqueta, un icono o una descripción en un componente de navegación.
+
+- Solo las superficies con `nav` salen en el navbar y los sidebars. `nav.navbar: false` saca una sección del navbar pero conserva su sidebar, sus tarjetas y su entrada en la búsqueda (así está `config`).
+- Para saber si un enlace está activo se usa `isNavLinkActive(href, pathname)`, nunca un `startsWith` suelto. Dentro de una sección solo se marca la fila más específica: en `/config/appearance` se marca Apariencia, no Configuración.
+- Los iconos se resuelven por nombre en `src/lib/icon-registry.ts` (ver [Sistema visual](visual-system.mdx#iconos)).
+- El marco de navegación vive en `features/app-shell/` (`authenticated`, `guest`, `sidebar`) y en `features/admin/shell`; `components/shared` nunca lo pinta.
+
+## La búsqueda del navbar (`⌘K` / `Ctrl+K`)
+
+- Lista todas las superficies con ruta fija, salvo las de admin para quien no lo es. Una superficie nueva aparece sola; las que no son un destino (login, signup, 404) llevan `search: false`.
+- Las rutas con parámetro (`/documents/[id]`) no salen como superficies, pero pueden declarar una **fuente de búsqueda** (`searchSource`) que lista sus registros. Hoy hay tres, en `features/app-shell/authenticated/model/surface-search-sources.ts`: «Tareas programadas» (los cron jobs), «Documentos» y «Carpetas» (las carpetas de la biblioteca, que abren `/documents` con su carpeta en la query string).
+- Cada palabra de la búsqueda tiene que aparecer en algún texto del resultado (etiqueta, descripción, grupo, rastro o `keywords`), sin importar mayúsculas ni acentos: «configuracion tema» encuentra Apariencia. Los registros también casan con las etiquetas de su sección, así que «crons» lista todos los jobs.
+- Cada subpágina y cada registro muestra antes su rastro de sección (`Configuración › Apariencia`).
+- Con la búsqueda vacía muestra un grupo «Recientes» con las últimas páginas visitadas, guardado en `localStorage` por usuario. Los registros nunca entran en recientes.
+
+## Hacer buscable una entidad
+
+| La entidad… | Fuente | Cómo carga |
+| --- | --- | --- |
+| Se lista entera | `defineSearchSource`, con el `list` de su página | Una vez mientras el diálogo está abierto, compartiendo la caché de la lista |
+| Se lista por páginas | `defineServerSearchSource`, con su procedimiento `search` | 150 ms después de dejar de escribir, desde 2 caracteres, 5 resultados |
+
+La fuente siempre llama al procedimiento de su propia entidad. El procedimiento `search` se escribe como cuenta [Búsquedas de texto libre](../api/search.mdx).

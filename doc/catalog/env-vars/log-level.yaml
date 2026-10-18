@@ -1,0 +1,8 @@
+name: LOG_LEVEL
+area: runtime
+required: false
+default: "info"
+meaning: "Nivel mínimo de log: fatal, error, warn, info, debug o trace"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

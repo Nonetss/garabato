@@ -1,0 +1,35 @@
+---
+titulo: Comentarios
+descripcion: Hilos de comentarios con respuestas sobre cualquier entidad, su API y cómo engancharlos a una entidad nueva
+workspaces: [api, frontend]
+orden: 1
+actualizado: 2026-10-18
+---
+
+Para usarlos en una entidad basta con renderizar `CommentsButton` (de `@/features/comments`) con su `entityType` y su `entityId`. Muestra el contador y abre el hilo en un panel lateral. Hoy solo lo usan las ejecuciones de los crons (`features/crons/detail/components/cron-run-row.tsx`).
+
+## La API
+
+`orpc.v1.comment.*`, todos con `protectedProcedure`:
+
+| Procedimiento | Método | Qué hace |
+| --- | --- | --- |
+| `list` | `GET` | Los comentarios de una entidad, como árbol de respuestas. |
+| `counts` | `QUERY` | Cuántos tiene cada una de muchas entidades a la vez, para los contadores de una lista. |
+| `create` | `POST` 201 | Crea un comentario o una respuesta. |
+| `update` | `PATCH` | Cambia su contenido. |
+| `delete` | `DELETE` | Lo borra de forma lógica; repetirlo no da error. |
+
+Solo el autor puede editar o borrar sus comentarios.
+
+## Qué falla
+
+| Mensaje | Causa |
+| --- | --- |
+| «Solo puedes editar tus comentarios» / «Solo puedes eliminar tus comentarios» (`FORBIDDEN`) | No eres el autor |
+| «Comentario no encontrado» (`NOT_FOUND`) | El comentario no existe |
+| «Comentario padre no encontrado» (`NOT_FOUND`) | La respuesta apunta a un comentario que no existe |
+| `BAD_REQUEST` al responder | El comentario padre es de otra entidad |
+
+> [!WARNING]
+> Al borrar una entidad que tiene comentarios, su handler tiene que borrarlos en la misma transacción: la referencia es polimórfica y la base de datos no lo hace sola (ver [Referencias polimórficas](index.mdx#referencias-polimórficas)).

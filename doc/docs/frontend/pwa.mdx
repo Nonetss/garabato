@@ -1,0 +1,19 @@
+---
+titulo: PWA
+descripcion: Cómo se instala Garabato como aplicación, qué guarda su service worker y por qué en desarrollo se desactiva solo
+workspaces: [frontend]
+orden: 5
+actualizado: 2026-10-18
+---
+
+La app se puede instalar: tiene `public/manifest.webmanifest` (nombre «Garabato», iconos en `public/pwa/`) y un service worker, `public/sw.js`, que los layouts registran a través de `src/layouts/service-worker.astro`, **solo en producción**.
+
+## Qué hace el service worker
+
+- Va **primero a la red** en todo, y solo tira de la caché cuando la red falla de verdad: la app cambia a menudo y un contenido viejo es peor que un fallo de caché.
+- Nunca toca `/rpc`, `/api`, `/scalar` ni `/openapi.json`: son datos vivos y de sesión que siempre se piden de nuevo.
+- Solo atiende peticiones `GET`.
+
+## En desarrollo
+
+`service-worker.astro` hace lo contrario: desregistra cualquier worker y borra su caché. Un worker interceptaría cada uno de los cientos de módulos sin empaquetar que sirve Vite en desarrollo, lo que vuelve el desarrollo muy lento y a veces rompe la carga de módulos.

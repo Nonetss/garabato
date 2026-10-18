@@ -1,0 +1,28 @@
+---
+titulo: CSRF y protecciones
+descripcion: Las tres capas que impiden que otra web use tu sesión y los límites que el backend aplica a cada petición
+workspaces: [backend, gateway]
+orden: 2
+actualizado: 2026-10-18
+---
+
+CSRF es el ataque en que otra web hace que tu navegador envíe una petición a esta app con tu cookie. Se evita con tres capas, sin plugin en el cliente:
+
+1. **`/rpc` nunca acepta `GET`.** Las escrituras exigen `POST`, `PUT`, `PATCH` o `DELETE`, y las lecturas `QUERY`, que el navegador no puede enviar desde otra web sin pasar un *preflight* de CORS que solo supera el origen configurado. Además, `QUERY` solo se acepta en procedimientos de lectura (declarados `GET` o `QUERY`).
+2. **`/api` rechaza navegaciones desde otra web.** Si un `GET` llega como navegación de nivel superior desde otro sitio (según las cabeceras `Sec-Fetch-*`), responde `403`. Las peticiones sin esas cabeceras (scripts, clientes con API key) pasan.
+3. **La cookie es `SameSite=Lax`**, así que el navegador no la envía en peticiones cross-site con métodos que modifican datos.
+
+Además, todo va por el mismo origen gracias al gateway (o al gateway de desarrollo), así que el navegador nunca necesita CORS ([El camino de una petición](../architecture/request.mdx)).
+
+## Protecciones del backend
+
+Los manejadores de oRPC (`/rpc`, `/api` y la documentación) comparten plugins, en `apps/backend/src/routers/handler-plugins.ts`:
+
+| Protección | Respuesta |
+| --- | --- |
+| El cuerpo pasa de 1 MiB | `413`. La subida de documentos (`document.upload`) tiene su propio manejador con un límite de 21 MiB: un PDF de 20 MiB más el sobre multipart |
+| El cuerpo intenta contaminar prototipos (`__proto__`, `constructor.prototype`) | `400` |
+| Un stream SSE lleva tiempo sin enviar nada | Un *ping* cada 5 segundos, para que Bun no cierre la conexión a los 10 segundos de inactividad |
+| Un procedimiento falla | Se registra una sola vez, con el nivel según la causa ([Logs](../architecture/logs.mdx)) |
+
+`/scalar` y `/openapi.json` solo responden a admins: sin sesión, `401`; sin el rol, `403`.

@@ -1,0 +1,41 @@
+---
+titulo: Primera vez
+descripcion: Los pasos para dejar el proyecto listo para arrancar en una copia de trabajo nueva
+commands: [setup-dev, minio-start]
+env_vars: [database-url, better-auth-secret, certificate-encryption-key, s3-secret-access-key, admin-email, admin-password]
+orden: 1
+actualizado: 2026-10-18
+---
+
+1. Instala las dependencias:
+
+   ```bash
+   bun install
+   ```
+
+2. Crea el `.env` de la raíz:
+
+   ```bash
+   bun run setup:dev
+   ```
+
+   Copia `.env.example` y rellena con `openssl` los secretos (`BETTER_AUTH_SECRET`, `CERTIFICATE_ENCRYPTION_KEY`, `S3_SECRET_ACCESS_KEY`) y el administrador inicial (`ADMIN_EMAIL=admin@stack.local`, `ADMIN_NAME` y una `ADMIN_PASSWORD` aleatoria). El fichero se crea con permisos `600`.
+
+3. **Guarda la contraseña del administrador**, que `setup:dev` imprime al terminar: no queda guardada en ningún otro sitio que el `.env`.
+
+4. Pon en `DATABASE_URL` la dirección de tu base de datos PostgreSQL de desarrollo (ver [Base de datos](database.mdx)).
+
+5. Elige dónde van los PDF: para el modo nativo, `bun run minio:start` levanta un MinIO en `127.0.0.1:9000`, que es el `S3_ENDPOINT` por defecto; si tienes tu propio almacén S3, pon sus datos en las variables `S3_*`.
+
+6. Arranca el proyecto [con Docker](docker.mdx) o [en nativo](native.mdx). El backend aplica las migraciones y crea el administrador al arrancar.
+
+7. La primera vez, [confía en el certificado local](certificate.mdx) del gateway.
+
+## Si algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| `setup:dev` dice `.env already exists, skipping` | Ya hay un `.env`, que nunca se sobrescribe sin pedirlo | Edítalo a mano, o ejecuta `bash scripts/setup-dev.sh --force` para regenerarlo (pierdes los valores actuales) |
+| `error: openssl is required to generate secrets` | No tienes `openssl` | Instálalo y vuelve a ejecutarlo |
+| Avisa de `per-app env files that are no longer read` | Quedan `.env` en `apps/*` de una versión anterior | Pasa al `.env` de la raíz lo que necesites y bórralos |
+| El backend no arranca y se queja de `ADMIN_EMAIL` | No es un email válido (`admin@localhost` no pasa la validación) | Usa uno con dominio, como `admin@stack.local` |

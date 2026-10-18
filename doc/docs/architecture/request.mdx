@@ -1,0 +1,42 @@
+---
+titulo: El camino de una petición
+descripcion: Qué hace cada pieza cuando abres una página, y por qué todo se sirve desde un solo origen
+workspaces: [gateway, frontend, backend]
+orden: 1
+actualizado: 2026-10-18
+---
+
+Ejemplo: abres `/documents` en el navegador.
+
+1. **El gateway** recibe `GET /documents`. Como no empieza por `/rpc/`, `/api/`, `/scalar` ni es `/openapi.json`, lo envía al frontend.
+2. **El middleware del frontend** (`apps/frontend/src/middleware.ts`) pregunta al backend por la sesión con la cookie. Sin sesión, redirige a `/login`; si la ruta es de `/admin` y el usuario no es admin, lo manda a `/`. Si todo va bien, registra la visita para el [registro de actividad](../cross-cutting/activity-log.mdx).
+3. **Astro renderiza** la página. La parte interactiva es una isla React que solo se monta en el navegador (`client:only="react"`).
+4. **La isla pide los datos** con `orpc.v1.document.list`, que sale como `QUERY /rpc/v1/document/list` hacia el mismo origen: el cliente manda las lecturas como `QUERY` y el resto como `POST`.
+5. **El gateway** ve `/rpc/…` y lo pasa al backend.
+6. **El backend** genera un id de petición, identifica al usuario por la cookie, ejecuta el procedimiento y devuelve el resultado.
+
+En desarrollo pasa lo mismo: el gateway de desarrollo sirve `https://localhost:4321` (HTTPS con HTTP/2 y una autoridad de certificación local) con las mismas rutas, delante de `astro dev`, que escucha en `:4320`. Las rutas están en un solo fichero, `apps/gateway/routes.caddy`, que importan tanto el `Caddyfile` de producción como el `Caddyfile.dev`, así que desarrollo y producción enrutan igual.
+
+## Qué ruta va a cada app
+
+| Ruta | Va a |
+| --- | --- |
+| `/rpc/*`, `/api/*`, `/scalar*`, `/openapi.json` | El backend |
+| `/health` | El propio gateway responde `ok` (para el healthcheck del compose) |
+| Todo lo demás | El frontend |
+
+`routes.caddy` también comprime las respuestas, añade cabeceras de seguridad básicas y quita la cabecera `Server` (ver [Las imágenes](../deployment/images.mdx)).
+
+## Un solo origen
+
+El navegador lo ve todo bajo el mismo dominio, así que no hay peticiones cross-origin: no hace falta CORS en el cliente y las cookies de sesión funcionan sin trucos. Por eso el gateway es **el único sitio** que decide qué app sirve cada ruta.
+
+> [!IMPORTANT]
+> Una ruta pública nueva se añade en `apps/gateway/routes.caddy`, nunca publicando el puerto de otro servicio.
+
+## Cuando algo falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Toda página responde `Service Unavailable` (503) | El middleware del frontend no pudo consultar la sesión: el backend no responde | Mira los logs del backend; las páginas públicas (`/login`, `/signup`) siguen cargando |
+| El inicio de sesión no guarda la cookie | Estás entrando por `:4320` o `:3000` en lugar de por el gateway | Entra siempre por `https://localhost:4321` en desarrollo |

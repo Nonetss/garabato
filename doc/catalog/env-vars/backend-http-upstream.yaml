@@ -1,0 +1,8 @@
+name: BACKEND_HTTP_UPSTREAM
+area: gateway
+required: false
+default: "backend:3000"
+meaning: "Adónde manda el gateway la API; lo ponen los compose"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

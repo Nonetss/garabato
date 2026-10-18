@@ -1,0 +1,6 @@
+command: "bun run loki:stop"
+area: services
+purpose: "Para el Loki del modo nativo"
+page: development/native
+fuente: package.json
+actualizado: 2026-10-18

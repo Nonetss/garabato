@@ -1,0 +1,50 @@
+---
+titulo: Las imágenes
+descripcion: Cómo se construyen las imágenes del backend, el frontend y el gateway, qué llevan dentro y qué hay que tocar al añadir un workspace
+workspaces: [backend, frontend, gateway, pkcs11]
+orden: 3
+actualizado: 2026-10-18
+---
+
+## Al añadir un workspace
+
+Un workspace de Bun nuevo necesita, en el mismo cambio:
+
+1. La línea que copia su `package.json` en los cuatro Dockerfiles de las apps: `apps/backend/Dockerfile`, `apps/frontend/Dockerfile` y sus dos `Dockerfile.dev`.
+2. Su entrada `sync` en `compose.dev.yml`, en cada servicio que lo importe, o sus cambios no llegarán al contenedor ([Con Docker](../development/docker.mdx)).
+
+## Backend y frontend
+
+- Se construyen y ejecutan sobre `oven/bun:<versión>-slim`, sin Node. La versión es el `ARG BUN_VERSION`, que se mantiene igual que el `packageManager` del `package.json` raíz.
+- Primero se copian solo los `package.json` de todos los workspaces y se instalan las dependencias (`bun install --frozen-lockfile`); después se copia el resto. Así, cambiar código no invalida la capa de dependencias: solo cambiarlas.
+- Se compilan con `SKIP_ENV_VALIDATION=1`, porque al compilar no hay `.env`.
+- **Las imágenes finales no llevan `node_modules`.** El backend se empaqueta con `tsdown`, que mete los paquetes del workspace y todas las dependencias en `dist/`; el frontend las deja en `dist/server` y arranca `dist/server/entry.mjs` en el puerto 4321.
+- El backend copia además las migraciones (`packages/db/src/migrations`), que aplica al arrancar.
+
+### El módulo PKCS#11 en la imagen del backend
+
+El `Dockerfile` del backend empieza con una etapa `module` sobre `rust:<versión>-slim-bookworm` que compila [`native/pkcs11`](catalog:workspaces/pkcs11) para Linux x86_64, Linux aarch64 y Windows x86_64. La imagen final copia esos binarios y `native/pkcs11/install` en `/app/native/pkcs11`, para que el backend los ofrezca a los navegadores; nada de Rust llega a la imagen final. Las imágenes de desarrollo no lo compilan: en desarrollo se usa `native/pkcs11/scripts/build-dist.sh`.
+
+### `Dockerfile.dev`
+
+Cada app tiene un `Dockerfile.dev` para `compose.dev.yml`, con la misma capa de dependencias y su servidor de desarrollo como `CMD` (`bun run --hot src/index.ts` en el backend, `astro dev` en el frontend). Producción y CI nunca los usan.
+
+## Gateway
+
+`caddy:2-alpine` más `routes.caddy`, el `Caddyfile` (producción) y el `Caddyfile.dev` (solo lo usan los compose de desarrollo, para servir `https://localhost:4321` con HTTP/2), sin paso de compilación.
+
+`routes.caddy` añade a todas las respuestas cabeceras de seguridad básicas y quita la cabecera `Server`:
+
+| Cabecera | Valor |
+| --- | --- |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=()` |
+
+- HSTS y CSP se dejan fuera a propósito: HSTS corresponde a lo que termine el TLS delante, y una CSP necesita probarse antes en modo `Report-Only` (Astro y Scalar usan scripts en línea).
+- Si una funcionalidad necesita cámara, micrófono, geolocalización, pagos o USB, hay que relajar `Permissions-Policy` en `routes.caddy`.
+
+## Lo que no entra en el contexto
+
+`.dockerignore` deja fuera `node_modules`, las salidas de compilación (también `native/*/target` y todo `dist/`), los Dockerfiles, `compose.yml` y todo `.env*` salvo `.env.example`.

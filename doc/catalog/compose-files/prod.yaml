@@ -1,0 +1,6 @@
+path: compose.prod.yml
+purpose: Producción, con las imágenes ya publicadas en el registro
+start: En el servidor, con scripts/bootstrap.sh
+page: deployment/production
+fuente: manual
+actualizado: 2026-10-18

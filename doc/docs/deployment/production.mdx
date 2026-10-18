@@ -1,0 +1,59 @@
+---
+titulo: Producción
+descripcion: Cómo instalar Garabato en un servidor con scripts/bootstrap.sh, qué genera y qué levanta compose.prod.yml con las imágenes publicadas
+compose_files: [prod]
+env_vars: [frontend-port, cors-origin, database-url, postgres-password, better-auth-secret, certificate-encryption-key, compose-profiles]
+orden: 2
+actualizado: 2026-10-18
+---
+
+## Instalar en un servidor nuevo
+
+Hace falta `docker` con el plugin `docker compose`, `openssl` y `curl`.
+
+1. Crea un directorio para la instalación y entra en él: el script lo escribe todo en el directorio actual.
+2. Ejecuta el instalador:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/Nonetss/garabato/main/scripts/bootstrap.sh | bash
+   ```
+
+3. Responde a las preguntas: el puerto del host (por defecto `4444`), la URL pública que verá el navegador, el nombre, email y contraseña del administrador (al menos 8 caracteres) y dónde guardar los documentos: en el MinIO incluido o en un almacén S3 externo cuyo bucket ya exista (endpoint, bucket, región y credenciales).
+4. Revisa el resumen y confirma. El script genera los secretos con `openssl` y escribe el `.env` con permisos `600`.
+5. Si no hay `compose.prod.yml` en el directorio, lo descarga. Con `PB_REF=<rama o tag>` delante de `bash` eliges de qué versión (las imágenes siguen siendo `:main`).
+6. Acepta arrancar el stack, o hazlo después desde ese directorio:
+
+   ```bash
+   docker compose -f compose.prod.yml --env-file .env up -d
+   ```
+
+7. En uno o dos minutos, entra en la URL pública con el email del administrador. El backend aplica las migraciones y crea el administrador al arrancar: no hay ningún paso manual de base de datos.
+
+<Callout type="warning" title="Guarda la clave de los certificados">
+`CERTIFICATE_ENCRYPTION_KEY` cifra los certificados de firma guardados. Haz copia de ella junto con las de la base de datos: si se pierde, ningún certificado guardado se puede recuperar.
+</Callout>
+
+## Qué genera
+
+El `.env` lleva `FRONTEND_PORT`, `CORS_ORIGIN` (la URL pública), `POSTGRES_PASSWORD`, `DATABASE_URL`, `BETTER_AUTH_SECRET`, `DISABLE_SIGN_UP='false'`, `CERTIFICATE_ENCRYPTION_KEY`, las variables `S3_*`, los `ADMIN_*` y, con el MinIO incluido, `COMPOSE_PROFILES=minio`. Todos los valores van entre comillas simples para que compose los lea tal cual; consérvalas si lo editas. Qué significa cada variable: [Configuración](../configuration/index.mdx) y [El .env de producción](../configuration/production-env.mdx).
+
+## Cuándo se niega o avisa
+
+| Situación | Qué hace |
+| --- | --- |
+| Ya hay un `.env` en el directorio | Se niega a seguir: no machaca una instalación existente. Bórralo a mano si quieres regenerarlo |
+| Falta `docker`, `docker compose`, `openssl` o `curl` | Sale antes de preguntar nada |
+| No hay terminal interactiva (`/dev/tty`) | Sale: ejecútalo desde una shell |
+| La URL pública es `http://` y no es `localhost` ni `127.0.0.1` | Avisa de que las cookies `Secure` no funcionarán y pregunta si seguir; por defecto, no |
+| Un valor lleva comillas simples, o el puerto o la URL no son válidos | Lo rechaza |
+| `PB_REF` no es ninguna rama ni tag | El `.env` ya está escrito, pero no descarga el compose: corrige `PB_REF` y descárgalo a mano |
+
+Por eso nunca se ejecuta dentro de tu copia de trabajo: para probar producción en local usa otro directorio, o [`bun run docker:up`](compose-local.mdx).
+
+## `compose.prod.yml`
+
+Usa las imágenes publicadas `ghcr.io/nonetss/garabato-{frontend,backend,gateway}:main` y los mismos servicios que [`compose.yml`](compose-local.mdx), en una red `garabato` (proyecto `garabato`, contenedores `garabato-<servicio>`). Toda la configuración sale del `.env` del directorio.
+
+- **Solo el gateway publica un puerto** (`${FRONTEND_PORT:-4444}` → 80). Delante del servidor va un proxy inverso con https que apunta a ese puerto.
+- `BETTER_AUTH_URL` se toma de `CORS_ORIGIN`, así que las dos coinciden siempre.
+- MinIO solo arranca con el perfil `minio` (`COMPOSE_PROFILES=minio`). Sin él, el backend usa el almacén S3 externo del `.env`, y nadie espera por MinIO. Ni su API S3 ni su consola se publican, ni siquiera en el loopback.

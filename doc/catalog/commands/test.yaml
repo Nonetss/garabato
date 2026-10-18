@@ -1,0 +1,6 @@
+command: "bun run test"
+area: validation
+purpose: "Los tests unitarios de packages/api, packages/cron y apps/frontend"
+page: development/validation
+fuente: package.json
+actualizado: 2026-10-18

@@ -1,0 +1,6 @@
+command: "bun run tailwind:fix"
+area: validation
+purpose: "Arregla las clases de Tailwind que marca tailwind:check"
+page: development/validation
+fuente: package.json
+actualizado: 2026-10-18

@@ -1,0 +1,6 @@
+command: "bun run db:generate"
+area: database
+purpose: "Genera una migración nueva a partir del cambio de esquema; solo la ejecuta una persona"
+page: development/database
+fuente: package.json
+actualizado: 2026-10-18

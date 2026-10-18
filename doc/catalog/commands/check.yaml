@@ -1,0 +1,6 @@
+command: "bun run check"
+area: validation
+purpose: "Biome: formato, lint y orden de imports, corrigiendo lo que puede"
+page: development/validation
+fuente: package.json
+actualizado: 2026-10-18

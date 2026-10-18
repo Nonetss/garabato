@@ -1,0 +1,8 @@
+name: S3_REGION
+area: storage
+required: false
+default: "us-east-1"
+meaning: "La región del almacén; MinIO la ignora"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

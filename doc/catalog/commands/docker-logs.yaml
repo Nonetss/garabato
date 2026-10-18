@@ -1,0 +1,6 @@
+command: "bun run docker:logs"
+area: docker
+purpose: "Sigue los logs del stack de compose.yml"
+page: deployment/compose-local
+fuente: package.json
+actualizado: 2026-10-18

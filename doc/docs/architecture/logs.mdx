@@ -1,0 +1,19 @@
+---
+titulo: Logs
+descripcion: Cómo se ven los logs en desarrollo y en producción, cómo seguir una petición y cuándo se envían a Loki
+workspaces: [logger]
+env_vars: [log-level, loki-url, node-env]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Todos los workspaces usan el mismo logger, `@nonete/logger`, sobre pino:
+
+- **En desarrollo** sale formateado y con colores; **en producción** (`NODE_ENV=production`) como JSON, una línea por evento.
+- **El nivel mínimo** lo fija `LOG_LEVEL` (por defecto `info`).
+- **Cada petición HTTP** recibe un id generado por el backend; nunca se acepta uno que venga del cliente (`x-request-id`). Todas las líneas de esa petición, también las de los errores de oRPC, lo llevan, así que se puede seguir de principio a fin.
+- **Los errores de los procedimientos** se registran una sola vez, con un nivel según la causa: `warn` si es un rechazo deliberado (un 4xx), `error` si es un fallo del servidor (5xx o una excepción inesperada) e `info` si el cliente canceló la petición.
+
+## Loki
+
+Si `LOKI_URL` está definida, los logs también se envían a Loki: el backend como servicio `stack-backend` y el frontend como `stack-frontend`. De ahí sale el [registro de actividad](../cross-cutting/activity-log.mdx) de `/admin/logs`: las llamadas a la API y las páginas vistas por usuarios con sesión. Sin `LOKI_URL`, los logs solo salen por consola y `/admin/logs` aparece vacío.

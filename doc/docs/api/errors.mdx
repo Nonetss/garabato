@@ -1,0 +1,38 @@
+---
+titulo: Errores
+descripcion: Qué código de error lanzar según la causa, cómo se escribe el mensaje y las dos distinciones que más se confunden
+workspaces: [api]
+orden: 3
+actualizado: 2026-10-18
+---
+
+Se lanzan con `errors.<CÓDIGO>()` importado de `#errors`, nunca con `new ORPCError(...)`. El mensaje que ve el usuario va en español; los internos, en inglés:
+
+```ts
+throw errors.NOT_FOUND({ message: "Comentario no encontrado" })
+```
+
+El código tiene que decir **cuál es la causa**:
+
+| Código | Cuándo |
+| --- | --- |
+| `BAD_REQUEST` 400 | La entrada es inválida o incoherente más allá de lo que comprueba zod: un cursor mal formado, una expresión cron inválida, un tipo de entidad que no admite iconos. |
+| `UNAUTHORIZED` 401 | No hay nadie autenticado. |
+| `FORBIDDEN` 403 | Hay usuario, pero **este** usuario no tiene el rol, el permiso o la propiedad. Otro sí podría. |
+| `NOT_FOUND` 404 | No existe, **o es privado de otra persona**. |
+| `CONFLICT` 409 | La entrada es válida y el usuario podría, pero el estado o el tipo del objetivo lo impide para todo el mundo: un slug duplicado, un cron declarado en código. |
+| `INTERNAL_SERVER_ERROR` 500 | El servidor rompió algo que debería cumplirse siempre (un `insert().returning()` sin fila). |
+| `BAD_GATEWAY` 502 / `SERVICE_UNAVAILABLE` 503 | Falla un servicio externo o no está disponible (Loki caído en `logs.query`). |
+
+`src/errors.ts` declara todos los códigos estándar de oRPC (de `BAD_REQUEST` a `GATEWAY_TIMEOUT`) con su mensaje por defecto, pero no su estado HTTP: lo ponen los manejadores de `/rpc` y `/api`. El cuerpo de un error lleva `code`, `message` y `data`.
+
+## Dos distinciones que se confunden
+
+- **403 o 404.** Si el usuario ni siquiera debería saber que el recurso existe (es privado de otro), responde 404 para no filtrar su existencia: filtra por dueño en el `where` y usa `assertFound`. 403 solo cuando lo puede ver pero no modificar.
+- **403 o 409.** ¿Podría hacerlo un admin o el dueño? Entonces 403. ¿No puede nadie, por cómo está el objetivo? Entonces 409. Un 400 nunca es la respuesta a una entrada válida que se rechaza por el objetivo.
+
+Los errores de validación de zod ya se convierten solos en `BAD_REQUEST`: no se vuelve a validar la misma regla a mano.
+
+## Cómo se registran
+
+Los errores de los procedimientos se registran una sola vez, con un nivel según la causa: `warn` para un 4xx, `error` para un 5xx o una excepción inesperada, e `info` si el cliente canceló la petición (ver [Logs](../architecture/logs.mdx)).

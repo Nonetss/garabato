@@ -1,0 +1,41 @@
+---
+titulo: Garabato por dentro
+descripcion: Qué es Garabato, de qué piezas está hecho y por dónde empezar a leer para arrancarlo, cambiarlo o desplegarlo
+actualizado: 2026-10-18
+---
+
+Garabato firma PDF con tus propios certificados digitales: sueltas un fichero en el inicio, colocas la firma visible, firmas y descargas. Los certificados se guardan cifrados y los PDF viven cifrados en un almacén de objetos compatible con S3.
+
+Por dentro es un monorepo de TypeScript sobre Bun, coordinado con Turborepo: un frontend Astro y un backend Hono con oRPC detrás de un gateway Caddy, sobre PostgreSQL. Nace de la plantilla `stack` y conserva sus paquetes (`@nonete/*`), sus convenciones y su sistema visual, de modo que el código se puede mover entre los dos repositorios sin reescribirlo. Lo que trajo la plantilla (autenticación, panel de administración, API tipada, planificador de crons, comentarios, iconos de entidad, registro de actividad, Docker) sigue aquí; el producto encima es la firma de documentos.
+
+<Diagram id="architecture" />
+
+## Qué hay en esta documentación
+
+Estas páginas explican cómo funciona el proyecto y cómo se trabaja con él, con el porqué de cada pieza. El `README.md` de la raíz es el resumen rápido, en inglés. Las reglas para los agentes de código están en `AGENTS.md` y en la skill `stack` (`.agents/skills/stack/`); aquí se cuenta lo mismo con más contexto. Si alguna vez no coinciden, mandan las specs de `openspec/specs/` y el código.
+
+| Término | Qué es |
+| --- | --- |
+| **Workspace** | Cada carpeta de `apps/*` y `packages/*` con su propio `package.json`. Bun las enlaza entre sí. |
+| **Procedimiento** | Una operación de la API (por ejemplo `cron.list`). Se define una vez y se puede llamar por RPC o por HTTP. |
+| **Feature (API)** | Un grupo de procedimientos relacionados, en su carpeta `packages/api/src/v1/<feature>/`. |
+| **Feature (frontend)** | Un dominio de la interfaz, en `apps/frontend/src/features/<dominio>/`. |
+| **Slice** | Un caso de uso dentro de un dominio del frontend (`overview`, `detail`…). |
+| **Superficie** | Cualquier página con identidad propia (título, etiqueta, icono), declarada en `app-surfaces.ts`. |
+| **Isla** | Un componente React montado dentro de una página Astro. |
+| **Capability (OpenSpec)** | Un área funcional con sus requisitos en `openspec/specs/<capability>/spec.md`. |
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Entender las piezas del sistema y el camino de una petición | [Arquitectura](architecture/index.mdx) |
+| Arrancar el proyecto en mi máquina por primera vez | [Primera vez](development/first-run.mdx) |
+| Saber qué significa una variable del `.env` | [Configuración](configuration/index.mdx) |
+| Añadir un procedimiento a la API | [Añadir un procedimiento](api/add-procedure.mdx) |
+| Entender quién puede llamar a qué | [Autenticación y permisos](auth/index.mdx) |
+| Programar una tarea | [Crons](crons/index.mdx) |
+| Saber dónde va un componente nuevo del frontend | [Features y slices](frontend/features.mdx) |
+| Instalar Garabato en un servidor | [Producción](deployment/production.mdx) |
+| Conocer las reglas de estilo, commits y OpenSpec | [Convenciones](conventions/index.mdx) |
+| Ver todos los workspaces, variables, comandos y compose | [Catálogo](catalog:workspaces) |

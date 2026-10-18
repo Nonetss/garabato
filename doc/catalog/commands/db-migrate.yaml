@@ -1,0 +1,6 @@
+command: "bun run db:migrate"
+area: database
+purpose: "Aplica las migraciones pendientes con Drizzle Kit"
+page: development/database
+fuente: package.json
+actualizado: 2026-10-18

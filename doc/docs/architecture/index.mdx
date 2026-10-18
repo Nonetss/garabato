@@ -1,0 +1,34 @@
+---
+titulo: Arquitectura
+descripcion: Las piezas de Garabato, qué hace cada una y por qué el navegador solo habla con el gateway
+workspaces: [frontend, backend, gateway, site, api, auth, db, cron, logger, env, config, pkcs11]
+actualizado: 2026-10-18
+---
+
+Garabato es un monorepo de TypeScript que corre sobre Bun y se coordina con Turborepo. El navegador solo habla con el gateway, que manda la API al backend y todo lo demás al frontend.
+
+<Diagram id="architecture" />
+
+## Las piezas
+
+<Entities type="workspaces" group="kind" />
+
+- **Las apps** (`apps/`) son lo que se ejecuta: el frontend y el backend son la aplicación; `apps/site` es la web estática del proyecto, que se publica en GitHub Pages y no forma parte de la app en marcha.
+- **Los paquetes** (`packages/`) son librerías compartidas con el prefijo `@nonete/`. El backend monta los procedimientos de `@nonete/api`; el frontend los llama con un cliente oRPC tipado y TanStack Query.
+- **Lo que no es workspace** no tiene `package.json` de Bun: el gateway solo tiene las rutas de Caddy (`routes.caddy`), el `Caddyfile` de producción, el `Caddyfile.dev` de desarrollo y su `Dockerfile`, y `native/pkcs11` es un crate de Rust que se construye con `cargo`.
+
+Además de la app, el backend usa una base de datos PostgreSQL (con Drizzle), un almacén compatible con S3 para los PDF (MinIO en los compose) y, si está configurado, Loki para el registro de actividad.
+
+## Los paquetes no se compilan
+
+Cada paquete se publica como código TypeScript tal cual y las apps lo importan directamente: su script `build` es literalmente `true`. Así no hay pasos intermedios y cualquier cambio en un paquete se ve al momento en la app que lo usa. Solo se compilan las apps: el backend con `tsdown` y el frontend con `astro build`.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber qué pasa desde que abro una página hasta que llegan los datos | [El camino de una petición](request.mdx) |
+| Entender qué hace el backend al arrancar y al apagarse | [Arranque y apagado del backend](backend-lifecycle.mdx) |
+| Saber cómo se importa código entre apps y paquetes | [Imports y dependencias](imports.mdx) |
+| Seguir una petición en los logs | [Logs](logs.mdx) |
+| Arrancar el proyecto en mi máquina | [Desarrollo local](../development/index.mdx) |

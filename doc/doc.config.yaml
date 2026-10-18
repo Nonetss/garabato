@@ -1,0 +1,40 @@
+# Configuración del sitio. El menú está en menu.yaml, las páginas en docs/,
+# los datos estructurados en catalog/ y los diagramas en diagrams/.
+#
+# Las claves de este fichero y de cada _type.yaml (nombre, cabecera, campos,
+# tipo: texto...) son el contrato de la plataforma y se leen tal cual. Los
+# valores, los ids de tipo y los nombres de campo son propios de este sitio.
+
+nombre: Garabato
+descripcion: Cómo está hecho Garabato por dentro y cómo se trabaja con él, desde arrancarlo en local hasta desplegarlo
+plataforma: "1" # versión mayor del contrato de la plataforma a la que apunta este sitio
+
+# Campos extra de cabecera para las páginas. La plataforma ya da a cada página
+# titulo, descripcion, icono, orden y actualizado. Estos usan los mismos tipos
+# de campo que el catálogo (ver catalog/*/_type.yaml).
+cabecera:
+  workspaces:
+    tipo: lista
+    de: { tipo: ref, a: workspaces }
+    opcional: true
+    descripcion: Workspaces y carpetas del monorepo que explica la página
+  env_vars:
+    tipo: lista
+    de: { tipo: ref, a: env-vars }
+    opcional: true
+    descripcion: Variables de entorno que explica la página
+  commands:
+    tipo: lista
+    de: { tipo: ref, a: commands }
+    opcional: true
+    descripcion: Comandos de la raíz que explica la página
+  compose_files:
+    tipo: lista
+    de: { tipo: ref, a: compose-files }
+    opcional: true
+    descripcion: Ficheros compose que explica la página
+  open_questions:
+    tipo: lista
+    de: { tipo: texto }
+    opcional: true
+    descripcion: Preguntas aún abiertas; una ronda de preguntas las responde (colofon-questions)

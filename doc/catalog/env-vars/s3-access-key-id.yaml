@@ -1,0 +1,7 @@
+name: S3_ACCESS_KEY_ID
+area: storage
+required: true
+meaning: "El usuario del almacén; también el usuario root del MinIO incluido"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

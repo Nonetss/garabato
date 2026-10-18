@@ -1,0 +1,6 @@
+command: "bun run docker:up"
+area: docker
+purpose: "Construye y arranca en segundo plano el stack tipo producción de compose.yml"
+page: deployment/compose-local
+fuente: package.json
+actualizado: 2026-10-18

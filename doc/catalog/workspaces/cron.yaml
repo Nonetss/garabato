@@ -1,0 +1,7 @@
+path: packages/cron
+package: "@nonete/cron"
+kind: package
+purpose: "El planificador que ejecuta las tareas programadas dentro del backend"
+page: crons
+fuente: manual
+actualizado: 2026-10-18

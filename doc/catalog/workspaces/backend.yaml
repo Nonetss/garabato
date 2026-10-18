@@ -1,0 +1,7 @@
+path: apps/backend
+package: "backend"
+kind: app
+purpose: "La API: Hono sobre Bun; aplica las migraciones, crea el admin y arranca el planificador de crons"
+page: architecture/backend-lifecycle
+fuente: manual
+actualizado: 2026-10-18

@@ -1,0 +1,46 @@
+---
+titulo: Desarrollo local
+descripcion: Qué necesitas para trabajar en Garabato, dónde queda cada servicio en tu máquina y qué comandos hay
+workspaces: [frontend, backend, gateway]
+commands: [dev, dev-local, check-types, check, test]
+actualizado: 2026-10-18
+---
+
+Garabato se arranca de dos formas equivalentes: [con Docker](docker.mdx) (`bun run dev`) o [en nativo](native.mdx) (`bun run dev:local` con el gateway). Las dos sirven la app en `https://localhost:4321` y usan los mismos puertos, así que solo puede estar una en marcha a la vez.
+
+## Requisitos
+
+- [Bun](https://bun.sh) 1.4.2 (el `packageManager` de la raíz): es runtime, gestor de paquetes y test runner a la vez.
+- Docker con Compose 2.22 o superior (`docker compose watch`): para el stack de desarrollo, el gateway en nativo, Loki y MinIO.
+- Una base de datos PostgreSQL de desarrollo **fuera del proyecto**, en otro servidor (ver [Base de datos](database.mdx)).
+- `openssl`, que usan los scripts que generan secretos.
+- Opcional: Rust y `cargo`, solo para construir el módulo PKCS#11 de `native/pkcs11` (`native/pkcs11/scripts/build-dist.sh`), que el backend sirve a los scripts de instalación del token del navegador.
+
+## Dónde está cada cosa
+
+| Dirección | Qué es |
+| --- | --- |
+| `https://localhost:4321` | La app, a través del gateway de desarrollo (HTTPS + HTTP/2). Es el único puerto que se expone y el único origen en el que funciona el inicio de sesión. |
+| `https://localhost:4321/scalar` | La documentación interactiva de la API; requiere sesión de admin. |
+| `:3000` y `:4320` | El backend y `astro dev`, detrás del gateway. Con Docker solo existen en la red interna; en nativo son procesos del host. |
+| `127.0.0.1:3100` y `127.0.0.1:9000` | Loki y la API S3 de MinIO para el modo nativo (`bun run loki:start`, `bun run minio:start`). |
+
+El gateway manda `/rpc`, `/api`, `/scalar` y `/openapi.json` al backend y el resto a `astro dev`, igual que en producción (ver [El camino de una petición](../architecture/request.mdx)).
+
+## Los comandos
+
+<Entities type="commands" group="area" />
+
+No hay git hooks: nada se ejecuta solo al hacer commit.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Preparar el proyecto la primera vez | [Primera vez](first-run.mdx) |
+| Arrancarlo todo en contenedores con recarga en caliente | [Con Docker](docker.mdx) |
+| Arrancar el frontend y el backend como procesos de mi máquina | [En nativo](native.mdx) |
+| Que el navegador confíe en `https://localhost:4321` | [Confiar en el certificado local](certificate.mdx) |
+| Saber qué base de datos uso y cómo cambia el esquema | [Base de datos](database.mdx) |
+| Comprobar un cambio antes de subirlo | [Validar un cambio](validation.mdx) |
+| Ver qué variables tiene el `.env` | [Configuración](../configuration/index.mdx) |

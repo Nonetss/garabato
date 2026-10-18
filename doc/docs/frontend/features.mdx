@@ -1,0 +1,48 @@
+---
+titulo: Features y slices
+descripcion: Dónde va cada pieza de la interfaz, qué puede importar de qué y dónde buscar antes de crear un componente, un hook o un helper
+workspaces: [frontend]
+orden: 1
+actualizado: 2026-10-18
+---
+
+El código de la interfaz se agrupa por **dominio** en `src/features/<dominio>/` (`documents`, `certificates`, `crons`, `admin`…). Dentro de cada dominio, cada carpeta es un **caso de uso** (slice: `overview`, `detail`, `sign-in`…), un `shared/` del dominio o su `index.ts`. Nunca una capa técnica.
+
+<Diagram id="crons-slices" />
+
+## Reglas de un slice
+
+- Dentro de un slice solo existen las carpetas técnicas que hacen falta: `components/` (vistas React), `definitions/` (descriptores de presentación tipados), `hooks/`, `model/` (tipos y transformaciones sin React) y `schemas/`. Nunca carpetas vacías por simetría.
+- **Cada slice expone un `index.ts` estrecho.** Las páginas Astro y los demás dominios importan desde ahí, nunca desde las carpetas internas de otro slice. Dentro del propio slice se importa por ruta directa, nunca su barrel.
+- Un dominio solo tiene `index.ts` en la raíz si alguien lo importa (`@/features/crons`). Los dominios contenedores (`admin`, `app-shell`, `config`) no lo tienen.
+- Un `shared/` dentro de un dominio solo existe si lo usan al menos dos slices.
+- Cuando dos slices se necesitan mutuamente, sus `index.ts` formarían un ciclo. El slice publica entonces un `public.ts` con la parte sin páginas (tipos, hooks) y el otro importa desde ahí: `features/admin/organizations/public.ts` ↔ `features/admin/teams/public.ts`. También sirve para dar a quien carga en todas las páginas solo el modelo ligero: `features/documents/shared/public.ts` deja pdfjs fuera de la búsqueda del navbar.
+- Dentro del frontend se importa con el alias `@/`, nunca con rutas relativas.
+
+## Página y contenido
+
+Una página de React se parte en dos ficheros:
+
+- **`*-page.tsx`** solo monta los providers (`QueryProvider` y, si hace falta, `PageShell`) alrededor del contenido.
+- **`*-content.tsx`** tiene todo lo demás: consultas, estado, diálogos y marcado.
+
+Por ejemplo, `crons-page.tsx` y `crons-content.tsx`. Así se ve de un vistazo dónde está la frontera de providers y el contenido se puede reutilizar.
+
+## `components/ui` y `components/shared`
+
+- **`components/ui`** son las primitivas de shadcn, sin nada específico del producto. No pueden importar ni `shared` ni `features`.
+- **`components/shared`** son patrones de la aplicación, agrupados en `brand`, `data-display`, `feedback`, `form`, `layout`, `navigation`, `resource` y `user`. No pueden importar `features`.
+
+Un componente nuevo nace dentro de su slice, aunque parezca reutilizable. Se sube a `components/shared` cuando **tres** sitios distintos lo usan con la misma intención; que se parezcan visualmente no basta.
+
+## Antes de crear algo, busca
+
+| Necesitas… | Mira en… |
+| --- | --- |
+| Una primitiva visual (botón, diálogo, select, tooltip…) | `src/components/ui/`. Si no está, en el registro de shadcn para `base-nova`; después de `shadcn add`, cambia su import de `cn` a `@/lib/utils` |
+| Un patrón de la app (cabecera de página, filas de lista, filtros, metadatos, menú de acciones, selector de entidades, botón de icono…) | `src/components/shared/<dominio>/` |
+| Algo que ya hizo otra feature | El `index.ts` (o `public.ts`) de su slice. Si lo necesita un segundo dominio, se promueve en vez de copiarlo |
+| Un hook (consultas hidratadas, scroll infinito, estado de diálogos, mutaciones, debounce…) | `src/hooks/` |
+| Un helper (cliente oRPC, formato, búsqueda sin acentos, toasts, navegación, tema…) | `src/lib/` |
+
+Un helper de `src/lib`, un hook de `src/hooks` o un componente de `components/shared` nuevo o cambiado lleva su test en `apps/frontend/tests/` en el mismo cambio.

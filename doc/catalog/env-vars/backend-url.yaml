@@ -1,0 +1,8 @@
+name: BACKEND_URL
+area: services
+required: false
+default: "http://localhost:3000"
+meaning: "Cómo llega el frontend al backend: las consultas de sesión en SSR y el proxy de astro dev"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

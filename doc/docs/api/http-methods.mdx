@@ -1,0 +1,46 @@
+---
+titulo: El método HTTP
+descripcion: Cómo elegir el método y el estado de éxito de un procedimiento según lo que hace su handler, y qué cambia en /rpc
+workspaces: [api]
+orden: 2
+actualizado: 2026-10-18
+---
+
+La API es estilo RPC: las rutas salen del nombre del procedimiento (`/api/v1/cron/setEnabled`) y los identificadores van en el cuerpo o en la query string, nunca en la ruta. El método no forma la ruta: dice si la operación **es segura y si se puede repetir**. Se elige por lo que hace el handler, no por su nombre:
+
+| El handler… | Método | Ejemplos |
+| --- | --- | --- |
+| Solo lee, y su entrada cabe en una query string | `GET` | `cron.list`, `organization.search`, `logs.query` |
+| Solo lee, pero su entrada es una lista de objetos | `QUERY` | `comment.counts`, `entityIcon.getMany` |
+| Crea algo nuevo cuyo id asigna el servidor | `POST` + estado `201` | `comment.create`, `cron.create` |
+| Ejecuta una acción que no es un CRUD | `POST` | `cron.runNow` |
+| Fija el estado completo de algo identificado por quien llama (repetirlo no cambia nada) | `PUT` | `entityIcon.set` |
+| Cambia algunos campos y deja los demás | `PATCH` | `cron.update`, `cron.setEnabled`, `comment.update` |
+| Borra algo, también borrados lógicos y cancelaciones | `DELETE` | `cron.remove`, `comment.delete` |
+
+El método y el estado se declaran en `.meta(openapi({ method, successStatus }))`.
+
+## Las reglas que hay detrás
+
+- **`GET` y `QUERY` nunca escriben** nada, ni disparan un job ni llaman a un servicio que escriba.
+- **`QUERY`** es un método HTTP nuevo para lecturas con cuerpo. Se usa cuando la entrada no cabe en una URL (por ejemplo, 100 referencias a entidades); aun así, el esquema zod limita el tamaño de la lista. Una lectura nunca se pasa a `POST` solo porque su entrada sea grande.
+- **`PUT` o `POST`.** Si llamar dos veces deja el mismo estado y devuelve la misma fila, es `PUT`; un insert con `onConflictDoNothing()` sobre una clave natural también.
+- **`PUT` o `PATCH`.** Un `PATCH` conserva los campos que no recibe; un `PUT` los reemplaza, y un opcional omitido se borra.
+- **`201` solo** en procedimientos cuyo propósito es crear. **Nunca `204`**: todos los procedimientos devuelven un cuerpo (los borrados devuelven `id` y `success`).
+- En `/api`, un `GET` lleva su entrada en la query string y el servidor la convierte a los tipos del esquema: se declaran tipos reales (`z.number()`), nunca `z.coerce`.
+
+## En `/rpc`
+
+En `/rpc` el estado declarado se ignora y el método solo importa para las lecturas:
+
+- El cliente del frontend (`apps/frontend/src/lib/orpc.ts`) envía como `QUERY` las llamadas que hace TanStack Query como consulta, y las llamadas directas que pasan `read: true` en su contexto. El resto va como `POST`.
+- El servidor acepta `POST`, `PUT`, `PATCH` y `DELETE` en todos los procedimientos, `QUERY` solo en los declarados `GET` o `QUERY`, y **nunca `GET`** (es una de las capas contra CSRF, ver [CSRF](../auth/csrf.mdx)).
+- Un stream que solo escucha (`cron.watchRuns`) se declara `GET` y el frontend lo abre con una llamada directa marcada como lectura.
+
+## Qué falla
+
+| Síntoma | Causa | Qué hacer |
+| --- | --- | --- |
+| Una llamada por `/rpc` responde 404 tras convertir una lectura en escritura | El frontend sigue enviándola como `QUERY` (`read: true`) | Quita la marca de lectura de esas llamadas |
+| Un cliente de `/api` deja de funcionar | Se cambió el método o el estado de un procedimiento | El método forma parte del contrato público: cámbialo solo a propósito |
+| Un CDN o WAF delante del despliegue rechaza peticiones | No deja pasar `QUERY` | Configúralo para aceptarlo; Caddy, Bun y el proxy de Vite ya lo hacen |

@@ -1,0 +1,90 @@
+---
+titulo: Backend y API
+descripcion: Cómo se define una operación de la API una sola vez y se llama por RPC o por HTTP, cómo está organizado packages/api y qué features tiene la versión 1
+workspaces: [api, backend]
+actualizado: 2026-10-18
+---
+
+Toda la API vive en `packages/api`. El backend (`apps/backend`) solo la monta en Hono junto a Better Auth y los middlewares.
+
+## oRPC en dos frases
+
+[oRPC](https://orpc.dev) permite definir cada operación de la API (un **procedimiento**) una sola vez, con esquemas zod de entrada y salida, y usarla de dos formas:
+
+- **Por RPC** en `/rpc/v1/...`: es lo que usa el frontend, con un cliente totalmente tipado (`orpc.v1.document.list(...)`). Si cambias la salida de un procedimiento, TypeScript te avisa en el frontend.
+- **Por HTTP normal (OpenAPI)** en `/api/v1/...`: para scripts y otros servicios. El documento está en `/openapi.json` y la documentación interactiva en `/scalar`, las dos solo para admins.
+
+> [!WARNING]
+> Se usa oRPC v2, que todavía está en beta y tiene la versión fijada en el `catalog` del `package.json` raíz. La documentación válida es la de [orpc.dev](https://orpc.dev); la de v1 no aplica.
+
+## Cómo está organizado `packages/api`
+
+<Diagram id="api-structure" />
+
+En la raíz del paquete está lo que comparten todas las versiones:
+
+| Fichero | Qué contiene |
+| --- | --- |
+| `src/index.ts` | Los [builders](builders.mdx) de procedimientos y los metadatos (`cronMeta`, `getAccessMeta`). |
+| `src/context.ts` | Lo que recibe cada procedimiento: usuario, sesión, cabeceras, id de petición y el logger de la petición. El planificador añade `cron`. |
+| `src/errors.ts` | El mapa de [errores](errors.mdx) y sus constructores (`errors.NOT_FOUND()`…). |
+| `src/router.ts` | Monta cada versión de la API bajo su clave (`v1`). |
+| `src/shared/` | Los [helpers compartidos](shared-helpers.mdx) entre features. |
+| `src/lib/` | Las instancias reales que los tests sustituyen (el cliente S3) y la comprobación de permisos de organización. |
+
+## Las features de v1
+
+Cada feature es una carpeta `src/v1/<feature>/` y una clave en `src/v1/router.ts`:
+
+| Área | Features |
+| --- | --- |
+| Producto | `document`, `documentFolder`, `documentTag`, `certificate`, `certificateToken`, `trace` |
+| Cuentas y administración | `authConfig`, `apiKey`, `organization`, `plugins`, `sessionHistory`, `logs`, `release` |
+| Sistema | `health`, `private`, `cron` |
+| Transversales | `comment`, `entityIcon` (ver [Funcionalidades transversales](../cross-cutting/index.mdx)) |
+
+## Router y handler
+
+Cada feature tiene, como mucho, cuatro ficheros, uno por responsabilidad:
+
+- **`input.ts` y `output.ts`**: los esquemas zod de entrada y salida, agrupados por método (`cronInput.create`, `cronOutput.list`).
+- **`router.ts` es solo cableado.** Elige quién puede llamar (el builder), describe el procedimiento para OpenAPI, declara entrada y salida y delega en el handler. Nunca toca la base de datos.
+- **`handler.ts` tiene la lógica.** Las llamadas a `@nonete/db` y `@nonete/auth` están aquí. Cada método recibe un único objeto con `context` e `input`.
+
+Algunas features tienen además módulos propios junto a esos cuatro (`cron/discovery.ts`, `cron/events.ts`, `entity-icon/targets.ts`, `document-folder/icon-target.ts`).
+
+Un procedimiento típico:
+
+```ts
+// router.ts
+list: protectedProcedure
+  .meta(openapi({
+    summary: "List cron jobs",
+    description: "Lists every persistent cron job definition.",
+    tags: ["System - Cron"],
+    method: "GET",
+  }))
+  .output(cronOutput.list)
+  .handler(() => cronHandler.list()),
+```
+
+Los textos de OpenAPI (`summary`, `description`, `.describe()`) van en inglés; los mensajes de error que ve el usuario, en español.
+
+## Versiones de la API
+
+Todo lo que depende de la versión vive en `src/v1/`. Una versión nueva sería una carpeta `src/v2/` más una clave en `src/router.ts`; las versiones existentes no se tocan. Por eso las llamadas siempre llevan la versión: `orpc.v1...`, `/rpc/v1/...`, `/api/v1/...`.
+
+Dentro de una versión, los imports usan su ruta (`#v1/cron/input`); lo compartido se importa con el alias sin versión (`#context`, `#shared/pagination`), nunca copiado dentro de la versión.
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber qué builder usar para que solo llamen ciertos usuarios | [Quién puede llamar](builders.mdx) |
+| Elegir entre `GET`, `QUERY`, `POST`, `PUT`, `PATCH` o `DELETE` | [El método HTTP](http-methods.mdx) |
+| Saber qué error lanzar | [Errores](errors.mdx) |
+| Paginar, buscar o formatear fechas sin reescribir el helper | [Helpers compartidos](shared-helpers.mdx) |
+| Añadir un buscador a una entidad | [Búsquedas de texto libre](search.mdx) |
+| Añadir un procedimiento nuevo | [Añadir un procedimiento](add-procedure.mdx) |
+| Convertir un procedimiento en una tarea programada | [Crons](../crons/index.mdx) |
+| Saber cómo se autentica quien llama | [Autenticación y permisos](../auth/index.mdx) |

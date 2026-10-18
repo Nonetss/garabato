@@ -1,0 +1,43 @@
+---
+titulo: Frontend
+descripcion: Cómo está hecha la web de Garabato, qué hay en cada carpeta de apps/frontend/src y por qué las islas React nunca se renderizan en el servidor
+workspaces: [frontend]
+actualizado: 2026-10-18
+---
+
+`apps/frontend` es una app Astro 7 con renderizado en servidor. Las páginas (`src/pages/`) son ficheros `.astro`, y todo lo interactivo es React 19 montado como isla. Los estilos son Tailwind v4 y los componentes base vienen de shadcn/ui (estilo `base-nova`, sobre Base UI). Habla con la API con el cliente oRPC tipado de `src/lib/orpc.ts` y TanStack Query.
+
+## Islas React: siempre `client:only="react"`
+
+Cuando una página `.astro` monta un componente React, **siempre** lo hace con `client:only="react"`, nunca con `client:load` ni otra directiva `client:*`. El componente no se renderiza en el servidor: Astro envía el HTML de la página y React pinta la isla en el navegador. Así no hay errores de hidratación y todo el estado de la isla vive en un solo sitio.
+
+## Estructura de carpetas
+
+<Diagram id="frontend-structure" />
+
+| Carpeta o fichero | Qué contiene |
+| --- | --- |
+| `pages/` | Las rutas de Astro, un fichero por URL (`documents/[id]/index.astro`, `admin/users/index.astro`…) |
+| `layouts/` | Los marcos de página: ver [Layouts](layouts.mdx) |
+| `middleware.ts` | La sesión, las redirecciones y el registro de visitas: ver [La sesión](../auth/sessions.mdx) |
+| `features/` | El código de la interfaz, por dominio y caso de uso: ver [Features y slices](features.mdx) |
+| `components/ui/` | Las primitivas de shadcn |
+| `components/shared/` | Los patrones de la aplicación |
+| `hooks/` | Los hooks compartidos (consultas hidratadas, scroll infinito, diálogos, mutaciones…) |
+| `lib/` | Los helpers: cliente oRPC, clientes de auth, formato, superficies, iconos, tema |
+| `providers/` | El `QueryProvider` de TanStack Query |
+| `styles/` | `global.css` con los tokens de diseño y el tema, y `typeset.css` para contenido enriquecido |
+
+Los dominios de `features/` son los de la app: `documents`, `certificates`, `traces`, `home`, `crons`, `admin`, `config`, `profile`, `auth`, `app-shell` y los transversales `comments` y `entity-icons`.
+
+Los tests del frontend están en `apps/frontend/tests/`, con la misma estructura que `src/` (ver [Validar un cambio](../development/validation.mdx)).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber dónde va un componente nuevo o qué importar de otro dominio | [Features y slices](features.mdx) |
+| Añadir una página a la navegación o a la búsqueda `⌘K` | [Navegación](navigation.mdx) |
+| Elegir el layout de una ruta | [Layouts](layouts.mdx) |
+| Dar estilo a un texto, explicar un botón de solo icono o hacer responsive un componente | [Sistema visual](visual-system.mdx) |
+| Saber por qué el service worker no funciona en desarrollo | [PWA](pwa.mdx) |

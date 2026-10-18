@@ -1,0 +1,33 @@
+---
+titulo: El .env de producción
+descripcion: Qué escribe scripts/bootstrap.sh en el .env de un servidor y por qué nunca se ejecuta dentro de la copia de trabajo
+env_vars: [postgres-password, frontend-port, cors-origin, compose-profiles, certificate-encryption-key]
+compose_files: [prod]
+orden: 2
+actualizado: 2026-10-18
+---
+
+Un despliegue tiene **su propio `.env`**, junto a `compose.prod.yml`, en el directorio del servidor. Lo genera `scripts/bootstrap.sh` ([Producción](../deployment/production.mdx) explica la instalación).
+
+## Qué escribe
+
+| Pregunta o genera | Variables |
+| --- | --- |
+| Pregunta el puerto del host y la URL pública | `FRONTEND_PORT`, `CORS_ORIGIN` |
+| Pregunta las credenciales del admin | `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` |
+| Pregunta si los documentos van al MinIO incluido o a un almacén externo | `S3_ENDPOINT`, `S3_BUCKET`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` y, con MinIO, `COMPOSE_PROFILES=minio` |
+| Genera secretos aleatorios | `POSTGRES_PASSWORD`, `BETTER_AUTH_SECRET`, `CERTIFICATE_ENCRYPTION_KEY` y, con MinIO, su contraseña |
+| Escribe con valores fijos | `DATABASE_URL` (el servicio `db`), `DISABLE_SIGN_UP='false'` |
+
+- Los valores van entre comillas simples para que docker compose los lea tal cual, sin interpolar `$`. Mantén las comillas si los editas.
+- El fichero se crea con permisos `600`.
+- `BETTER_AUTH_URL` no se escribe: `compose.prod.yml` le da el valor de `CORS_ORIGIN`.
+- Para una base de datos externa, se cambia la línea de `DATABASE_URL` y se quita el servicio `db` de `compose.prod.yml`.
+
+## Nunca dentro de la copia de trabajo
+
+`bootstrap.sh` se niega a ejecutarse si ya hay un `.env` en el directorio donde se lanza. Por eso no debe ejecutarse en tu copia de trabajo, donde ya está el `.env` de desarrollo: para probar producción en local usa otro directorio, o `bun run docker:up` aquí ([Producción en local](../deployment/compose-local.mdx)).
+
+<Callout type="warning" title="Copias de seguridad">
+Guarda `CERTIFICATE_ENCRYPTION_KEY` junto con las copias de la base de datos y, con el MinIO incluido, del volumen `minio_data`. Sin la clave, los certificados guardados no se pueden descifrar.
+</Callout>

@@ -1,0 +1,43 @@
+---
+titulo: La sesión
+descripcion: Cómo viaja la sesión entre el navegador, el frontend y el backend, y qué decide el middleware del frontend en cada página
+workspaces: [auth, frontend, backend]
+orden: 1
+actualizado: 2026-10-18
+---
+
+## La cookie
+
+- La sesión es una **cookie** `httpOnly`, `secure` y `SameSite=Lax`.
+- Better Auth guarda sus datos en una caché de cookie durante 60 segundos, para no consultar la base de datos en cada petición.
+- Como la cookie es `secure`, sobre `http` plano solo funciona en `localhost` ([Trampas habituales](../configuration/traps.mdx)).
+
+## Los dos clientes del frontend
+
+| Cliente | Dónde corre | A quién llama |
+| --- | --- | --- |
+| `src/lib/auth-client.ts` | En el navegador | `/api/auth` en el mismo origen |
+| `src/lib/auth-server.ts` | En el servidor de Astro | El backend, por `BACKEND_URL` |
+
+Los dos cargan los mismos plugins de cliente (API keys, admin, organizaciones y segundo factor), para que el usuario de la sesión traiga los mismos campos en los dos lados.
+
+## En el backend
+
+Un middleware de Hono resuelve la sesión de cada petición a partir de la cookie o de una cabecera `x-api-key` (una API key normal cuenta como sesión de su dueño). Una clave del token del navegador nunca se convierte en sesión: la leen solo sus propios procedimientos ([Autenticación y permisos](index.mdx#las-claves-del-token-del-navegador)).
+
+## El middleware del frontend
+
+`apps/frontend/src/middleware.ts` se ejecuta antes de cada página:
+
+1. Deja pasar `/login`, `/signup` (y sus subrutas) y `/logo.svg` sin sesión.
+2. Pregunta la sesión al backend con las cabeceras de la petición.
+3. Si no puede consultarla (el backend está caído), responde `503 Service Unavailable` y lo registra como `auth_service_error`.
+4. Si no hay sesión, redirige a `/login`.
+5. Si alguien sin rol `admin` entra en `/admin`, lo redirige a `/`.
+6. Reenvía al navegador las cookies de sesión renovadas.
+7. Registra cada página vista como `page_view` para el [registro de actividad](../cross-cutting/activity-log.mdx), salvo las precargas (cabecera `Sec-Purpose: prefetch`).
+
+| Síntoma | Causa |
+| --- | --- |
+| Toda página responde `Service Unavailable` | El frontend no llega al backend: revisa que esté arrancado y `BACKEND_URL` |
+| Vuelves a `/login` después de iniciar sesión | La cookie no se guarda: entras por `http` fuera de `localhost`, o no entras por el origen del gateway |

@@ -1,0 +1,36 @@
+---
+titulo: Base de datos
+descripcion: Qué base de datos usa el desarrollo, por qué está fuera del proyecto y cómo se cambia el esquema
+workspaces: [db]
+commands: [db-studio, db-generate, db-push, db-migrate]
+env_vars: [database-url]
+orden: 5
+actualizado: 2026-10-18
+---
+
+El proyecto no levanta ninguna base de datos en desarrollo. La de desarrollo vive **fuera del proyecto, en otro servidor**, y `DATABASE_URL` en el `.env` apunta a ella. Así:
+
+- el modo Docker y el nativo usan siempre los mismos datos;
+- borrar los contenedores o los volúmenes del stack de desarrollo no toca los datos;
+- tu máquina no tiene que ejecutar PostgreSQL ni reservar el puerto 5432.
+
+Necesitas una base de datos PostgreSQL vacía (o con datos de desarrollo) y un usuario con permisos para crear tablas, porque el backend aplica las migraciones al arrancar.
+
+> [!CAUTION]
+> No apuntes `DATABASE_URL` a la base de datos de producción.
+
+`bun run db:studio` abre Drizzle Studio para explorar los datos.
+
+## Cambiar el esquema
+
+**No hay que aplicar el esquema a mano**: el backend aplica las migraciones pendientes al arrancar. Cuando cambias el esquema en `packages/db/src/schema/`:
+
+1. `bun run db:generate` crea una carpeta nueva `packages/db/src/migrations/<timestamp>_<nombre>/` con `migration.sql` y `snapshot.json`.
+2. Revisas el SQL generado.
+3. Lo commiteas junto al cambio de esquema.
+4. Reinicias el backend, que la aplica.
+
+`bun run db:push` (aplicar el esquema sin migración) y `bun run db:migrate` existen, pero lo que se despliega son las migraciones: `db:push` es solo para experimentos.
+
+> [!IMPORTANT]
+> Las migraciones las genera y revisa siempre una persona. Los agentes de código tienen prohibido generarlas, aplicarlas o editarlas (ver [Convenciones](../conventions/index.mdx)).

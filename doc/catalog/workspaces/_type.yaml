@@ -1,0 +1,28 @@
+nombre: Workspace
+plural: Workspaces
+icono: package
+descripcion: Las carpetas del monorepo con identidad propia, sean workspaces de Bun o no (el gateway, el módulo PKCS#11). El id es el nombre de la carpeta (frontend, api, pkcs11)
+etiqueta: path
+
+campos:
+  path:
+    tipo: texto
+    descripcion: Su carpeta desde la raíz del repositorio (apps/frontend)
+  package:
+    tipo: texto
+    opcional: true
+    descripcion: El nombre de su package.json (@nonete/api, frontend); sin él, no es un workspace de Bun
+  kind:
+    tipo: enum
+    valores: [app, package, other]
+    descripcion: "app: una aplicación de apps/; package: una librería compartida de packages/; other: una carpeta que no es workspace (se construye con otra herramienta)"
+  purpose:
+    tipo: texto
+    descripcion: Una línea sobre para qué sirve
+  page:
+    tipo: ficha
+    opcional: true
+    descripcion: La página que lo explica
+
+vista:
+  columnas: [path, package, purpose]

@@ -1,0 +1,6 @@
+command: "bun run check-types"
+area: validation
+purpose: "Comprueba los tipos de todo el repositorio (tsc y astro check)"
+page: development/validation
+fuente: package.json
+actualizado: 2026-10-18

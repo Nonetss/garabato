@@ -1,0 +1,100 @@
+{
+  "type": "tree",
+  "title": "Estructura de apps/frontend/src",
+  "desc": "Las rutas (pages/, layouts/ y middleware.ts), la interfaz (features/ por dominio, components/ con ui/ y shared/, y hooks/) y el soporte (lib/, providers/ y styles/)",
+  "direction": "right",
+  "nodes": [
+    {
+      "id": "root",
+      "name": "apps/frontend/src",
+      "page": "frontend"
+    },
+    {
+      "id": "routes",
+      "name": "Rutas",
+      "parent": "root"
+    },
+    {
+      "id": "pages",
+      "name": "pages/",
+      "sub": "un fichero por URL",
+      "parent": "routes"
+    },
+    {
+      "id": "layouts",
+      "name": "layouts/",
+      "sub": "los marcos de página",
+      "parent": "routes",
+      "page": "frontend/layouts"
+    },
+    {
+      "id": "middleware",
+      "name": "middleware.ts",
+      "sub": "sesión",
+      "parent": "routes",
+      "info": "Sesión, redirecciones y registro de visitas"
+    },
+    {
+      "id": "ui",
+      "name": "Interfaz",
+      "parent": "root"
+    },
+    {
+      "id": "features",
+      "name": "features/",
+      "sub": "un dominio cada una",
+      "parent": "ui",
+      "focal": true,
+      "page": "frontend/features"
+    },
+    {
+      "id": "components",
+      "name": "components/",
+      "parent": "ui"
+    },
+    {
+      "id": "components-ui",
+      "name": "ui/",
+      "sub": "primitivas de shadcn",
+      "parent": "components"
+    },
+    {
+      "id": "components-shared",
+      "name": "shared/",
+      "sub": "patrones de la app",
+      "parent": "components"
+    },
+    {
+      "id": "hooks",
+      "name": "hooks/",
+      "sub": "hooks compartidos",
+      "parent": "ui"
+    },
+    {
+      "id": "support",
+      "name": "Soporte",
+      "parent": "root"
+    },
+    {
+      "id": "lib",
+      "name": "lib/",
+      "sub": "helpers",
+      "parent": "support",
+      "page": "frontend/navigation",
+      "info": "El cliente oRPC, auth, formato y las superficies"
+    },
+    {
+      "id": "providers",
+      "name": "providers/",
+      "sub": "QueryProvider",
+      "parent": "support"
+    },
+    {
+      "id": "styles",
+      "name": "styles/",
+      "sub": "tokens y tema",
+      "parent": "support",
+      "page": "frontend/visual-system"
+    }
+  ]
+}

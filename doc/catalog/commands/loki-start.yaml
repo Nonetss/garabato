@@ -1,0 +1,6 @@
+command: "bun run loki:start"
+area: services
+purpose: "Arranca solo Loki en 127.0.0.1:3100, para el modo nativo"
+page: development/native
+fuente: package.json
+actualizado: 2026-10-18

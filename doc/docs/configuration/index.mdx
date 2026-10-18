@@ -1,0 +1,49 @@
+---
+titulo: Configuración
+descripcion: El único .env de la raíz, quién lo lee, cómo lo encuentra cada workspace y qué significa cada variable
+workspaces: [env]
+env_vars: [database-url, better-auth-url, better-auth-secret, cors-origin, certificate-encryption-key, s3-endpoint, backend-url, loki-url]
+actualizado: 2026-10-18
+---
+
+Todo el proyecto se configura con **un único fichero `.env` en la raíz**. No hay `.env` por app ni por paquete. `.env.example` documenta cada variable con su valor por defecto; `bun run setup:dev` lo copia a `.env` y rellena los secretos (ver [Primera vez](../development/first-run.mdx)).
+
+## Las variables
+
+<Entities type="env-vars" group="area" columns="name,required,default,meaning" />
+
+Cada concepto tiene **un solo nombre**: no inventes un segundo nombre para algo que ya existe.
+
+## Quién lo lee
+
+| Lector | Qué valida |
+| --- | --- |
+| `packages/env/src/server.ts` (`@nonete/env/server`) | Las variables del backend y de los paquetes, con zod. Si falta una obligatoria o no tiene el formato esperado, el backend no arranca. |
+| `packages/db/drizzle.config.ts` | `DATABASE_URL`, para los comandos de Drizzle. |
+| `apps/frontend/astro.config.mjs` | Las variables de servidor del frontend (`BACKEND_URL`, `LOKI_URL`), con `astro:env`. |
+
+`packages/env/src/web.ts` (`@nonete/env/web`) valida `PUBLIC_SERVER_URL`, pero hoy no lo importa nadie.
+
+## Cómo se encuentra el fichero
+
+- `@nonete/env/server` y `drizzle.config.ts` abren `../../.env` **relativo a su directorio de trabajo**. Funciona porque todos los workspaces están dos niveles por debajo de la raíz y Turbo y `bun --filter` ejecutan los scripts desde ahí.
+- El frontend lo busca a partir de la ubicación de `astro.config.mjs` (dos carpetas por encima), y Vite lo carga para `astro:env` con `envDir`.
+
+Consecuencias:
+
+- Una variable ya definida en el entorno del proceso **gana** al fichero.
+- Si el fichero no existe no pasa nada. Es lo que ocurre en los contenedores, donde las variables las ponen los compose.
+- Si ejecutas un script del backend desde otro directorio (por ejemplo `bun apps/backend/src/index.ts` desde la raíz), no encontrará el `.env`.
+
+<Callout type="warning" title="Guarda la clave de los certificados">
+`CERTIFICATE_ENCRYPTION_KEY` cifra todos los certificados guardados. Haz copia de ella junto con la base de datos: sin ella, los certificados no se pueden recuperar. No la reutilices entre entornos.
+</Callout>
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Saber por qué el backend no arranca o no puedo iniciar sesión | [Trampas habituales](traps.mdx) |
+| Entender el `.env` de un servidor de producción | [El .env de producción](production-env.mdx) |
+| Añadir una variable nueva | [Añadir una variable](add-variable.mdx) |
+| Crear el `.env` de desarrollo por primera vez | [Primera vez](../development/first-run.mdx) |

@@ -1,0 +1,42 @@
+---
+titulo: Helpers compartidos
+descripcion: Qué ofrece packages/api/src/shared antes de escribir un helper nuevo, y cuándo un helper se mueve ahí
+workspaces: [api]
+orden: 4
+actualizado: 2026-10-18
+---
+
+Antes de escribir un helper, mira `packages/api/src/shared/`. Un helper que solo usa una feature se queda en su `handler.ts`; se mueve a `shared/` cuando lo necesita una segunda, y entonces lleva su test en `packages/api/tests/shared/<helper>.test.ts`.
+
+## Los genéricos
+
+| Fichero | Qué ofrece |
+| --- | --- |
+| `pagination.ts` | Paginación por cursor (`paginate`, `paginateWithTotal`), el cursor de keyset (`encodeKeysetCursor`, `decodeKeysetCursor`) y los esquemas de entrada `paginationLimit` y `paginationCursor`. |
+| `search.ts` | Las entradas de los procedimientos `search` (`searchQuery`, `searchLimit`) y `likePattern`, que escapa el texto para `ilike` (ver [Búsquedas](search.mdx)). |
+| `dates.ts` | `toIso` y `toIsoOrNull`. |
+| `not-found.ts` | `assertFound(fila, mensaje)`: devuelve la fila o lanza `NOT_FOUND`. |
+| `caller.ts` | `requireUserId`: el id de quien llama, o `UNAUTHORIZED`. |
+| `client-ip.ts` | `clientIp`: la primera entrada de `X-Forwarded-For`. |
+| `db-errors.ts` | `isUniqueViolation`, para convertir una clave duplicada en `CONFLICT`. |
+| `labels.ts` | `cleanLabel` y `sameLabel`, para nombres de carpetas y etiquetas. |
+| `procedure-docs.ts` | La documentación OpenAPI y el JSON Schema de entrada de un procedimiento (lo usa el descubrimiento de crons). |
+
+## Los del producto
+
+Los comparten `certificate`, `certificateToken` y `document`:
+
+| Fichero | Qué ofrece |
+| --- | --- |
+| `vault.ts` | El cifrado por sobre (AES-256-GCM) de certificados y documentos con la clave maestra `CERTIFICATE_ENCRYPTION_KEY`. |
+| `pkcs12.ts` | Leer un PKCS#12, abrir su clave de firma y describir el certificado. |
+| `certificate-secrets.ts` | Abrir el fichero y la contraseña recordada de un certificado guardado, con los errores de PKCS#12 en español. |
+| `object-storage.ts` | `createObjectStorage` sobre el almacén S3 y la traducción de sus errores. |
+| `trace.ts` | `recordTraces`: escribe las trazas de un usuario en la misma transacción que la acción. |
+| `raw-signature.ts` | Firmas en bruto con la clave de un certificado, para el token del navegador. |
+| `token-key.ts`, `token-module.ts`, `token-settings.ts`, `token-window.ts`, `install-codes.ts`, `totp.ts` | La clave de token, la versión del módulo PKCS#11, los interruptores de emergencia, la ventana de firma, los códigos de instalación y los códigos TOTP del token del navegador. |
+| `releases.ts` | La versión en marcha y la consulta de la última publicada en GitHub. |
+
+## Fuera de `shared/`
+
+`src/lib/` guarda las instancias reales que los tests sustituyen (el cliente S3 de `lib/object-storage.ts`, que `tests/setup.ts` cambia por uno en memoria) y la comprobación de permisos de organización (`lib/permissions.ts`).

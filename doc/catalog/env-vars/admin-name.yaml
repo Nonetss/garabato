@@ -1,0 +1,8 @@
+name: ADMIN_NAME
+area: auth
+required: false
+default: "Admin"
+meaning: "El nombre de ese administrador"
+page: auth
+fuente: .env.example
+actualizado: 2026-10-18

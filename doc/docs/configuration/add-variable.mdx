@@ -1,0 +1,21 @@
+---
+titulo: Añadir una variable
+descripcion: Los pasos para añadir una variable de entorno sin romper el arranque, los tests ni los contenedores
+workspaces: [env]
+orden: 3
+actualizado: 2026-10-18
+---
+
+En el mismo cambio:
+
+1. **Añádela al esquema de quien la lee:** `packages/env/src/server.ts` para el backend y los paquetes, o el `env.schema` de `apps/frontend/astro.config.mjs` para el frontend.
+2. **Documéntala en `.env.example`**, en la sección que le corresponda, con su valor por defecto o comentada si es opcional.
+3. **Si es obligatoria** en `packages/env/src/server.ts`, añade un valor de mentira en `packages/api/tests/setup.ts`, para que los tests sigan funcionando sin `.env`. Si activa una integración opcional, añádela a la lista de variables que ese fichero vacía.
+4. **Si un contenedor necesita otro valor**, ponlo en el `environment` del compose que corresponda.
+5. **Si la escribe el instalador**, añádela a `scripts/bootstrap.sh`; si `setup:dev` debe generarla, a `scripts/setup-dev.sh`.
+6. **Añade su entidad** en `doc/catalog/env-vars/` de esta documentación.
+
+## Si algo falla
+
+- **El backend no arranca** con un error de zod que nombra la variable: falta en tu `.env` o no tiene el formato del esquema.
+- **Los tests fallan al importar** `@nonete/auth` o `@nonete/db`: falta el valor de mentira del paso 3.

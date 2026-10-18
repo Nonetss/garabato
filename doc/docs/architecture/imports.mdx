@@ -1,0 +1,23 @@
+---
+titulo: Imports y dependencias
+descripcion: Cómo se importa código dentro de una app, dentro de un paquete y entre workspaces, y dónde se fijan las versiones
+workspaces: [config]
+orden: 3
+actualizado: 2026-10-18
+---
+
+| Desde… | Se escribe | Ejemplo |
+| --- | --- | --- |
+| Dentro de una app | `@/`, que apunta a su `src/` | `import { PageShell } from "@/components/shared/layout/page-shell"` |
+| Dentro de un paquete | Un *subpath import* de Node, que empieza por `#` y se declara en el campo `imports` de su `package.json` | `import type { Context } from "#context"` |
+| Entre workspaces | El nombre del paquete | `import { db } from "@nonete/db"` |
+
+## Por qué dos sistemas de alias
+
+Los paquetes se consumen como código fuente desde otros workspaces. Si también usaran `@/`, el `@/` de un paquete chocaría con el de la app que lo importa. Los `#` se resuelven siempre respecto al paquete que los declara. Por ejemplo, `packages/api` declara `#*` → `./src/*.ts` y `#tests/*` → `./tests/*.ts`.
+
+## Versiones de las dependencias
+
+- Las versiones compartidas están fijadas en el `catalog` del `package.json` de la raíz. Una dependencia que usan dos o más workspaces se declara como `catalog:` en cada uno.
+- `bunfig.toml` usa el *linker* aislado (`linker = "isolated"`), así que un workspace solo puede importar lo que declara en su propio `package.json`, aunque otro workspace ya lo tenga instalado.
+- Todos heredan el `tsconfig.base.json` de `@nonete/config`.

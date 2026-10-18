@@ -1,0 +1,7 @@
+name: OIDC_DISCOVERY_URL
+area: auth
+required: false
+meaning: "La URL base del emisor OIDC, sin /.well-known/openid-configuration, que añade el backend"
+page: auth
+fuente: .env.example
+actualizado: 2026-10-18

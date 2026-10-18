@@ -1,0 +1,7 @@
+name: LOKI_URL
+area: logging
+required: false
+meaning: "El endpoint de Loki; con él los logs alimentan el registro de actividad de /admin/logs"
+page: configuration
+fuente: .env.example
+actualizado: 2026-10-18

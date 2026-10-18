@@ -1,0 +1,31 @@
+---
+titulo: Docker y despliegue
+descripcion: Qué fichero compose usar para cada forma de ejecutar Garabato y la regla que comparten todos, que solo el gateway publica un puerto
+compose_files: [dev, local, prod, gateway]
+workspaces: [gateway]
+actualizado: 2026-10-18
+---
+
+Hay cuatro ficheros compose, uno por forma de ejecutar el proyecto:
+
+<Entities type="compose-files" />
+
+Los tres de la raíz levantan las tres imágenes de la aplicación (frontend, backend y gateway), Loki y el almacén de documentos MinIO (`pgsty/silo`, una compilación de MinIO). `compose.yml` y `compose.prod.yml` añaden además PostgreSQL (`postgres:17`). El de desarrollo no levanta base de datos: usa una PostgreSQL de fuera del proyecto ([Base de datos](../development/database.mdx)).
+
+## Solo el gateway publica un puerto
+
+En todos los compose, el único servicio con `ports` es el gateway. El frontend, el backend, la base de datos, Loki y MinIO solo se ven dentro de la red del stack (`expose`), y el gateway reparte las peticiones entre el backend y el frontend ([El camino de una petición](../architecture/request.mdx)).
+
+- Una ruta pública nueva se añade en `apps/gateway/routes.caddy`, nunca publicando el puerto de otro servicio.
+- Ni siquiera la consola de MinIO se publica: MinIO se administra con `mc` dentro del contenedor (`docker exec <contenedor> mc …`).
+
+## ¿Dónde encuentro…?
+
+| Quiero… | Página |
+| --- | --- |
+| Arrancar el stack de desarrollo en Docker | [Con Docker](../development/docker.mdx) |
+| Probar en local algo parecido a producción | [Producción en local](compose-local.mdx) |
+| Instalar Garabato en un servidor | [Producción](production.mdx) |
+| Saber qué llevan las imágenes o qué tocar al añadir un workspace | [Las imágenes](images.mdx) |
+| Saber cuándo se construyen y publican las imágenes | [CI](ci.mdx) |
+| Ver qué variables pone cada compose | [Configuración](../configuration/index.mdx) |

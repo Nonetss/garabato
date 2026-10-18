@@ -1,0 +1,101 @@
+{
+  "type": "tree",
+  "title": "Un dominio del frontend: crons",
+  "desc": "El dominio crons tiene tres slices: shared, con lo que usan los otros dos, overview, la lista de /crons, y detail, el detalle de /crons/[id]. Cada slice solo tiene las carpetas técnicas que necesita y expone un index.ts estrecho",
+  "direction": "right",
+  "nodes": [
+    {
+      "id": "root",
+      "name": "features/crons/",
+      "sub": "su index.ts",
+      "page": "frontend/features",
+      "info": "Su index.ts exporta las dos páginas"
+    },
+    {
+      "id": "shared",
+      "name": "shared/",
+      "sub": "de los dos slices",
+      "parent": "root",
+      "info": "Lo que usan overview y detail"
+    },
+    {
+      "id": "shared-definitions",
+      "name": "definitions/",
+      "sub": "etiquetas",
+      "parent": "shared"
+    },
+    {
+      "id": "shared-hooks",
+      "name": "hooks/",
+      "sub": "consultas",
+      "parent": "shared",
+      "info": "Las consultas y mutaciones de los jobs"
+    },
+    {
+      "id": "shared-model",
+      "name": "model/",
+      "sub": "tipos",
+      "parent": "shared"
+    },
+    {
+      "id": "overview",
+      "name": "overview/",
+      "sub": "/crons",
+      "parent": "root",
+      "focal": true
+    },
+    {
+      "id": "overview-components",
+      "name": "components/",
+      "sub": "la página",
+      "parent": "overview",
+      "info": "La página, su contenido y el formulario del job"
+    },
+    {
+      "id": "overview-definitions",
+      "name": "definitions/",
+      "sub": "el job",
+      "parent": "overview"
+    },
+    {
+      "id": "overview-hooks",
+      "name": "hooks/",
+      "sub": "handlers",
+      "parent": "overview",
+      "info": "Los handlers disponibles y los usuarios"
+    },
+    {
+      "id": "overview-model",
+      "name": "model/",
+      "sub": "por etiqueta",
+      "parent": "overview",
+      "info": "Agrupa los jobs por etiqueta"
+    },
+    {
+      "id": "detail",
+      "name": "detail/",
+      "sub": "/crons/[id]",
+      "parent": "root"
+    },
+    {
+      "id": "detail-components",
+      "name": "components/",
+      "sub": "el historial",
+      "parent": "detail",
+      "info": "La página, su contenido y el historial de ejecuciones"
+    },
+    {
+      "id": "detail-hooks",
+      "name": "hooks/",
+      "sub": "eventos en vivo",
+      "parent": "detail"
+    },
+    {
+      "id": "detail-model",
+      "name": "model/",
+      "sub": "el pulso",
+      "parent": "detail",
+      "info": "El pulso de la ejecución en curso"
+    }
+  ]
+}

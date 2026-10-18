@@ -1,0 +1,21 @@
+---
+titulo: En nativo
+descripcion: Arrancar el frontend y el backend como procesos de tu máquina, con el gateway, Loki y MinIO en Docker
+commands: [gateway, dev-local, dev-frontend, dev-backend, loki-start, minio-start]
+compose_files: [gateway]
+orden: 3
+actualizado: 2026-10-18
+---
+
+```bash
+bun run minio:start  # MinIO en 127.0.0.1:9000, si no usas otro almacén S3
+bun run loki:start   # Loki en 127.0.0.1:3100 (opcional)
+bun run gateway      # el gateway de desarrollo: https://localhost:4321
+bun run dev:local    # frontend y backend con Turbo
+```
+
+- **El gateway es obligatorio**: es el único que sirve `https://localhost:4321`. `astro dev` escucha en `:4320` y el inicio de sesión solo funciona en el origen del gateway. Corre en Docker con la red del host y comparte la autoridad de certificación (el volumen `stack-dev_gateway_data`) con el stack de Docker.
+- **Loki y MinIO** son los mismos servicios de `compose.dev.yml` con el perfil `native`, publicados solo en `127.0.0.1`. Se paran con `bun run loki:stop` y `bun run minio:stop`.
+- **Una sola app**: `bun run dev:frontend` o `bun run dev:backend`. `bun run dev:site` arranca la web del proyecto (`apps/site`) en `:4322`.
+
+No puedes tener a la vez el modo nativo y el [de Docker](docker.mdx): usan los mismos puertos.
