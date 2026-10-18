@@ -2,6 +2,12 @@ import { auth } from "@nonete/auth"
 import { db } from "@nonete/db"
 
 import { errors } from "#errors"
+import {
+  isOutdated,
+  type ModuleIdentity,
+  moduleIdentityOf,
+  readSwitches,
+} from "#shared/token-settings"
 
 /**
  * The permission that makes a Better Auth API key a token key: the
@@ -18,6 +24,46 @@ export type TokenCaller = {
   userId: string
   keyId: string
   keyName: string
+  module: ModuleIdentity
+}
+
+export const TOKEN_DISABLED_MESSAGE =
+  "El token del navegador está desactivado temporalmente"
+
+export const MODULE_OUTDATED_MESSAGE =
+  "El módulo de este navegador está desactualizado: vuelve a conectarlo desde Garabato"
+
+/** The module a token key last reported, from its API key metadata. */
+export function storedModuleOf(metadata: unknown): ModuleIdentity | null {
+  if (typeof metadata !== "object" || metadata === null) return null
+  if (!("moduleVersion" in metadata) || !("platform" in metadata)) return null
+  const { moduleVersion, platform } = metadata
+  if (typeof moduleVersion !== "string" || typeof platform !== "string") {
+    return null
+  }
+  return { version: moduleVersion, platform }
+}
+
+// Remembers the module a key reports, writing only when it changed: a
+// normal request writes nothing.
+async function rememberModule(
+  key: { id: string; referenceId: string; metadata: unknown },
+  module: ModuleIdentity
+) {
+  const stored = storedModuleOf(key.metadata)
+  if (
+    stored?.version === module.version &&
+    stored.platform === module.platform
+  ) {
+    return
+  }
+  await auth.api.updateApiKey({
+    body: {
+      keyId: key.id,
+      userId: key.referenceId,
+      metadata: { moduleVersion: module.version, platform: module.platform },
+    },
+  })
 }
 
 export const TWO_FACTOR_REQUIRED_MESSAGE =
@@ -104,5 +150,16 @@ export async function resolveTokenCaller(
   if (!owner.twoFactorEnabled) {
     throw errors.FORBIDDEN({ message: TWO_FACTOR_REQUIRED_MESSAGE })
   }
-  return { userId: owner.id, keyId: key.id, keyName: key.name ?? "" }
+  // Emergency switches: their own codes, so no module mistakes a refusal
+  // for a closed signing window (403) and asks for a code in a loop.
+  const switches = await readSwitches()
+  if (!switches.tokenEnabled) {
+    throw errors.SERVICE_UNAVAILABLE({ message: TOKEN_DISABLED_MESSAGE })
+  }
+  const module = moduleIdentityOf(headers)
+  await rememberModule(key, module)
+  if (isOutdated(module.version, switches.minModuleVersion)) {
+    throw errors.PRECONDITION_FAILED({ message: MODULE_OUTDATED_MESSAGE })
+  }
+  return { userId: owner.id, keyId: key.id, keyName: key.name ?? "", module }
 }

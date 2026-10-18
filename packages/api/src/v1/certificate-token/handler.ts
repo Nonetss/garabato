@@ -6,7 +6,7 @@ import type { Certificate } from "@nonete/db/schema"
 import { env } from "@nonete/env/server"
 import type { z } from "zod"
 
-import type { Context } from "#context"
+import { type Context, getRequestLogger } from "#context"
 import { errors } from "#errors"
 import { requireUserId } from "#shared/caller"
 import {
@@ -23,23 +23,42 @@ import {
 } from "#shared/raw-signature"
 import {
   hasTokenPermission,
+  storedModuleOf,
   TOKEN_KEY_PERMISSIONS,
   type TokenCaller,
   TWO_FACTOR_REQUIRED_MESSAGE,
 } from "#shared/token-key"
 import {
+  disabledInstallScript,
   expiredInstallScript,
   MODULE_ARCHITECTURES,
   MODULE_SYSTEMS,
+  MODULE_VERSION,
   type ModuleArchitecture,
   type ModuleSystem,
   moduleFiles,
 } from "#shared/token-module"
+import {
+  compareVersions,
+  isOutdated,
+  LEGACY_MODULE_VERSION,
+  type ModuleIdentity,
+  readSettingsRow,
+  readSwitches,
+  writeSwitches,
+} from "#shared/token-settings"
 import { tokenWindows } from "#shared/token-window"
 import { matchTotpStep } from "#shared/totp"
 import { recordTraces } from "#shared/trace"
 import type { certificateTokenInput } from "#v1/certificate-token/input"
 import type { TokenKeySummary } from "#v1/certificate-token/output"
+
+type SettingsRow = Awaited<ReturnType<typeof readSettingsRow>>
+
+function updatedByOf(row: SettingsRow) {
+  if (!row?.updatedByUser) return null
+  return { id: row.updatedByUser.id, name: row.updatedByUser.name }
+}
 
 /** Context of a procedure reached with a token key (`tokenProcedure`). */
 export type TokenContext = Context & { token: TokenCaller }
@@ -154,7 +173,9 @@ async function requireTwoFactor(userId: string) {
 
 // Server-side call (no headers): only then may a key carry permissions and
 // skip the plugin's default rate limit, which the module would hit.
-function createTokenKey(userId: string, name: string) {
+// The module the installer hands out is recorded with the key, so a browser
+// that has not called Garabato yet already shows its version.
+function createTokenKey(userId: string, name: string, platform: string) {
   return auth.api.createApiKey({
     body: {
       configId: "default",
@@ -163,8 +184,84 @@ function createTokenKey(userId: string, name: string) {
       expiresIn: KEY_LIFETIME_SECONDS,
       permissions: TOKEN_KEY_PERMISSIONS,
       rateLimitEnabled: false,
+      metadata: { moduleVersion: MODULE_VERSION, platform },
     },
   })
+}
+
+/** The module a browser last reported; browsers connected before modules
+ *  reported one count as the legacy version. */
+function moduleOf(metadata: unknown): ModuleIdentity {
+  const stored = storedModuleOf(metadata)
+  if (stored) return stored
+  return { version: LEGACY_MODULE_VERSION, platform: "unknown" }
+}
+
+// Better Auth stores permissions and metadata as JSON text; a row read
+// straight from the table carries it unparsed (older rows double-encoded).
+function parseJson(text: string | null): unknown {
+  if (text === null) return null
+  try {
+    const value: unknown = JSON.parse(text)
+    if (typeof value === "string") return JSON.parse(value)
+    return value
+  } catch {
+    return null
+  }
+}
+
+function isPermissionRecord(value: unknown): value is Record<string, string[]> {
+  if (typeof value !== "object" || value === null) return false
+  return Object.values(value).every(
+    (actions) =>
+      Array.isArray(actions) &&
+      actions.every((action) => typeof action === "string")
+  )
+}
+
+/** Connected browsers of every user, grouped by module version and platform. */
+async function browsersByModule(minimum: string | null) {
+  const rows = await db.query.apikey.findMany()
+  const groups = new Map<
+    string,
+    { version: string; platform: string; count: number }
+  >()
+  for (const row of rows) {
+    const permissions = parseJson(row.permissions)
+    if (!isPermissionRecord(permissions) || !hasTokenPermission(permissions)) {
+      continue
+    }
+    const module = moduleOf(parseJson(row.metadata))
+    const id = `${module.version} ${module.platform}`
+    const group = groups.get(id)
+    if (group) group.count++
+    else groups.set(id, { ...module, count: 1 })
+  }
+  return [...groups.values()]
+    .toSorted(
+      (a, b) =>
+        compareVersions(b.version, a.version) ||
+        a.platform.localeCompare(b.platform)
+    )
+    .map((group) => ({
+      ...group,
+      outdated: isOutdated(group.version, minimum),
+    }))
+}
+
+const INSTALLS_DISABLED_MESSAGE =
+  "La conexión de navegadores está desactivada temporalmente"
+
+/** Whether new browsers may be connected: both switches on. */
+async function installsAllowed() {
+  const switches = await readSwitches()
+  return switches.tokenEnabled && switches.installsEnabled
+}
+
+async function requireInstalls() {
+  if (!(await installsAllowed())) {
+    throw errors.SERVICE_UNAVAILABLE({ message: INSTALLS_DISABLED_MESSAGE })
+  }
 }
 
 const EXPIRED_CODE_MESSAGE =
@@ -183,6 +280,7 @@ export const certificateTokenHandler = {
     input: z.infer<typeof certificateTokenInput.startConnection>
   }) => {
     const userId = requireUserId(context)
+    await requireInstalls()
     await requireTwoFactor(userId)
     const pending = installCodes.start(userId, input.name)
     return {
@@ -215,6 +313,7 @@ export const certificateTokenHandler = {
   }: {
     input: z.infer<typeof certificateTokenInput.redeem>
   }) => {
+    await requireInstalls()
     // The module must exist before the code is spent: the script downloads
     // it first, and a missing architecture should not burn the code.
     const module = await moduleFiles.read(input.os, input.arch)
@@ -227,7 +326,11 @@ export const certificateTokenHandler = {
     if (!pending) throw errors.NOT_FOUND({ message: EXPIRED_CODE_MESSAGE })
     try {
       await requireTwoFactor(pending.userId)
-      const created = await createTokenKey(pending.userId, pending.name)
+      const created = await createTokenKey(
+        pending.userId,
+        pending.name,
+        `${input.os}-${input.arch}`
+      )
       installCodes.complete(pending.code, created.id)
       return { url: publicUrl(), key: created.key, moduleSha256: module.sha256 }
     } catch (error) {
@@ -241,6 +344,15 @@ export const certificateTokenHandler = {
   }: {
     input: z.infer<typeof certificateTokenInput.installScript>
   }) => {
+    // The script is piped to a shell, so it never fails: while installs are
+    // off it only says so.
+    if (!(await installsAllowed())) {
+      return new File(
+        [disabledInstallScript(input.os)],
+        SCRIPT_DOWNLOAD_NAMES[input.os],
+        { type: "text/plain; charset=utf-8" }
+      )
+    }
     const pending = installCodes.peek(input.code)
     const script = pending
       ? await moduleFiles.installScript(input.os, publicUrl(), pending.code)
@@ -260,6 +372,7 @@ export const certificateTokenHandler = {
     const notShipped = errors.NOT_FOUND({
       message: "No hay módulo para esa arquitectura",
     })
+    await requireInstalls()
     const os = input.os ?? "linux"
     if (!isArchitecture(input.arch) || !isSystem(os)) throw notShipped
     const module = await moduleFiles.read(os, input.arch)
@@ -270,10 +383,60 @@ export const certificateTokenHandler = {
   },
 
   listKeys: async ({ context }: { context: Context }) => {
-    const keys = await ownTokenKeys(context)
+    const [keys, switches] = await Promise.all([
+      ownTokenKeys(context),
+      readSwitches(),
+    ])
     return keys
       .toSorted((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .map(toSummary)
+      .map((key) => {
+        const module = moduleOf(key.metadata)
+        return {
+          ...toSummary(key),
+          moduleVersion: module.version,
+          platform: module.platform,
+          outdated: isOutdated(module.version, switches.minModuleVersion),
+        }
+      })
+  },
+
+  switches: async () => {
+    const switches = await readSwitches()
+    return { ...switches, servedVersion: MODULE_VERSION }
+  },
+
+  settings: async () => {
+    const row = await readSettingsRow()
+    const switches = await readSwitches()
+    return {
+      ...switches,
+      servedVersion: MODULE_VERSION,
+      updatedAt: toIsoOrNull(row?.updatedAt ?? null),
+      updatedBy: updatedByOf(row),
+      browsers: await browsersByModule(switches.minModuleVersion),
+    }
+  },
+
+  updateSettings: async ({
+    context,
+    input,
+  }: {
+    context: Context
+    input: z.infer<typeof certificateTokenInput.updateSettings>
+  }) => {
+    const userId = requireUserId(context)
+    const before = await readSwitches()
+    await writeSwitches(input, userId)
+    getRequestLogger(context)?.info(
+      {
+        event: "browser-token.settings.updated",
+        adminId: userId,
+        before,
+        after: input,
+      },
+      "browser token settings updated"
+    )
+    return certificateTokenHandler.settings()
   },
 
   revokeKey: async ({

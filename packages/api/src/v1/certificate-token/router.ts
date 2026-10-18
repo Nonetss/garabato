@@ -1,5 +1,10 @@
 import { openapi } from "@orpc/openapi"
-import { protectedProcedure, publicProcedure, tokenProcedure } from "#index"
+import {
+  adminProcedure,
+  protectedProcedure,
+  publicProcedure,
+  tokenProcedure,
+} from "#index"
 import { certificateTokenHandler } from "#v1/certificate-token/handler"
 import { certificateTokenInput } from "#v1/certificate-token/input"
 import { certificateTokenOutput } from "#v1/certificate-token/output"
@@ -81,6 +86,48 @@ export const certificateTokenRouter = {
     .input(certificateTokenInput.module)
     .output(certificateTokenOutput.module)
     .handler(({ input }) => certificateTokenHandler.module({ input })),
+
+  switches: protectedProcedure
+    .meta(
+      openapi({
+        summary: "Browser token switches",
+        description:
+          "Whether the browser token and new installs are enabled, the minimum module version and the version the installers hand out, for the certificates page.",
+        tags: TAGS,
+        method: "GET",
+      })
+    )
+    .output(certificateTokenOutput.switches)
+    .handler(() => certificateTokenHandler.switches()),
+
+  settings: adminProcedure
+    .meta(
+      openapi({
+        summary: "Browser token settings",
+        description:
+          "Admin only. The emergency switches, who changed them last and when, and the connected browsers of every user grouped by module version and platform.",
+        tags: TAGS,
+        method: "GET",
+      })
+    )
+    .output(certificateTokenOutput.settings)
+    .handler(() => certificateTokenHandler.settings()),
+
+  updateSettings: adminProcedure
+    .meta(
+      openapi({
+        summary: "Change the browser token settings",
+        description:
+          "Admin only. Replaces the emergency switches; they apply from the next request. Logged with the administrator and the old and new values.",
+        tags: TAGS,
+        method: "PUT",
+      })
+    )
+    .input(certificateTokenInput.updateSettings)
+    .output(certificateTokenOutput.updateSettings)
+    .handler(({ context, input }) =>
+      certificateTokenHandler.updateSettings({ context, input })
+    ),
 
   listKeys: protectedProcedure
     .meta(

@@ -13,6 +13,10 @@ export const MODULE_SYSTEMS = ["linux", "windows"] as const
 
 export type ModuleSystem = (typeof MODULE_SYSTEMS)[number]
 
+/** The module version the installers hand out: `native/pkcs11/Cargo.toml`'s
+ *  (a unit test keeps them equal). */
+export const MODULE_VERSION = "0.2.0"
+
 export const MODULE_FILE_NAME = "libgarabato_pkcs11.so"
 export const WINDOWS_MODULE_FILE_NAME = "garabato_pkcs11.dll"
 
@@ -52,6 +56,23 @@ export function renderInstallScript(
     .replace("@@URL@@", () => url)
     .replace("@@CODE@@", () => code)
     .replace("@@UNINSTALL@@", () => uninstall.trimEnd())
+}
+
+/** What an install command gets while installs are turned off. */
+export function disabledInstallScript(os: ModuleSystem) {
+  if (os === "windows") {
+    return [
+      "Write-Host 'La conexión de navegadores está desactivada temporalmente.' -ForegroundColor Red",
+      "Write-Host 'Vuelve a intentarlo más tarde o consulta al administrador de Garabato.'",
+      "",
+    ].join("\r\n")
+  }
+  return [
+    "#!/bin/sh",
+    "printf '%s\\n' 'La conexión de navegadores está desactivada temporalmente.' 'Vuelve a intentarlo más tarde o consulta al administrador de Garabato.' >&2",
+    "exit 1",
+    "",
+  ].join("\n")
 }
 
 /** What an unknown, used or expired code gets: a message and nothing else.

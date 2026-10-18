@@ -33,6 +33,15 @@ const moduleSystem = z
   .describe("Operating system of the install script; linux when omitted")
 
 export const certificateTokenInput = {
+  updateSettings: z.object({
+    tokenEnabled: z.boolean(),
+    installsEnabled: z.boolean(),
+    minModuleVersion: z
+      .string()
+      .regex(/^\d+\.\d+\.\d+$/)
+      .nullable()
+      .describe("Modules older than this are refused; null for none"),
+  }),
   startConnection: z.object({
     name: z
       .string()

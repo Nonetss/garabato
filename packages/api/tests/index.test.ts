@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, mock, spyOn, test } from "bun:test"
 import { auth } from "@nonete/auth"
 import { type AppResource, appStatements } from "@nonete/auth/permissions"
-import { userRow } from "@nonete/db/testing"
+import { browserTokenSettingsRow, userRow } from "@nonete/db/testing"
 import { type AnyProcedure, call, ORPCError } from "@orpc/server"
 
 import type { Context } from "#context"
@@ -32,6 +32,7 @@ const {
 } = await import("#index")
 
 const verifyApiKey = spyOn(auth.api, "verifyApiKey")
+const updateApiKey = spyOn(auth.api, "updateApiKey")
 
 // Any declared app permission works; the builder's logic doesn't depend on it.
 const resource = Object.keys(appStatements)[0] as AppResource
@@ -64,6 +65,7 @@ async function expectCode(promise: Promise<unknown>, code: string) {
 beforeEach(() => {
   fakeDb.reset()
   verifyApiKey.mockReset()
+  updateApiKey.mockReset()
   hasOrganizationPermission.mockReset()
   hasOrganizationPermission.mockResolvedValue(false)
 })
@@ -160,8 +162,23 @@ describe("cronProcedure", () => {
 })
 
 describe("tokenProcedure", () => {
-  function withKey(key: string) {
-    return { ...anonymousContext(), headers: new Headers({ "x-api-key": key }) }
+  function withKey(key: string, module = "0.2.0 linux-x86_64") {
+    return {
+      ...anonymousContext(),
+      headers: new Headers({ "x-api-key": key, "x-garabato-module": module }),
+    }
+  }
+
+  function ownerWithTwoFactor() {
+    verifyApiKey.mockResolvedValue(
+      verifiedTokenKey({
+        metadata: { moduleVersion: "0.2.0", platform: "linux-x86_64" },
+      })
+    )
+    fakeDb.queue(
+      "query.user.findFirst",
+      userRow({ id: "user-id", twoFactorEnabled: true })
+    )
   }
 
   test("rejects a request without a token key with UNAUTHORIZED", async () => {
@@ -198,17 +215,63 @@ describe("tokenProcedure", () => {
     await expectCode(run(procedures.token, withKey("sk_token")), "UNAUTHORIZED")
   })
 
-  test("puts the key and its owner in the context", async () => {
-    verifyApiKey.mockResolvedValue(verifiedTokenKey())
-    fakeDb.queue(
-      "query.user.findFirst",
-      userRow({ id: "user-id", twoFactorEnabled: true })
-    )
+  test("puts the key, its owner and the module in the context", async () => {
+    ownerWithTwoFactor()
+    fakeDb.queue("query.browserTokenSettings.findFirst", undefined)
 
     expect(await run(procedures.token, withKey("sk_token"))).toEqual({
       userId: "user-id",
       keyId: "key-1",
       keyName: "Firefox portátil",
+      module: { version: "0.2.0", platform: "linux-x86_64" },
+    })
+    expect(updateApiKey).not.toHaveBeenCalled()
+  })
+
+  test("refuses with SERVICE_UNAVAILABLE while the token is off", async () => {
+    ownerWithTwoFactor()
+    fakeDb.queue(
+      "query.browserTokenSettings.findFirst",
+      browserTokenSettingsRow({ tokenEnabled: false })
+    )
+
+    await expectCode(
+      run(procedures.token, withKey("sk_token")),
+      "SERVICE_UNAVAILABLE"
+    )
+  })
+
+  test("refuses an outdated module with PRECONDITION_FAILED", async () => {
+    ownerWithTwoFactor()
+    fakeDb.queue(
+      "query.browserTokenSettings.findFirst",
+      browserTokenSettingsRow({ minModuleVersion: "0.3.0" })
+    )
+
+    await expectCode(
+      run(procedures.token, withKey("sk_token")),
+      "PRECONDITION_FAILED"
+    )
+  })
+
+  test("treats a module without the header as 0.1.0 and remembers it", async () => {
+    ownerWithTwoFactor()
+    fakeDb.queue(
+      "query.browserTokenSettings.findFirst",
+      browserTokenSettingsRow({ minModuleVersion: "0.2.0" })
+    )
+    const context = {
+      ...anonymousContext(),
+      headers: new Headers({ "x-api-key": "sk_token" }),
+    }
+
+    await expectCode(run(procedures.token, context), "PRECONDITION_FAILED")
+    expect(updateApiKey).toHaveBeenCalledWith({
+      body: {
+        keyId: "key-1",
+        userId: "user-id",
+        metadata: { moduleVersion: "0.1.0", platform: "unknown" },
+      },
     })
   })
 })

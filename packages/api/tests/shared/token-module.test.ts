@@ -5,8 +5,10 @@ import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 import {
   createModuleFiles,
+  disabledInstallScript,
   expiredInstallScript,
   MODULE_FILE_NAME,
+  MODULE_VERSION,
   modulePath,
   renderInstallScript,
   WINDOWS_MODULE_FILE_NAME,
@@ -145,5 +147,24 @@ describe("the repository's scripts", () => {
     // It runs in the user's console through iex: exit would close it.
     expect(windows).not.toContain("exit")
     expect(windows).not.toContain("Invoke-")
+  })
+})
+
+describe("MODULE_VERSION", () => {
+  test("matches the version in native/pkcs11/Cargo.toml", async () => {
+    const manifest = await Bun.file(
+      resolve(import.meta.dir, "../../../../native/pkcs11/Cargo.toml")
+    ).text()
+    const version = /^version = "([^"]+)"/m.exec(manifest)?.[1]
+
+    expect(version).toBe(MODULE_VERSION)
+  })
+})
+
+describe("disabledInstallScript", () => {
+  test("only prints, on both systems", () => {
+    expect(disabledInstallScript("linux")).toContain("desactivada")
+    expect(disabledInstallScript("linux")).not.toContain("curl")
+    expect(disabledInstallScript("windows")).not.toContain("exit")
   })
 })

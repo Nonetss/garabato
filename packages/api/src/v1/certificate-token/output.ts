@@ -14,6 +14,31 @@ const tokenKey = z.object({
 
 export type TokenKeySummary = z.infer<typeof tokenKey>
 
+const switches = {
+  tokenEnabled: z.boolean(),
+  installsEnabled: z.boolean(),
+  minModuleVersion: z.string().nullable(),
+  servedVersion: z.string().describe("Module version the installers hand out"),
+}
+
+const settings = z.object({
+  ...switches,
+  updatedAt: z.string().nullable(),
+  updatedBy: z.object({ id: z.string(), name: z.string() }).nullable(),
+  browsers: z
+    .array(
+      z.object({
+        version: z.string(),
+        platform: z.string(),
+        count: z.number().int(),
+        outdated: z.boolean(),
+      })
+    )
+    .describe(
+      "Connected browsers of every user by module version and platform"
+    ),
+})
+
 export const certificateTokenOutput = {
   startConnection: z.object({
     code: z.string().describe("Install code, canonical form"),
@@ -44,7 +69,16 @@ export const certificateTokenOutput = {
     .file()
     .describe("POSIX shell script, or PowerShell script for os=windows"),
   module: z.file().describe("The PKCS#11 module, an ELF shared object"),
-  listKeys: z.array(tokenKey),
+  listKeys: z.array(
+    tokenKey.extend({
+      moduleVersion: z.string(),
+      platform: z.string(),
+      outdated: z.boolean().describe("Below the minimum module version"),
+    })
+  ),
+  switches: z.object(switches),
+  settings,
+  updateSettings: settings,
   revokeKey: z.object({ id: z.string(), success: z.boolean() }),
   certificates: z.array(
     z.object({

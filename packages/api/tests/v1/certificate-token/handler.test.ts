@@ -9,6 +9,8 @@ import {
 import { auth } from "@nonete/auth"
 import { encryptTwoFactorSecret } from "@nonete/auth/two-factor"
 import {
+  type BrowserTokenSettingsRow,
+  browserTokenSettingsRow,
   type CertificateRow,
   certificateRow,
   stepArgs,
@@ -70,6 +72,7 @@ function tokenContext(): TokenContext {
       userId: `token-user-${counter}`,
       keyId: `token-key-${counter}`,
       keyName: "Firefox portátil",
+      module: { version: "0.2.0", platform: "linux-x86_64" },
     },
   }
 }
@@ -141,7 +144,26 @@ function tokenKey(id: string, createdAt: string) {
   })
 }
 
-beforeEach(() => fakeDb.reset())
+// Installs are allowed unless a test says otherwise: each install procedure
+// reads the switches once, and an unconsumed result is harmless.
+function allowInstalls() {
+  for (let i = 0; i < 4; i++) {
+    fakeDb.queue("query.browserTokenSettings.findFirst", undefined)
+  }
+}
+
+function switchesOff(overrides: Partial<BrowserTokenSettingsRow>) {
+  fakeDb.reset()
+  fakeDb.queue(
+    "query.browserTokenSettings.findFirst",
+    browserTokenSettingsRow(overrides)
+  )
+}
+
+beforeEach(() => {
+  fakeDb.reset()
+  allowInstalls()
+})
 
 afterEach(() => {
   listApiKeys.mockReset()
@@ -181,6 +203,57 @@ describe("certificateToken.startConnection", () => {
   })
 })
 
+describe("emergency switches on installs", () => {
+  test("startConnection is refused while installs are off", async () => {
+    switchesOff({ installsEnabled: false })
+
+    await expectErrorCode(
+      certificateTokenHandler.startConnection({
+        context: userContext(),
+        input: { name: "Firefox portátil" },
+      }),
+      "SERVICE_UNAVAILABLE"
+    )
+  })
+
+  test("redeem is refused while the token is off, keeping the code", async () => {
+    const { code } = await startConnection("Firefox portátil")
+    switchesOff({ tokenEnabled: false })
+
+    await expectErrorCode(
+      certificateTokenHandler.redeem({
+        input: { code, arch: "x86_64", os: "linux" },
+      }),
+      "SERVICE_UNAVAILABLE"
+    )
+    expect(createApiKey).not.toHaveBeenCalled()
+    expect(installCodes.peek(code)).not.toBeNull()
+  })
+
+  test("the install script only says installs are off", async () => {
+    const { code } = await startConnection("Firefox portátil")
+    switchesOff({ installsEnabled: false })
+
+    const file = await certificateTokenHandler.installScript({
+      input: { code, os: "windows" },
+    })
+    const script = await file.text()
+
+    expect(script).toContain("desactivada temporalmente")
+    expect(script).not.toContain("Invoke-")
+  })
+
+  test("the module download is refused while installs are off", async () => {
+    switchesOff({ installsEnabled: false })
+
+    await expectErrorCode(
+      certificateTokenHandler.module({ input: { arch: "x86_64" } }),
+      "SERVICE_UNAVAILABLE"
+    )
+    expect(readModule).not.toHaveBeenCalled()
+  })
+})
+
 describe("certificateToken.redeem", () => {
   test("creates the token key for the starter and returns url, key and hash", async () => {
     const { code } = await startConnection("Firefox portátil")
@@ -206,6 +279,7 @@ describe("certificateToken.redeem", () => {
         expiresIn: 365 * 24 * 60 * 60,
         permissions: { certificateToken: ["use"] },
         rateLimitEnabled: false,
+        metadata: { moduleVersion: "0.2.0", platform: "linux-x86_64" },
       },
     })
     expect(redeemed).toEqual({
@@ -443,6 +517,129 @@ describe("certificateToken.listKeys", () => {
 
     expect(keys.map((key) => key.id)).toEqual(["new", "old"])
     expect(keys[0]).not.toHaveProperty("key")
+  })
+})
+
+describe("certificateToken.listKeys module versions", () => {
+  test("marks browsers below the minimum version as outdated", async () => {
+    switchesOff({ minModuleVersion: "0.2.0" })
+    listApiKeys.mockResolvedValue(
+      listedApiKeys([
+        {
+          ...tokenKey("new", "2026-01-02T10:00:00.000Z"),
+          metadata: { moduleVersion: "0.2.0", platform: "windows-x86_64" },
+        },
+        tokenKey("legacy", "2026-01-01T10:00:00.000Z"),
+      ])
+    )
+
+    const keys = await certificateTokenHandler.listKeys({
+      context: userContext(),
+    })
+
+    expect(
+      keys.map((key) => [key.id, key.moduleVersion, key.platform, key.outdated])
+    ).toEqual([
+      ["new", "0.2.0", "windows-x86_64", false],
+      ["legacy", "0.1.0", "unknown", true],
+    ])
+  })
+})
+
+describe("certificateToken.switches and settings", () => {
+  function jsonOrNull(value: unknown) {
+    if (value === null) return null
+    return JSON.stringify(value)
+  }
+
+  function apikeyRow(id: string, metadata: unknown, permissions: unknown) {
+    return {
+      id,
+      permissions: JSON.stringify(permissions),
+      metadata: jsonOrNull(metadata),
+    }
+  }
+
+  test("switches tell the certificates page what applies", async () => {
+    switchesOff({ installsEnabled: false })
+
+    expect(await certificateTokenHandler.switches()).toEqual({
+      tokenEnabled: true,
+      installsEnabled: false,
+      minModuleVersion: null,
+      servedVersion: "0.2.0",
+    })
+  })
+
+  test("settings count connected browsers per version, ignoring other keys", async () => {
+    fakeDb.reset()
+    const row = {
+      ...browserTokenSettingsRow({
+        minModuleVersion: "0.2.0",
+        updatedBy: "admin-id",
+      }),
+      updatedByUser: userRow({ id: "admin-id", name: "Admin" }),
+    }
+    fakeDb.queue("query.browserTokenSettings.findFirst", row, row)
+    const token = { certificateToken: ["use"] }
+    fakeDb.queue("query.apikey.findMany", [
+      apikeyRow(
+        "a",
+        { moduleVersion: "0.2.0", platform: "linux-x86_64" },
+        token
+      ),
+      apikeyRow(
+        "b",
+        { moduleVersion: "0.2.0", platform: "linux-x86_64" },
+        token
+      ),
+      apikeyRow("c", null, token),
+      apikeyRow("d", null, { other: ["use"] }),
+    ])
+
+    const settings = await certificateTokenHandler.settings()
+
+    expect(settings).toMatchObject({
+      minModuleVersion: "0.2.0",
+      updatedBy: { id: "admin-id", name: "Admin" },
+      browsers: [
+        {
+          version: "0.2.0",
+          platform: "linux-x86_64",
+          count: 2,
+          outdated: false,
+        },
+        { version: "0.1.0", platform: "unknown", count: 1, outdated: true },
+      ],
+    })
+  })
+
+  test("updateSettings saves the switches with the administrator", async () => {
+    fakeDb.reset()
+    fakeDb.queue("query.browserTokenSettings.findFirst", undefined)
+    fakeDb.queue("insert", [])
+    const saved = browserTokenSettingsRow({
+      tokenEnabled: false,
+      updatedBy: "admin-id",
+    })
+    fakeDb.queue("query.browserTokenSettings.findFirst", saved, saved)
+    fakeDb.queue("query.apikey.findMany", [])
+
+    const result = await certificateTokenHandler.updateSettings({
+      context: adminContext(),
+      input: {
+        tokenEnabled: false,
+        installsEnabled: true,
+        minModuleVersion: null,
+      },
+    })
+
+    const [insert] = fakeDb.calls("insert")
+    expect(insert && stepArgs(insert, "values")[0]).toMatchObject({
+      tokenEnabled: false,
+      updatedBy: "admin-id",
+    })
+    expect(result.tokenEnabled).toBe(false)
   })
 })
 
