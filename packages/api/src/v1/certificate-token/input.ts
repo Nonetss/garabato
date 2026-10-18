@@ -27,6 +27,11 @@ const installCode = z
   .max(12)
   .describe("Install code, e.g. 7KQ4-XMPA (case and dash ignored)")
 
+const moduleSystem = z
+  .enum(["linux", "windows"])
+  .default("linux")
+  .describe("Operating system of the install script; linux when omitted")
+
 export const certificateTokenInput = {
   startConnection: z.object({
     name: z
@@ -40,9 +45,13 @@ export const certificateTokenInput = {
   redeem: z.object({
     code: installCode,
     arch: z.enum(["x86_64", "aarch64"]),
+    os: moduleSystem,
   }),
-  installScript: z.object({ code: z.string().max(32) }),
-  module: z.object({ arch: z.string().max(32) }),
+  installScript: z.object({ code: z.string().max(32), os: moduleSystem }),
+  module: z.object({
+    arch: z.string().max(32),
+    os: z.string().max(32).optional().describe("linux (default) or windows"),
+  }),
   revokeKey: z.object({ id: z.string().min(1) }),
   unlock: z.object({
     code: z

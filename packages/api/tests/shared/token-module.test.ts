@@ -7,22 +7,24 @@ import {
   createModuleFiles,
   expiredInstallScript,
   MODULE_FILE_NAME,
+  modulePath,
   renderInstallScript,
+  WINDOWS_MODULE_FILE_NAME,
 } from "#shared/token-module"
 
 const root = mkdtempSync(join(tmpdir(), "garabato-module-"))
 afterAll(() => rmSync(root, { recursive: true, force: true }))
 
-function put(arch: string, content: string) {
+function put(arch: string, content: string, file = MODULE_FILE_NAME) {
   mkdirSync(join(root, "dist", arch), { recursive: true })
-  writeFileSync(join(root, "dist", arch, MODULE_FILE_NAME), content)
+  writeFileSync(join(root, "dist", arch, file), content)
 }
 
 describe("moduleFiles.read", () => {
   test("reads the file of an architecture with its SHA-256", async () => {
     put("x86_64", "elf-x86")
 
-    const file = await createModuleFiles(root).read("x86_64")
+    const file = await createModuleFiles(root).read("linux", "x86_64")
 
     expect(new TextDecoder().decode(file?.bytes)).toBe("elf-x86")
     expect(file?.sha256).toBe(
@@ -31,20 +33,35 @@ describe("moduleFiles.read", () => {
   })
 
   test("is null for an architecture this installation does not ship", async () => {
-    expect(await createModuleFiles(root).read("aarch64")).toBeNull()
+    expect(await createModuleFiles(root).read("linux", "aarch64")).toBeNull()
   })
 
   test("hashes a rebuilt file again", async () => {
     const files = createModuleFiles(root)
     put("x86_64", "first")
-    await files.read("x86_64")
+    await files.read("linux", "x86_64")
 
     put("x86_64", "second build")
-    const file = await files.read("x86_64")
+    const file = await files.read("linux", "x86_64")
 
     expect(file?.sha256).toBe(
       createHash("sha256").update("second build").digest("hex")
     )
+  })
+})
+
+describe("Windows module", () => {
+  test("lives under windows-x86_64 as a DLL", async () => {
+    put("windows-x86_64", "pe-dll", WINDOWS_MODULE_FILE_NAME)
+
+    const file = await createModuleFiles(root).read("windows", "x86_64")
+
+    expect(new TextDecoder().decode(file?.bytes)).toBe("pe-dll")
+  })
+
+  test("does not exist for ARM", async () => {
+    expect(modulePath("windows", "aarch64")).toBeNull()
+    expect(await createModuleFiles(root).read("windows", "aarch64")).toBeNull()
   })
 })
 
@@ -60,6 +77,19 @@ describe("renderInstallScript", () => {
         "7KQ4XMPA"
       )
     ).toBe("U='https://garabato.lan'\nC='7KQ4XMPA'\ncat <<'X'\nrm -f x\nX\n")
+  })
+
+  test("keeps dollar sequences of the uninstall script as they are", () => {
+    const uninstall = "if ($_ -notmatch '^x$') { $& $1 $` }"
+
+    expect(
+      renderInstallScript(
+        template,
+        uninstall,
+        "https://garabato.lan",
+        "7KQ4XMPA"
+      )
+    ).toContain(uninstall)
   })
 
   test("refuses an address that could break out of the quotes", () => {
@@ -83,6 +113,7 @@ describe("the repository's scripts", () => {
 
   test("render without any placeholder left", async () => {
     const script = await createModuleFiles(native).installScript(
+      "linux",
       "https://garabato.lan",
       "7KQ4XMPA"
     )
@@ -93,8 +124,26 @@ describe("the repository's scripts", () => {
     expect(script).toContain("modutil -dbdir")
   })
 
-  test("the expired script only prints and fails", () => {
-    expect(expiredInstallScript()).toContain("exit 1")
-    expect(expiredInstallScript()).not.toContain("curl")
+  test("the PowerShell script renders without any placeholder left", async () => {
+    const script = await createModuleFiles(native).installScript(
+      "windows",
+      "https://garabato.lan",
+      "7KQ4XMPA"
+    )
+
+    expect(script).not.toContain("@@")
+    expect(script).toContain("$GarabatoUrl = 'https://garabato.lan'")
+    expect(script).toContain("$InstallCode = '7KQ4XMPA'")
+    expect(script).toContain("function Uninstall-GarabatoToken")
+  })
+
+  test("the expired scripts only print", () => {
+    expect(expiredInstallScript("linux")).toContain("exit 1")
+    expect(expiredInstallScript("linux")).not.toContain("curl")
+    const windows = expiredInstallScript("windows")
+    expect(windows).toContain("ha caducado")
+    // It runs in the user's console through iex: exit would close it.
+    expect(windows).not.toContain("exit")
+    expect(windows).not.toContain("Invoke-")
   })
 })

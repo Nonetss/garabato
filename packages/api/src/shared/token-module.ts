@@ -8,7 +8,26 @@ export const MODULE_ARCHITECTURES = ["x86_64", "aarch64"] as const
 
 export type ModuleArchitecture = (typeof MODULE_ARCHITECTURES)[number]
 
+/** Operating systems the module and its install script exist for. */
+export const MODULE_SYSTEMS = ["linux", "windows"] as const
+
+export type ModuleSystem = (typeof MODULE_SYSTEMS)[number]
+
 export const MODULE_FILE_NAME = "libgarabato_pkcs11.so"
+export const WINDOWS_MODULE_FILE_NAME = "garabato_pkcs11.dll"
+
+/** Where a platform's module lives under `dist/`; null for a platform the
+ *  module is not built for (Windows on ARM). */
+export function modulePath(os: ModuleSystem, arch: ModuleArchitecture) {
+  if (os === "linux") return join(arch, MODULE_FILE_NAME)
+  if (arch === "x86_64") return join("windows-x86_64", WINDOWS_MODULE_FILE_NAME)
+  return null
+}
+
+const SCRIPT_FILES = {
+  linux: { install: "install.sh", uninstall: "uninstall.sh" },
+  windows: { install: "install.ps1", uninstall: "uninstall.ps1" },
+} satisfies Record<ModuleSystem, { install: string; uninstall: string }>
 
 export type ModuleFile = { bytes: Uint8Array<ArrayBuffer>; sha256: string }
 
@@ -27,14 +46,25 @@ export function renderInstallScript(
 ) {
   if (!SAFE_URL.test(url)) throw new Error(`Unsafe Garabato URL: ${url}`)
   if (!SAFE_CODE.test(code)) throw new Error("Unsafe install code")
+  // Replacer functions: a replacement string would expand `$'`, `$&` and
+  // `$1`, which scripts are full of.
   return template
-    .replace("@@URL@@", url)
-    .replace("@@CODE@@", code)
-    .replace("@@UNINSTALL@@", uninstall.trimEnd())
+    .replace("@@URL@@", () => url)
+    .replace("@@CODE@@", () => code)
+    .replace("@@UNINSTALL@@", () => uninstall.trimEnd())
 }
 
-/** What an unknown, used or expired code gets: a message and nothing else. */
-export function expiredInstallScript() {
+/** What an unknown, used or expired code gets: a message and nothing else.
+ *  The PowerShell one never calls `exit`: it runs in the user's own console
+ *  through `iex`, which `exit` would close. */
+export function expiredInstallScript(os: ModuleSystem) {
+  if (os === "windows") {
+    return [
+      "Write-Host 'Este comando ha caducado o ya se usó.' -ForegroundColor Red",
+      "Write-Host 'Genera otro en Garabato → Certificados → Conectar navegador.'",
+      "",
+    ].join("\r\n")
+  }
   return [
     "#!/bin/sh",
     "printf '%s\\n' 'Este comando ha caducado o ya se usó.' 'Genera otro en Garabato → Certificados → Conectar navegador.' >&2",
@@ -62,8 +92,13 @@ export function createModuleFiles(nativeRoot: string) {
     }
   }
 
-  async function read(arch: ModuleArchitecture): Promise<ModuleFile | null> {
-    const path = join(nativeRoot, "dist", arch, MODULE_FILE_NAME)
+  async function read(
+    os: ModuleSystem,
+    arch: ModuleArchitecture
+  ): Promise<ModuleFile | null> {
+    const relative = modulePath(os, arch)
+    if (relative === null) return null
+    const path = join(nativeRoot, "dist", relative)
     const version = await versionOf(path)
     if (version === null) return null
     const bytes = new Uint8Array(await Bun.file(path).arrayBuffer())
@@ -74,10 +109,11 @@ export function createModuleFiles(nativeRoot: string) {
     return { bytes, sha256 }
   }
 
-  async function installScript(url: string, code: string) {
+  async function installScript(os: ModuleSystem, url: string, code: string) {
+    const files = SCRIPT_FILES[os]
     const [template, uninstall] = await Promise.all([
-      Bun.file(join(nativeRoot, "install", "install.sh")).text(),
-      Bun.file(join(nativeRoot, "install", "uninstall.sh")).text(),
+      Bun.file(join(nativeRoot, "install", files.install)).text(),
+      Bun.file(join(nativeRoot, "install", files.uninstall)).text(),
     ])
     return renderInstallScript(template, uninstall, url, code)
   }

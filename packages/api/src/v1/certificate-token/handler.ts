@@ -30,7 +30,9 @@ import {
 import {
   expiredInstallScript,
   MODULE_ARCHITECTURES,
+  MODULE_SYSTEMS,
   type ModuleArchitecture,
+  type ModuleSystem,
   moduleFiles,
 } from "#shared/token-module"
 import { tokenWindows } from "#shared/token-window"
@@ -116,13 +118,32 @@ function publicUrl() {
   return env.CORS_ORIGIN.replace(/\/+$/, "")
 }
 
-function installCommand(code: string) {
-  return `curl -fsSL '${publicUrl()}/api/v1/certificateToken/installScript?code=${code}' | sh`
+/** The command that installs the module, per operating system. */
+function installCommands(code: string) {
+  const script = `${publicUrl()}/api/v1/certificateToken/installScript?code=${code}`
+  return {
+    linux: `curl -fsSL '${script}' | sh`,
+    windows: `irm '${script}&os=windows' | iex`,
+  }
 }
 
 function isArchitecture(value: string): value is ModuleArchitecture {
   return MODULE_ARCHITECTURES.some((arch) => arch === value)
 }
+
+function isSystem(value: string): value is ModuleSystem {
+  return MODULE_SYSTEMS.some((os) => os === value)
+}
+
+const MODULE_DOWNLOAD_NAMES = {
+  linux: "libgarabato_pkcs11.so",
+  windows: "garabato_pkcs11.dll",
+} satisfies Record<ModuleSystem, string>
+
+const SCRIPT_DOWNLOAD_NAMES = {
+  linux: "garabato-install.sh",
+  windows: "garabato-install.ps1",
+} satisfies Record<ModuleSystem, string>
 
 async function requireTwoFactor(userId: string) {
   const owner = await db.query.user.findFirst({ where: { id: userId } })
@@ -167,7 +188,7 @@ export const certificateTokenHandler = {
     return {
       code: pending.code,
       displayCode: formatInstallCode(pending.code),
-      command: installCommand(pending.code),
+      commands: installCommands(pending.code),
       expiresAt: toIso(new Date(pending.expiresAt)),
     }
   },
@@ -196,10 +217,10 @@ export const certificateTokenHandler = {
   }) => {
     // The module must exist before the code is spent: the script downloads
     // it first, and a missing architecture should not burn the code.
-    const module = await moduleFiles.read(input.arch)
+    const module = await moduleFiles.read(input.os, input.arch)
     if (!module) {
       throw errors.NOT_FOUND({
-        message: `Este Garabato no incluye el módulo para ${input.arch}`,
+        message: `Este Garabato no incluye el módulo para ${input.os} ${input.arch}`,
       })
     }
     const pending = installCodes.redeem(input.code)
@@ -222,10 +243,12 @@ export const certificateTokenHandler = {
   }) => {
     const pending = installCodes.peek(input.code)
     const script = pending
-      ? await moduleFiles.installScript(publicUrl(), pending.code)
-      : expiredInstallScript()
-    return new File([script], "garabato-install.sh", {
-      type: "text/x-shellscript",
+      ? await moduleFiles.installScript(input.os, publicUrl(), pending.code)
+      : expiredInstallScript(input.os)
+    // The charset matters: Windows PowerShell 5.1 reads a response without
+    // one as Latin-1 and would garble the accents.
+    return new File([script], SCRIPT_DOWNLOAD_NAMES[input.os], {
+      type: "text/plain; charset=utf-8",
     })
   },
 
@@ -237,10 +260,11 @@ export const certificateTokenHandler = {
     const notShipped = errors.NOT_FOUND({
       message: "No hay módulo para esa arquitectura",
     })
-    if (!isArchitecture(input.arch)) throw notShipped
-    const module = await moduleFiles.read(input.arch)
+    const os = input.os ?? "linux"
+    if (!isArchitecture(input.arch) || !isSystem(os)) throw notShipped
+    const module = await moduleFiles.read(os, input.arch)
     if (!module) throw notShipped
-    return new File([module.bytes], "libgarabato_pkcs11.so", {
+    return new File([module.bytes], MODULE_DOWNLOAD_NAMES[os], {
       type: "application/octet-stream",
     })
   },

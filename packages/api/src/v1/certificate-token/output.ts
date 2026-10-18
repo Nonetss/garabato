@@ -18,7 +18,12 @@ export const certificateTokenOutput = {
   startConnection: z.object({
     code: z.string().describe("Install code, canonical form"),
     displayCode: z.string().describe("Install code as shown, e.g. 7KQ4-XMPA"),
-    command: z.string().describe("The command that installs the module"),
+    commands: z
+      .object({
+        linux: z.string().describe("Shell command (curl … | sh)"),
+        windows: z.string().describe("PowerShell command (irm … | iex)"),
+      })
+      .describe("The command that installs the module, per operating system"),
     expiresAt: z.string(),
   }),
   connectionStatus: z.discriminatedUnion("state", [
@@ -35,7 +40,9 @@ export const certificateTokenOutput = {
       .string()
       .describe("SHA-256 of the module for the requested architecture"),
   }),
-  installScript: z.file().describe("POSIX shell script"),
+  installScript: z
+    .file()
+    .describe("POSIX shell script, or PowerShell script for os=windows"),
   module: z.file().describe("The PKCS#11 module, an ELF shared object"),
   listKeys: z.array(tokenKey),
   revokeKey: z.object({ id: z.string(), success: z.boolean() }),

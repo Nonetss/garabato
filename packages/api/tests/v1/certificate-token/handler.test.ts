@@ -170,9 +170,10 @@ describe("certificateToken.startConnection", () => {
     expect(pending.displayCode).toBe(
       `${pending.code.slice(0, 4)}-${pending.code.slice(4)}`
     )
-    expect(pending.command).toBe(
-      `curl -fsSL 'http://localhost:4321/api/v1/certificateToken/installScript?code=${pending.code}' | sh`
-    )
+    expect(pending.commands).toEqual({
+      linux: `curl -fsSL 'http://localhost:4321/api/v1/certificateToken/installScript?code=${pending.code}' | sh`,
+      windows: `irm 'http://localhost:4321/api/v1/certificateToken/installScript?code=${pending.code}&os=windows' | iex`,
+    })
     const minutes = (Date.parse(pending.expiresAt) - Date.now()) / 60_000
     expect(minutes).toBeGreaterThan(9.9)
     expect(minutes).toBeLessThanOrEqual(10)
@@ -194,7 +195,7 @@ describe("certificateToken.redeem", () => {
     })
 
     const redeemed = await certificateTokenHandler.redeem({
-      input: { code, arch: "x86_64" },
+      input: { code, arch: "x86_64", os: "linux" },
     })
 
     expect(createApiKey).toHaveBeenCalledWith({
@@ -220,6 +221,26 @@ describe("certificateToken.redeem", () => {
     ).toEqual({ state: "connected", keyId: "key-new" })
   })
 
+  test("hashes the module of the operating system the script names", async () => {
+    const { code } = await startConnection("Firefox oficina")
+    readModule.mockResolvedValue({ ...moduleFile, sha256: "dll-hash" })
+    fakeDb.queue(
+      "query.user.findFirst",
+      userRow({ id: "user-id", twoFactorEnabled: true })
+    )
+    createApiKey.mockResolvedValue({
+      ...tokenKey("key-win", "2026-01-01T10:00:00.000Z"),
+      key: "sk_token_value",
+    })
+
+    const redeemed = await certificateTokenHandler.redeem({
+      input: { code, arch: "x86_64", os: "windows" },
+    })
+
+    expect(readModule).toHaveBeenCalledWith("windows", "x86_64")
+    expect(redeemed.moduleSha256).toBe("dll-hash")
+  })
+
   test("refuses a second redeem without creating another key", async () => {
     const { code } = await startConnection("Firefox portátil")
     readModule.mockResolvedValue(moduleFile)
@@ -231,10 +252,14 @@ describe("certificateToken.redeem", () => {
       ...tokenKey("key-new", "2026-01-01T10:00:00.000Z"),
       key: "sk_token_value",
     })
-    await certificateTokenHandler.redeem({ input: { code, arch: "x86_64" } })
+    await certificateTokenHandler.redeem({
+      input: { code, arch: "x86_64", os: "linux" },
+    })
 
     await expectErrorCode(
-      certificateTokenHandler.redeem({ input: { code, arch: "x86_64" } }),
+      certificateTokenHandler.redeem({
+        input: { code, arch: "x86_64", os: "linux" },
+      }),
       "NOT_FOUND"
     )
     expect(createApiKey).toHaveBeenCalledTimes(1)
@@ -245,7 +270,7 @@ describe("certificateToken.redeem", () => {
 
     await expectErrorCode(
       certificateTokenHandler.redeem({
-        input: { code: "00000000", arch: "x86_64" },
+        input: { code: "00000000", arch: "x86_64", os: "linux" },
       }),
       "NOT_FOUND"
     )
@@ -257,7 +282,9 @@ describe("certificateToken.redeem", () => {
     readModule.mockResolvedValue(null)
 
     await expectErrorCode(
-      certificateTokenHandler.redeem({ input: { code, arch: "aarch64" } }),
+      certificateTokenHandler.redeem({
+        input: { code, arch: "aarch64", os: "linux" },
+      }),
       "NOT_FOUND"
     )
     expect(
@@ -274,7 +301,9 @@ describe("certificateToken.redeem", () => {
     fakeDb.queue("query.user.findFirst", userRow({ id: "user-id" }))
 
     await expectErrorCode(
-      certificateTokenHandler.redeem({ input: { code, arch: "x86_64" } }),
+      certificateTokenHandler.redeem({
+        input: { code, arch: "x86_64", os: "linux" },
+      }),
       "CONFLICT"
     )
     expect(createApiKey).not.toHaveBeenCalled()
@@ -312,18 +341,31 @@ describe("certificateToken.installScript", () => {
     const { code } = await startConnection("Firefox portátil")
 
     const file = await certificateTokenHandler.installScript({
-      input: { code },
+      input: { code, os: "linux" },
     })
     const script = await file.text()
 
-    expect(file.type).toBe("text/x-shellscript")
+    expect(file.type).toBe("text/plain; charset=utf-8")
     expect(script).toContain("GARABATO_URL='http://localhost:4321'")
     expect(script).toContain(`INSTALL_CODE='${code}'`)
   })
 
+  test("builds the PowerShell script for Windows", async () => {
+    const { code } = await startConnection("Firefox oficina")
+
+    const file = await certificateTokenHandler.installScript({
+      input: { code, os: "windows" },
+    })
+    const script = await file.text()
+
+    expect(file.name).toBe("garabato-install.ps1")
+    expect(script).toContain("$GarabatoUrl = 'http://localhost:4321'")
+    expect(script).toContain(`$InstallCode = '${code}'`)
+  })
+
   test("answers the expired script for an unknown code", async () => {
     const file = await certificateTokenHandler.installScript({
-      input: { code: "'; rm -rf ~" },
+      input: { code: "'; rm -rf ~", os: "linux" },
     })
 
     const script = await file.text()
@@ -340,8 +382,29 @@ describe("certificateToken.module", () => {
       input: { arch: "aarch64" },
     })
 
-    expect(readModule).toHaveBeenCalledWith("aarch64")
+    expect(readModule).toHaveBeenCalledWith("linux", "aarch64")
     expect(new Uint8Array(await file.arrayBuffer())).toEqual(moduleFile.bytes)
+  })
+
+  test("answers the Windows DLL", async () => {
+    readModule.mockResolvedValue(moduleFile)
+
+    const file = await certificateTokenHandler.module({
+      input: { arch: "x86_64", os: "windows" },
+    })
+
+    expect(readModule).toHaveBeenCalledWith("windows", "x86_64")
+    expect(file.name).toBe("garabato_pkcs11.dll")
+  })
+
+  test("answers NOT_FOUND for an unknown operating system", async () => {
+    await expectErrorCode(
+      certificateTokenHandler.module({
+        input: { arch: "x86_64", os: "macos" },
+      }),
+      "NOT_FOUND"
+    )
+    expect(readModule).not.toHaveBeenCalled()
   })
 
   test("answers NOT_FOUND for an unknown architecture", async () => {
@@ -356,7 +419,9 @@ describe("certificateToken.module", () => {
     readModule.mockResolvedValue(null)
 
     await expectErrorCode(
-      certificateTokenHandler.module({ input: { arch: "x86_64" } }),
+      certificateTokenHandler.module({
+        input: { arch: "x86_64", os: "linux" },
+      }),
       "NOT_FOUND"
     )
   })
