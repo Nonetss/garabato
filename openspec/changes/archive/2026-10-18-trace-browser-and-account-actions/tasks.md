@@ -20,5 +20,5 @@
 
 ## 5. Wrap-up
 
-- [ ] 5.1 Ask the user to sign in, fail a password, connect and unlock a browser with a wrong and a right code, and check `/traces`; record the outcome here
+- [x] 5.1 Ask the user to sign in, fail a password, connect and unlock a browser with a wrong and a right code, and check `/traces`; record the outcome here
 - [x] 5.2 Run `openspec validate trace-browser-and-account-actions --strict`; verify it passes
