@@ -11,8 +11,10 @@ import { user } from "#schema/auth"
 import { certificates } from "#schema/certificate"
 import { documents, documentVersions } from "#schema/document"
 
-/** The actions on certificates and documents that leave a trace. Signatures
- *  are not listed: their evidence lives in `document_signatures`. */
+/** The actions on certificates, documents, connected browsers and the
+ *  account that leave a trace, plus the security-relevant refusals
+ *  (`*Failed`, `browser.installRefused`). Signatures are not listed: their
+ *  evidence lives in `document_signatures`. */
 export const TRACE_TYPES = [
   "certificate.imported",
   "certificate.renamed",
@@ -28,6 +30,20 @@ export const TRACE_TYPES = [
   "document.moved",
   "document.versionDeleted",
   "document.deleted",
+  "browser.connected",
+  "browser.disconnected",
+  "browser.unlocked",
+  "browser.unlockFailed",
+  "browser.locked",
+  "browser.installRefused",
+  "account.signedIn",
+  "account.signInFailed",
+  "account.signedOut",
+  "account.nameChanged",
+  "account.passwordChanged",
+  "account.twoFactorEnabled",
+  "account.twoFactorDisabled",
+  "account.twoFactorFailed",
 ] as const
 
 export type TraceType = (typeof TRACE_TYPES)[number]
@@ -35,15 +51,24 @@ export type TraceType = (typeof TRACE_TYPES)[number]
 /** A folder as it was when the trace was written; null is the library root. */
 export type TraceFolderRef = { id: string; name: string } | null
 
+/** A token key (connected browser) as named when the trace was written. */
+export type TraceKeyRef = { id: string; name: string }
+
 /** What a trace keeps beyond its ids, snapshotted so it survives renames and
  *  deleted folders: the previous and new name of a rename, the origin and
  *  destination of a move, the sources of a merge, the token key (browser)
- *  that used a certificate to sign in. Null for the other types. */
+ *  a browser or sign-in trace concerns and why a refusal happened, and how
+ *  an account signed in. Null for the other types. */
 export type TraceDetails =
   | { from: string; to: string }
   | { from: TraceFolderRef; to: TraceFolderRef }
   | { sources: { id: string; name: string }[] }
-  | { key: { id: string; name: string } }
+  | { key: TraceKeyRef }
+  | { key: TraceKeyRef; platform: string }
+  | { key: TraceKeyRef; reason: "wrong-code" | "locked-out" }
+  | { name: string; reason: "used" | "expired" }
+  | { method: "password" | "sso"; userAgent: string | null }
+  | { reason: "wrong-password" | "banned" }
 
 // Audit trail of a user's actions: one row per action, written in the same
 // transaction as the action and never updated or deleted by the API.
