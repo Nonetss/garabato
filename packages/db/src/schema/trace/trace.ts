@@ -19,6 +19,7 @@ export const TRACE_TYPES = [
   "certificate.passwordRemembered",
   "certificate.passwordForgotten",
   "certificate.deleted",
+  "certificate.usedToSignIn",
   "document.uploaded",
   "document.merged",
   "document.pagesEdited",
@@ -36,11 +37,13 @@ export type TraceFolderRef = { id: string; name: string } | null
 
 /** What a trace keeps beyond its ids, snapshotted so it survives renames and
  *  deleted folders: the previous and new name of a rename, the origin and
- *  destination of a move, the sources of a merge. Null for the other types. */
+ *  destination of a move, the sources of a merge, the token key (browser)
+ *  that used a certificate to sign in. Null for the other types. */
 export type TraceDetails =
   | { from: string; to: string }
   | { from: TraceFolderRef; to: TraceFolderRef }
   | { sources: { id: string; name: string }[] }
+  | { key: { id: string; name: string } }
 
 // Audit trail of a user's actions: one row per action, written in the same
 // transaction as the action and never updated or deleted by the API.
