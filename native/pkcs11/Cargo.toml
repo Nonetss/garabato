@@ -1,0 +1,21 @@
+[package]
+name = "garabato-pkcs11"
+version = "0.1.0"
+edition = "2024"
+description = "PKCS#11 module that lets Firefox and Chromium use the certificates kept in Garabato"
+license = "AGPL-3.0-only"
+publish = false
+
+[lib]
+name = "garabato_pkcs11"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+base64 = "0.22"
+native-pkcs11 = { version = "=0.2.27", features = ["custom-function-list"] }
+native-pkcs11-traits = "=0.2.27"
+pkcs11-sys = "0.2.25"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "2", features = ["json", "native-certs"] }
+x509-cert = "0.2.5"

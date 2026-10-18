@@ -91,3 +91,7 @@ temp
 !.github/workflows/
 
 .impeccable/critique/*
+
+# Rust build output of the native modules
+native/*/target/
+native/*/dist/
