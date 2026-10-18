@@ -48,7 +48,9 @@ export function createAuth() {
     },
     plugins: [
       admin(),
-      apiKey({ enableSessionForAPIKeys: true }),
+      // Metadata keeps the module version and platform of a browser's token
+      // key; without it creating one fails with METADATA_DISABLED.
+      apiKey({ enableSessionForAPIKeys: true, enableMetadata: true }),
       organization({
         teams: {
           enabled: true,
